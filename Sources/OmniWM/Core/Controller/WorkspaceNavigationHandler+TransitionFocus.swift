@@ -63,11 +63,9 @@ extension WorkspaceNavigationHandler {
             guard let controller else { return }
             // A newer switch may have replaced the target before this placement finished; focusing
             // its window then would pull the user back to the workspace they just left.
-            guard let targetMonitorId = controller.workspaceManager.monitorId(for: targetWorkspaceId),
-                  controller.workspaceManager.activeWorkspace(on: targetMonitorId)?.id == targetWorkspaceId
-            else { return }
+            guard Self.isWorkspaceActive(targetWorkspaceId, controller: controller) else { return }
             if let focusToken = handoff.focusToken {
-                controller.focusWindow(focusToken)
+                self?.focusAfterRevealWrites(focusToken, workspaceId: targetWorkspaceId)
             } else if handoff.shouldClearManagedFocus {
                 self?.clearManagedFocusAfterEmptyWorkspaceSwitch()
             }
@@ -91,5 +89,44 @@ extension WorkspaceNavigationHandler {
                 handoffAction()
             }
         )
+    }
+
+    private static let revealWriteFocusTimeout: Duration = .milliseconds(250)
+    private static let revealWritePollInterval: Duration = .milliseconds(4)
+
+    private static func isWorkspaceActive(
+        _ workspaceId: WorkspaceDescriptor.ID,
+        controller: WMController
+    ) -> Bool {
+        guard let monitorId = controller.workspaceManager.monitorId(for: workspaceId) else { return false }
+        return controller.workspaceManager.activeWorkspace(on: monitorId)?.id == workspaceId
+    }
+
+    /// Activating an app while its revealed windows are still being moved lets accessibility clients
+    /// re-enable `AXEnhancedUserInterface` mid-write, which makes AppKit animate the window in from its
+    /// park position. Wait (bounded) for the app's reveal writes to land before focusing it.
+    private func focusAfterRevealWrites(
+        _ token: WindowToken,
+        workspaceId: WorkspaceDescriptor.ID,
+        deadline: ContinuousClock.Instant? = nil
+    ) {
+        guard let controller else { return }
+        let deadline = deadline ?? ContinuousClock.now.advanced(by: Self.revealWriteFocusTimeout)
+        let hasPendingRevealWrite = controller.workspaceManager.entries(in: workspaceId).contains {
+            $0.pid == token.pid && controller.axManager.hasPendingFrameWrite(for: $0.windowId)
+        }
+        guard hasPendingRevealWrite, ContinuousClock.now < deadline else {
+            controller.focusWindow(token)
+            return
+        }
+        let newestFocusIntentId = controller.intentLedger.newestFocusIntentId()
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.revealWritePollInterval)
+            guard let self, let controller = self.controller,
+                  Self.isWorkspaceActive(workspaceId, controller: controller),
+                  controller.intentLedger.newestFocusIntentId() == newestFocusIntentId
+            else { return }
+            self.focusAfterRevealWrites(token, workspaceId: workspaceId, deadline: deadline)
+        }
     }
 }
