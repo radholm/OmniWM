@@ -26,6 +26,7 @@ final class WorkspaceSwipePresentation {
     final class Flight {
         let preparation: Preparation
         let destination: Workspace
+        let axis: WorkspaceSwipeAxis
         let inputSign: Double
         let visualSign: CGFloat
         let motion: WorkspaceSwipeMotion
@@ -40,6 +41,7 @@ final class WorkspaceSwipePresentation {
         init(
             preparation: Preparation,
             destination: Workspace,
+            axis: WorkspaceSwipeAxis,
             cumulative: Double,
             isNext: Bool,
             timestamp: TimeInterval,
@@ -47,6 +49,7 @@ final class WorkspaceSwipePresentation {
         ) {
             self.preparation = preparation
             self.destination = destination
+            self.axis = axis
             inputSign = cumulative < 0 ? -1 : 1
             visualSign = isNext ? 1 : -1
             motion = WorkspaceSwipeMotion(
@@ -58,12 +61,20 @@ final class WorkspaceSwipePresentation {
         }
 
         var stride: CGFloat {
-            preparation.frame.height * 1.1
+            switch axis {
+            case .horizontal: preparation.frame.width * 1.1
+            case .vertical: preparation.frame.height * 1.1
+            }
         }
 
+        /// Slides along the swipe axis: the next workspace enters from the right (horizontal)
+        /// or from below (vertical).
         func offset(destination: Bool) -> CGVector {
             let translation = (CGFloat(progress) - (destination ? 1 : 0)) * stride * visualSign
-            return CGVector(dx: 0, dy: translation)
+            switch axis {
+            case .horizontal: return CGVector(dx: -translation, dy: 0)
+            case .vertical: return CGVector(dx: 0, dy: translation)
+            }
         }
     }
 
@@ -140,6 +151,7 @@ final class WorkspaceSwipePresentation {
         let flight = Flight(
             preparation: preparation,
             destination: destination,
+            axis: axis,
             cumulative: cumulative,
             isNext: isNext,
             timestamp: timestamp,
