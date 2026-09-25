@@ -62,6 +62,8 @@ extension MouseEventHandler {
     private func shouldHandleFocusFollowsMouse(at location: CGPoint) -> Bool {
         guard !state.isMoving, !state.isResizing, !isTrackpadSwipeSessionActive else { return false }
         guard let controller else { return false }
+        // While a workspace slide is on screen the pointer is over previews, not the real windows.
+        guard !controller.layoutRefreshController.workspaceSwipe.hasPresentation else { return false }
         guard let workspaceId = workspaceIdForPointer(at: location) else {
             return true
         }
@@ -247,6 +249,7 @@ extension MouseEventHandler {
               !state.isMoving,
               !state.isResizing,
               !isTrackpadSwipeSessionActive,
+              !controller.layoutRefreshController.workspaceSwipe.hasPresentation,
               controller.focusPolicyEngine.evaluate(.focusFollowsMouse).allowsFocusChange,
               !externalFocusBlocksFocusFollowsMouse,
               !hasPendingNativeFullscreenTransition(at: sample.location),

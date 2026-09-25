@@ -61,6 +61,11 @@ extension WorkspaceNavigationHandler {
         let focusEpochSeq = controller.workspaceManager.worldSeq
         let handoffAction: LayoutRefreshController.PostLayoutAction = { [weak self, weak controller] in
             guard let controller else { return }
+            // A newer switch may have replaced the target before this placement finished; focusing
+            // its window then would pull the user back to the workspace they just left.
+            guard let targetMonitorId = controller.workspaceManager.monitorId(for: targetWorkspaceId),
+                  controller.workspaceManager.activeWorkspace(on: targetMonitorId)?.id == targetWorkspaceId
+            else { return }
             if let focusToken = handoff.focusToken {
                 controller.focusWindow(focusToken)
             } else if handoff.shouldClearManagedFocus {
