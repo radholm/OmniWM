@@ -65,6 +65,10 @@ final class WorkspaceSwipePreview {
         panel?.isVisible == true
     }
 
+    var canCapture: Bool {
+        hasCaptureAccess()
+    }
+
     init(
         ownedWindowRegistry: OwnedWindowRegistry,
         previewCapture: OverviewThumbnailCapture? = nil,

@@ -256,6 +256,72 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
         XCTAssertFalse(swipe.hasPresentation)
     }
 
+    func testKeyboardSwitchSlidesHorizontallyAndCommitsWhenSettled() throws {
+        let (controller, swipe, monitor, source) = try fixture()
+        controller.settings.gestures.workspaceSwipeAxis = .horizontal
+        let manager = controller.workspaceManager
+        let third = try XCTUnwrap(manager.workspaceId(for: "3", createIfMissing: true))
+        manager.assignWorkspaceToMonitor(third, monitorId: monitor.id)
+        var fallbacks = 0
+
+        XCTAssertTrue(swipe.animateSwitch(to: third) { fallbacks += 1 })
+
+        let flight = try XCTUnwrap(swipe.flight)
+        XCTAssertEqual(flight.destination.id, third)
+        XCTAssertEqual(flight.axis, .horizontal)
+        XCTAssertEqual(flight.phase, .settling)
+        XCTAssertEqual(manager.activeWorkspace(on: monitor.id)?.id, source)
+        swipe.tick(displayId: monitor.displayId, timestamp: 1.5)
+        XCTAssertLessThan(flight.offset(destination: false).dx, 0)
+        XCTAssertGreaterThan(flight.offset(destination: true).dx, 0)
+        XCTAssertEqual(flight.offset(destination: false).dy, 0)
+
+        swipe.tick(displayId: monitor.displayId, timestamp: 3)
+
+        XCTAssertEqual(manager.activeWorkspace(on: monitor.id)?.id, third)
+        XCTAssertEqual(swipe.flight?.phase, .waitingForPlacement)
+        swipe.didSubmitPlacement()
+        XCTAssertFalse(swipe.hasPresentation)
+        XCTAssertEqual(fallbacks, 0)
+    }
+
+    func testKeyboardSwitchToEarlierWorkspaceEntersFromLeft() throws {
+        let (controller, swipe, monitor, _) = try fixture()
+        controller.settings.gestures.workspaceSwipeAxis = .horizontal
+        let manager = controller.workspaceManager
+        let second = try XCTUnwrap(manager.workspaceId(for: "2", createIfMissing: false))
+        XCTAssertTrue(manager.setActiveWorkspace(second, on: monitor.id))
+        let first = try XCTUnwrap(manager.workspaceId(for: "1", createIfMissing: false))
+
+        XCTAssertTrue(swipe.animateSwitch(to: first) {})
+
+        let flight = try XCTUnwrap(swipe.flight)
+        swipe.tick(displayId: monitor.displayId, timestamp: 1.5)
+        XCTAssertGreaterThan(flight.offset(destination: false).dx, 0)
+        XCTAssertLessThan(flight.offset(destination: true).dx, 0)
+        swipe.cancel(reason: "test-complete")
+    }
+
+    func testKeyboardSwitchDoesNotAnimateWithoutMotionOrToActiveWorkspace() throws {
+        let (controller, swipe, _, source) = try fixture()
+        let second = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "2", createIfMissing: false))
+        XCTAssertFalse(swipe.animateSwitch(to: source) {})
+        controller.motionPolicy.animationsEnabled = false
+        XCTAssertFalse(swipe.animateSwitch(to: second) {})
+        XCTAssertNil(swipe.flight)
+    }
+
+    func testKeyboardSwitchDuringFlightCancelsAndSwitchesImmediately() throws {
+        let (controller, swipe, _, _) = try fixture()
+        let second = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "2", createIfMissing: false))
+        XCTAssertTrue(swipe.animateSwitch(to: second) {})
+        XCTAssertNotNil(swipe.flight)
+
+        XCTAssertFalse(swipe.animateSwitch(to: second) {})
+
+        XCTAssertNil(swipe.flight)
+    }
+
     func testPreviousWorkspaceWrapsAsOneVisualStep() throws {
         let (controller, swipe, monitor, source) = try fixture()
         let last = controller.workspaceManager.workspaces(on: monitor.id).last?.id

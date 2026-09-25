@@ -89,6 +89,21 @@ final class WorkspaceSwipeMotion {
         return true
     }
 
+    /// Settles toward `destination` without finger input, e.g. for keyboard workspace switches.
+    @discardableResult
+    func animate(to destination: Double, animationTime: TimeInterval) -> Bool {
+        guard spring == nil, destination.isFinite, animationTime.isFinite else { return false }
+        target = destination
+        spring = SpringAnimation(
+            from: trackedProgress,
+            to: destination,
+            initialVelocity: 0,
+            startTime: animationTime,
+            config: Self.springConfig
+        )
+        return true
+    }
+
     @discardableResult
     func catchMotion(cumulativeUnits: Double, timestamp: TimeInterval, animationTime: TimeInterval) -> Bool {
         guard accepts(cumulativeUnits: cumulativeUnits, timestamp: timestamp),

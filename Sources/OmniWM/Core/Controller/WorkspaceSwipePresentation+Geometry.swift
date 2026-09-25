@@ -12,9 +12,13 @@ extension WorkspaceSwipePresentation {
               let monitor = controller.monitorForInteraction(),
               let preparation = makePreparation(monitorId: monitor.id)
         else { return }
+        // Warm every workspace on the display so keyboard switches (Command+N) can animate at once.
+        let others = controller.workspaceManager.workspaces(on: monitor.id)
+            .filter { $0.id != preparation.source.id }
+            .compactMap { makeWorkspace($0.id, monitor: preparation.monitor, active: false) }
         previewSurface(controller).warm(
             source: preparation.source.items,
-            destination: (preparation.previous?.items ?? []) + (preparation.next?.items ?? []),
+            destination: others.flatMap(\.items),
             monitor: preparation.monitor,
             workingFrame: preparation.frame
         )
@@ -57,7 +61,7 @@ extension WorkspaceSwipePresentation {
         )
     }
 
-    private func makeWorkspace(_ id: WorkspaceDescriptor.ID, monitor: Monitor, active: Bool) -> Workspace? {
+    func makeWorkspace(_ id: WorkspaceDescriptor.ID, monitor: Monitor, active: Bool) -> Workspace? {
         guard let controller, let refreshController else { return nil }
         let entries = controller.workspaceManager.entries(in: id).filter {
             !controller.workspaceManager.isWindowSuppressedByMacOS($0.token)

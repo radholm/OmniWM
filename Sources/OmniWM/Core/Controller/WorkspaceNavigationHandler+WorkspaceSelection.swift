@@ -8,7 +8,25 @@ import OmniWMIPC
 extension WorkspaceNavigationHandler {
     func switchWorkspace(index: Int) {
         guard let rawWorkspaceID = WorkspaceIDPolicy.rawID(from: max(0, index) + 1) else { return }
+        if animateSwitchWorkspace(rawWorkspaceID: rawWorkspaceID) { return }
         switchWorkspace(rawWorkspaceID: rawWorkspaceID)
+    }
+
+    /// Slides to the workspace with the swipe presentation; the switch commits when the animation ends.
+    private func animateSwitchWorkspace(rawWorkspaceID: String) -> Bool {
+        guard let controller,
+              let currentWorkspace = controller.activeWorkspace(),
+              currentWorkspace.name != rawWorkspaceID,
+              let targetWorkspaceId = controller.workspaceManager.workspaceId(
+                  for: rawWorkspaceID,
+                  createIfMissing: false
+              ),
+              controller.workspaceManager.monitorForWorkspace(targetWorkspaceId)?.id
+              == controller.workspaceManager.monitorForWorkspace(currentWorkspace.id)?.id
+        else { return false }
+        return controller.layoutRefreshController.workspaceSwipe.animateSwitch(to: targetWorkspaceId) { [weak self] in
+            self?.switchWorkspace(rawWorkspaceID: rawWorkspaceID)
+        }
     }
 
     func canSkipSwitch(toVisibleWorkspace workspaceId: WorkspaceDescriptor.ID) -> Bool {

@@ -83,6 +83,9 @@ final class WorkspaceSwipePresentation {
     private(set) var flight: Flight?
     private var preview: WorkspaceSwipePreview?
     private let mediaTimeProvider: () -> TimeInterval
+    private var keyboardSwitchTask: Task<Void, Never>?
+    private var keyboardSwitchFallback: (() -> Void)?
+    static let keyboardPreviewWait: Duration = .milliseconds(250)
 
     init(
         refreshController: LayoutRefreshController,
@@ -108,6 +111,7 @@ final class WorkspaceSwipePresentation {
     }
 
     func prepare(monitorId: Monitor.ID, timestamp: TimeInterval) -> Bool {
+        flushPendingKeyboardSwitch()
         guard let controller, controller.motionPolicy.animationsEnabled else { return false }
         let mediaTime = mediaTimeProvider()
         if let flight, flight.preparation.monitor.id == monitorId, !flight.committing,
@@ -201,13 +205,7 @@ final class WorkspaceSwipePresentation {
             return true
         }
         flight.phase = .settling
-        if refreshController?
-            .displayLinkActivationForTests?(flight.preparation.monitor.displayId) == true { return true }
-        guard let link = refreshController?.getOrCreateDisplayLink(for: flight.preparation.monitor.displayId) else {
-            cancel(reason: "display-link-unavailable")
-            return true
-        }
-        link.add(to: .main, forMode: .common)
+        startSettling(flight)
         return true
     }
 
@@ -302,6 +300,124 @@ final class WorkspaceSwipePresentation {
         )
         flight.phase = .waitingForPlacement
         refreshController.stopDisplayLinkIfIdle(for: flight.preparation.monitor.displayId)
+    }
+}
+
+extension WorkspaceSwipePresentation {
+    @discardableResult
+    private func startSettling(_ flight: Flight) -> Bool {
+        if refreshController?
+            .displayLinkActivationForTests?(flight.preparation.monitor.displayId) == true { return true }
+        guard let link = refreshController?.getOrCreateDisplayLink(for: flight.preparation.monitor.displayId) else {
+            cancel(reason: "display-link-unavailable")
+            return false
+        }
+        link.add(to: .main, forMode: .common)
+        return true
+    }
+
+    /// Animates a keyboard workspace switch with the swipe presentation. Returns `false` when the caller
+    /// must switch without animation. If window previews are not ready yet, waits briefly and runs
+    /// `fallback` (an unanimated switch) when they do not arrive in time.
+    func animateSwitch(to targetId: WorkspaceDescriptor.ID, fallback: @escaping () -> Void) -> Bool {
+        flushPendingKeyboardSwitch()
+        if flight != nil {
+            cancel(reason: "keyboard-superseded")
+            return false
+        }
+        guard let controller, controller.motionPolicy.animationsEnabled, !controller.isOverviewOpen(),
+              let monitor = controller.workspaceManager.monitorForWorkspace(targetId),
+              let current = controller.workspaceManager.activeWorkspaceOrFirst(on: monitor.id),
+              current.id != targetId,
+              let source = makeWorkspace(current.id, monitor: monitor, active: true),
+              let destination = makeWorkspace(targetId, monitor: monitor, active: false)
+        else { return false }
+        let order = controller.workspaceManager.workspaces(on: monitor.id).map(\.id)
+        guard let sourceIndex = order.firstIndex(of: current.id),
+              let targetIndex = order.firstIndex(of: targetId)
+        else { return false }
+        let isNext = targetIndex > sourceIndex
+        let surface = previewSurface(controller)
+        guard surface.canCapture else { return false }
+        let preparation = Preparation(
+            monitor: monitor,
+            frame: monitor.visibleFrame,
+            source: source,
+            previous: isNext ? nil : destination,
+            next: isNext ? destination : nil
+        )
+        self.preparation = preparation
+        surface.prepare(
+            source: source.items,
+            destination: destination.items,
+            monitor: monitor,
+            workingFrame: preparation.frame
+        )
+        if beginKeyboardFlight(isNext: isNext) { return true }
+        keyboardSwitchFallback = fallback
+        keyboardSwitchTask = Task { @MainActor [weak self] in
+            let deadline = ContinuousClock.now + Self.keyboardPreviewWait
+            while ContinuousClock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(8))
+                guard !Task.isCancelled, let self else { return }
+                if beginKeyboardFlight(isNext: isNext) {
+                    keyboardSwitchTask = nil
+                    keyboardSwitchFallback = nil
+                    return
+                }
+            }
+            guard !Task.isCancelled, let self else { return }
+            flushPendingKeyboardSwitch()
+        }
+        return true
+    }
+
+    /// Performs a keyboard switch that is still waiting for previews immediately, without animation.
+    func flushPendingKeyboardSwitch() {
+        keyboardSwitchTask?.cancel()
+        keyboardSwitchTask = nil
+        guard let fallback = keyboardSwitchFallback else { return }
+        keyboardSwitchFallback = nil
+        stopPreparing()
+        fallback()
+    }
+
+    private func beginKeyboardFlight(isNext: Bool) -> Bool {
+        guard flight == nil, let controller, let preparation,
+              controller.motionPolicy.animationsEnabled,
+              let destination = isNext ? preparation.next : preparation.previous,
+              controller.workspaceManager.activeWorkspaceOrFirst(on: preparation.monitor.id)?.id
+              == preparation.source.id
+        else { return false }
+        let flight = Flight(
+            preparation: preparation,
+            destination: destination,
+            axis: controller.settings.gestures.workspaceSwipeAxis,
+            cumulative: 0,
+            isNext: isNext,
+            timestamp: mediaTimeProvider(),
+            recognitionMovement: nil
+        )
+        guard participantsAreCurrent(flight),
+              preview?.begin(
+                  source: preparation.source.items,
+                  destination: destination.items,
+                  monitor: preparation.monitor,
+                  workingFrame: preparation.frame
+              ) == true
+        else { return false }
+        refreshController?.stopScrollAnimation(for: preparation.monitor.displayId)
+        refreshController?.stopDwindleAnimation(for: preparation.monitor.displayId)
+        self.flight = flight
+        trace("keyboard-began")
+        controller.surfaceReconciler.reconcileNow()
+        guard flight.motion.animate(to: 1, animationTime: mediaTimeProvider()) else {
+            cancel(reason: "keyboard-invalid")
+            return false
+        }
+        flight.phase = .settling
+        present(flight, at: mediaTimeProvider())
+        return startSettling(flight)
     }
 }
 
