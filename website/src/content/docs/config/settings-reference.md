@@ -289,6 +289,7 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 | `windowResizeEnabled` *(optional)* | boolean | `false` | Drag without clicking to resize the tiled window under the cursor in either layout. |
 | `windowResizeFingerCount` *(optional)* | integer | `3` | Window-resize finger count: `2`, `3`, or `4`. |
 | `windowGestureSensitivity` *(optional)* | float | `1.0` | Move/resize sensitivity, clamped to `0.1…5.0`; non-finite values use `1.0`. |
+| `workspaceSwipeSensitivity` *(optional)* | float | `1.0` | Workspace-swipe sensitivity, clamped to `0.5…4.0`; higher values need shorter swipes. Non-finite values use `1.0`. |
 
 Window move and resize gestures use all directions, so their finger counts must differ from every other enabled gesture. Configuration loading rejects overlaps with each other, column scrolling, workspace switching, or Overview. In Settings, **Set Up…** previews the conflicting assignments and lets you choose which gestures to turn off before applying the change. When editing TOML, disable or reassign conflicting gestures in the same edit. Moving stays on the starting monitor; resizing can continue beyond its bounds. Lift all fingers to finish, and turn off matching macOS gestures under System Settings → Trackpad → More Gestures. These gestures are inactive while Overview is open and do not use `invertDirection`.
 

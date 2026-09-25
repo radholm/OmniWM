@@ -47,15 +47,7 @@ extension MouseEventHandler {
         state.activeGestureMode = mode
         state.gesturePhase = .committed
         if case let .workspaceSwitch(axis) = mode {
-            controller.layoutRefreshController.workspaceSwipe.begin(
-                axis: axis, cumulative: axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY,
-                timestamp: timestamp,
-                recognitionMovement: SwipeEvent(
-                    delta: Double(axis == .horizontal ? metrics.rawDeltaX : metrics.rawDeltaY),
-                    timestamp: metrics.previousTimestamp
-                )
-            )
-            if controller.layoutRefreshController.workspaceSwipe.hasPresentation { state.workspaceSwipeFired = true }
+            beginWorkspaceSwipePresentation(axis: axis, metrics: metrics, timestamp: timestamp)
         } else {
             controller.layoutRefreshController.workspaceSwipe.cancel(reason: "other-gesture")
         }
@@ -126,13 +118,14 @@ extension MouseEventHandler {
         timestamp: TimeInterval
     ) {
         guard let controller else { return }
+        let cumulative = (axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY) * workspaceSwipeSensitivity
         if controller.layoutRefreshController.workspaceSwipe.update(
-            cumulative: axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY,
+            cumulative: cumulative,
             timestamp: timestamp
         ) { return }
         handleWorkspaceSwipeFrame(
             axis: axis,
-            cumulative: axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY,
+            cumulative: cumulative,
             monitorId: monitorId
         )
     }
@@ -190,6 +183,29 @@ extension MouseEventHandler {
         else { return }
         state.workspaceSwipeFired = true
         controller?.workspaceNavigationHandler.switchWorkspaceRelative(isNext: isNext, monitorId: monitorId)
+    }
+
+    private func beginWorkspaceSwipePresentation(
+        axis: WorkspaceSwipeAxis,
+        metrics: GestureFrameMetrics,
+        timestamp: TimeInterval
+    ) {
+        guard let controller else { return }
+        let sensitivity = workspaceSwipeSensitivity
+        controller.layoutRefreshController.workspaceSwipe.begin(
+            axis: axis,
+            cumulative: (axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY) * sensitivity,
+            timestamp: timestamp,
+            recognitionMovement: SwipeEvent(
+                delta: Double((axis == .horizontal ? metrics.rawDeltaX : metrics.rawDeltaY) * sensitivity),
+                timestamp: metrics.previousTimestamp
+            )
+        )
+        if controller.layoutRefreshController.workspaceSwipe.hasPresentation { state.workspaceSwipeFired = true }
+    }
+
+    private var workspaceSwipeSensitivity: CGFloat {
+        CGFloat(controller?.settings.gestures.workspaceSwipeSensitivity ?? 1.0)
     }
 
     func finishCommittedGestureOnRelease(timestamp: TimeInterval, allowFlick: Bool) {
@@ -257,9 +273,10 @@ extension MouseEventHandler {
             ? state.gestureLastAverageX - state.gestureStartX
             : state.gestureLastAverageY - state.gestureStartY)
             * GestureEventSnapshot.normalizedPositionToGestureUnits
+            * workspaceSwipeSensitivity
         guard let displacement = TrackpadGestureIntent.releaseFlickDisplacement(
             cumulativeAxisUnits: cumulative,
-            velocity: state.workspaceSwipeTracker.velocity()
+            velocity: state.workspaceSwipeTracker.velocity() * Double(workspaceSwipeSensitivity)
         ),
             let isNext = TrackpadGestureIntent.isNextWorkspace(
                 axis: axis,

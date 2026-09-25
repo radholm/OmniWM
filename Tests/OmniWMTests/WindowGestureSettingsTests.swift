@@ -150,6 +150,34 @@ final class WindowGestureSettingsTests: XCTestCase {
         }
     }
 
+    func testWorkspaceSwipeSensitivityNormalizesAndRoundTrips() throws {
+        withSettings { settings in
+            for (value, expected) in [
+                (Double.nan, 1.0),
+                (.infinity, 1.0),
+                (0, 0.5),
+                (9, 4.0),
+                (2.5, 2.5)
+            ] {
+                settings.gestures.workspaceSwipeSensitivity = value
+                XCTAssertEqual(settings.gestures.workspaceSwipeSensitivity, expected)
+                var export = settings.toExport()
+                export.gestures.workspaceSwipeSensitivity = value
+                settings.applyExport(export)
+                XCTAssertEqual(settings.toExport().gestures.workspaceSwipeSensitivity, expected)
+            }
+            var export = settings.toExport()
+            export.gestures.workspaceSwipeSensitivity = nil
+            settings.applyExport(export)
+            XCTAssertEqual(settings.gestures.workspaceSwipeSensitivity, 1)
+        }
+        var export = SettingsExport.defaults()
+        export.gestures.workspaceSwipeSensitivity = 2.5
+        let encoded = try SettingsTOMLCodec.encode(export)
+        XCTAssertEqual(try SettingsTOMLCodec.decode(encoded), export)
+        XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: encoded).isEmpty)
+    }
+
     func testAbsentExportValuesApplyWindowDefaults() {
         withSettings { settings in
             var export = settings.toExport()

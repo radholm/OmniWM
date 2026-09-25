@@ -212,6 +212,7 @@ struct SettingsExport: Equatable {
         var windowResizeEnabled: Bool? = false
         var windowResizeFingerCount: GestureFingerCount? = .three
         var windowGestureSensitivity: Double? = 1.0
+        var workspaceSwipeSensitivity: Double? = 1.0
     }
 
     struct StatusBar: Codable, Equatable {

@@ -172,6 +172,14 @@ struct TrackpadGesturesSettingsPanel: View {
             SettingsCaption(
                 localized: "When sharing fingers with column scrolling in Niri, workspace swipes use the perpendicular direction on each display. The selected axis applies without column scrolling."
             )
+            SettingsSliderRow(
+                label: "Swipe sensitivity",
+                value: Bindable(settings.gestures).workspaceSwipeSensitivity,
+                range: GestureSettings.workspaceSwipeSensitivityRange,
+                step: 0.1,
+                valueText: String(format: "%.1f", settings.gestures.workspaceSwipeSensitivity) + "x"
+            )
+            SettingsCaption("Higher values switch workspaces with shorter swipes.")
         case .overview:
             SettingsCaption(
                 localized: "Swipe up to open and down to close. Thumbnails follow your fingers; move past halfway or flick to commit. Lift all fingers between gestures."

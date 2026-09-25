@@ -159,6 +159,7 @@ extension CanonicalTOMLConfig {
         gestures.windowResizeEnabled = gestures.windowResizeEnabled ?? false
         gestures.windowResizeFingerCount = gestures.windowResizeFingerCount ?? .three
         gestures.windowGestureSensitivity = gestures.windowGestureSensitivity ?? 1.0
+        gestures.workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         return SettingsExport(
             hotkeysEnabled: general.hotkeysEnabled,
             focus: focus,

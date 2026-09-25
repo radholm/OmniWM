@@ -14,6 +14,7 @@ final class GestureSettings {
     @ObservationIgnored private var isApplying = false
 
     nonisolated static let windowGestureSensitivityRange = 0.1 ... 5.0
+    nonisolated static let workspaceSwipeSensitivityRange = 0.5 ... 4.0
 
     private nonisolated static let scrollSensitivityRange = 0.1 ... 100.0
 
@@ -126,6 +127,20 @@ final class GestureSettings {
         }
     }
 
+    var workspaceSwipeSensitivity = GestureSettings.defaults.workspaceSwipeSensitivity ?? 1.0 {
+        didSet {
+            let range = GestureSettings.workspaceSwipeSensitivityRange
+            let normalized = workspaceSwipeSensitivity.isFinite
+                ? min(max(workspaceSwipeSensitivity, range.lowerBound), range.upperBound)
+                : GestureSettings.defaults.workspaceSwipeSensitivity ?? 1.0
+            guard normalized == workspaceSwipeSensitivity else {
+                workspaceSwipeSensitivity = normalized
+                return
+            }
+            notifyChange()
+        }
+    }
+
     var workspaceSwipeAxisLockedToVertical: Bool {
         scrollEnabled && workspaceSwipeFingerCount == fingerCount
     }
@@ -153,7 +168,8 @@ final class GestureSettings {
             windowMoveFingerCount: windowMoveFingerCount,
             windowResizeEnabled: windowResizeEnabled,
             windowResizeFingerCount: windowResizeFingerCount,
-            windowGestureSensitivity: windowGestureSensitivity
+            windowGestureSensitivity: windowGestureSensitivity,
+            workspaceSwipeSensitivity: workspaceSwipeSensitivity
         )
     }
 
@@ -183,6 +199,7 @@ final class GestureSettings {
         windowResizeEnabled = gestures.windowResizeEnabled ?? false
         windowResizeFingerCount = gestures.windowResizeFingerCount ?? .three
         windowGestureSensitivity = gestures.windowGestureSensitivity ?? 1.0
+        workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         isApplying = false
         if export() != previous {
             notifyChange()
