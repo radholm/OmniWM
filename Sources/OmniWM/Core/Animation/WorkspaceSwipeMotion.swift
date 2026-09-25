@@ -104,6 +104,24 @@ final class WorkspaceSwipeMotion {
         return true
     }
 
+    /// Redirects a settling animation toward `destination`, keeping its current position and velocity.
+    @discardableResult
+    func retarget(to destination: Double, animationTime: TimeInterval) -> Bool {
+        guard spring != nil, destination.isFinite, animationTime.isFinite else { return false }
+        let current = progress(at: animationTime)
+        let currentVelocity = velocity(at: animationTime)
+        trackedProgress = current
+        target = destination
+        spring = SpringAnimation(
+            from: current,
+            to: destination,
+            initialVelocity: currentVelocity,
+            startTime: animationTime,
+            config: Self.springConfig
+        )
+        return true
+    }
+
     @discardableResult
     func catchMotion(cumulativeUnits: Double, timestamp: TimeInterval, animationTime: TimeInterval) -> Bool {
         guard accepts(cumulativeUnits: cumulativeUnits, timestamp: timestamp),

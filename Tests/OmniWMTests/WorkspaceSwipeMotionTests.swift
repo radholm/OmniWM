@@ -33,6 +33,22 @@ final class WorkspaceSwipeMotionTests: XCTestCase {
         XCTAssertEqual(motion.progress(at: 12), 1, accuracy: 0.001)
     }
 
+    func testRetargetReversesFromCurrentPositionAndVelocity() {
+        let motion = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 1)
+        XCTAssertFalse(motion.retarget(to: 0, animationTime: 10))
+        motion.animate(to: 1, animationTime: 10)
+        let midway = motion.progress(at: 10.05)
+        let velocity = motion.velocity(at: 10.05)
+
+        XCTAssertTrue(motion.retarget(to: 0, animationTime: 10.05))
+
+        XCTAssertEqual(motion.target, 0)
+        XCTAssertEqual(motion.progress(at: 10.05), midway, accuracy: 0.000001)
+        XCTAssertEqual(motion.velocity(at: 10.05), velocity, accuracy: 0.0001)
+        XCTAssertTrue(motion.isComplete(at: 12))
+        XCTAssertEqual(motion.progress(at: 12), 0, accuracy: 0.001)
+    }
+
     func testSlowRecognitionUsesRecentMovementInsteadOfWholeContactDisplacement() {
         let motion = WorkspaceSwipeMotion(
             cumulativeUnits: 20, timestamp: 2,

@@ -321,9 +321,9 @@ extension WorkspaceSwipePresentation {
     /// `fallback` (an unanimated switch) when they do not arrive in time.
     func animateSwitch(to targetId: WorkspaceDescriptor.ID, fallback: @escaping () -> Void) -> Bool {
         flushPendingKeyboardSwitch()
-        if flight != nil {
+        if let flight {
+            if redirectKeyboardFlight(flight, to: targetId) { return true }
             cancel(reason: "keyboard-superseded")
-            return false
         }
         guard let controller, controller.motionPolicy.animationsEnabled, !controller.isOverviewOpen(),
               let monitor = controller.workspaceManager.monitorForWorkspace(targetId),
@@ -380,6 +380,23 @@ extension WorkspaceSwipePresentation {
         keyboardSwitchFallback = nil
         stopPreparing()
         fallback()
+    }
+
+    /// Steers a settling flight that has not committed yet: back to its source or on to its destination.
+    private func redirectKeyboardFlight(_ flight: Flight, to targetId: WorkspaceDescriptor.ID) -> Bool {
+        if flight.committing { return targetId == flight.destination.id }
+        guard flight.phase == .settling else { return false }
+        let destination: Double
+        if targetId == flight.destination.id {
+            destination = 1
+        } else if targetId == flight.preparation.source.id {
+            destination = 0
+        } else {
+            return false
+        }
+        guard flight.motion.retarget(to: destination, animationTime: mediaTimeProvider()) else { return false }
+        trace("keyboard-redirected", progress: flight.progress)
+        return true
     }
 
     private func beginKeyboardFlight(isNext: Bool) -> Bool {

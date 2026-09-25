@@ -39,7 +39,18 @@ final class WorkspaceSwipePreview {
             layer.contentsGravity = .resize
             layer.contents = preview.surface
             layer.contentsRect = preview.contentsRect
+            // Window captures exclude the system drop shadow; draw one from the content's alpha instead.
+            layer.shadowColor = NSColor.black.cgColor
+            layer.shadowOpacity = Self.shadowOpacity
+            layer.shadowRadius = Self.shadowRadius
+            layer.shadowOffset = Self.shadowOffset
+            layer.shouldRasterize = true
+            layer.rasterizationScale = scale
         }
+
+        static let shadowOpacity: Float = 0.45
+        static let shadowRadius: CGFloat = 16
+        static let shadowOffset = CGSize(width: 0, height: -8)
 
         func update(_ preview: OverviewPreviewFrame) {
             let previous = self.preview

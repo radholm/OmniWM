@@ -16,7 +16,6 @@ extension WorkspaceNavigationHandler {
     private func animateSwitchWorkspace(rawWorkspaceID: String) -> Bool {
         guard let controller,
               let currentWorkspace = controller.activeWorkspace(),
-              currentWorkspace.name != rawWorkspaceID,
               let targetWorkspaceId = controller.workspaceManager.workspaceId(
                   for: rawWorkspaceID,
                   createIfMissing: false
