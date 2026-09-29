@@ -96,7 +96,25 @@ extension WorkspaceSwipePresentation {
             guard let frame, !frame.isNull, !frame.isInfinite, frame.width > 0, frame.height > 0 else { return nil }
             if frame.intersects(monitor.visibleFrame) { items.append(.init(handle: handle, frame: frame)) }
         }
-        return Workspace(id: id, items: items)
+        return Workspace(id: id, items: stacked(items, in: id))
+    }
+
+    /// Orders previews bottom-to-top like the real window stack: tiled, fullscreen tiled, then floating.
+    func stacked(
+        _ items: [WorkspaceSwipePreview.Item], in id: WorkspaceDescriptor.ID
+    ) -> [WorkspaceSwipePreview.Item] {
+        guard let controller else { return items }
+        let wm = controller.workspaceManager
+        let topology = wm.layoutTopology(for: id)
+        func layer(_ item: WorkspaceSwipePreview.Item) -> Int {
+            guard let entry = wm.entry(for: item.handle) else { return 0 }
+            if entry.mode == .floating { return 2 }
+            return topology.isFullscreen(entry.token) ? 1 : 0
+        }
+        return items.enumerated()
+            .map { (layer: layer($0.element), index: $0.offset, item: $0.element) }
+            .sorted { ($0.layer, $0.index) < ($1.layer, $1.index) }
+            .map(\.item)
     }
 
     func participantsAreCurrent(_ flight: Flight) -> Bool {
