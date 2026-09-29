@@ -99,6 +99,16 @@ struct MouseTrackpadSettingsTab: View {
             SettingsCaption(
                 localized: "Hold this modifier to move the cursor over other windows without changing focus."
             )
+
+            Toggle(isOn: Bindable(settings.focus).floatingWindowsAlwaysOnTop) {
+                Text(verbatim: "Keep Floating Windows Above Tiled Windows")
+            }
+
+            SettingsCaption(
+                "Focus follows mouse focuses tiled windows without raising them, and moving the pointer over a "
+                    + "tiled window does not take focus away from a focused floating window. "
+                    + "Click a tiled window to focus it."
+            )
         }
     }
 }

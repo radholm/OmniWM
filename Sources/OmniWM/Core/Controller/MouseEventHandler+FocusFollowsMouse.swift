@@ -114,10 +114,24 @@ extension MouseEventHandler {
         let token = focusFollowsMouseToken(for: target)
 
         guard token != controller.workspaceManager.selectedManagedToken else { return }
+        guard !keepsFloatingFocus(over: target) else { return }
         controller.focusPolicyEngine.performIfFocusFollowsMouseAllowed {
             state.lastFocusFollowsMouseTime = now
             activateFocusFollowsMouseTarget(target)
         }
+    }
+
+    /// With floating windows kept on top, hovering a tiled window must not pull focus away from a
+    /// focused floating window (which would leave keyboard input going to a window behind it).
+    private func keepsFloatingFocus(over target: FocusFollowsMouseTarget) -> Bool {
+        guard let controller, controller.settings.focus.floatingWindowsAlwaysOnTop else { return false }
+        if case .floating = target { return false }
+        guard let focusedToken = controller.workspaceManager.selectedManagedToken,
+              let focusedEntry = controller.workspaceManager.entry(for: focusedToken),
+              focusedEntry.mode == .floating,
+              controller.workspaceManager.visibleWorkspaceIds().contains(focusedEntry.workspaceId)
+        else { return false }
+        return true
     }
 
     private func hasPendingNativeFullscreenTransition(at location: CGPoint) -> Bool {

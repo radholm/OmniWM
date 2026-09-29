@@ -132,7 +132,7 @@ extension AXEventHandler {
         let omitsExplicitOrdering = switch focusObservation {
         case let .echoOf(intent),
              let .lateEcho(intent):
-            intent.origin == .focusFollowsMouse && !controller.settings.focus.raiseOnMouseFocus
+            intent.origin == .focusFollowsMouse && !controller.raisesOnMouseFocus(entry.token)
         case .external:
             false
         }

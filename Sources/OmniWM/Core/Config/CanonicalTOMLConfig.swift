@@ -162,7 +162,7 @@ extension CanonicalTOMLConfig {
         gestures.workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         return SettingsExport(
             hotkeysEnabled: general.hotkeysEnabled,
-            focus: focus,
+            focus: focus.normalized(),
             mouseWarp: mouseWarp,
             routing: routing,
             monitorRanking: monitors?.ranking ?? [],

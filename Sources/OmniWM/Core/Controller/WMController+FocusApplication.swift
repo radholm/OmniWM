@@ -29,7 +29,7 @@ extension WMController {
         guard validateMouseFocusRequest(liveRequest, validatesPointer: validatesPointer) else { return false }
 
         let focusesWithoutRaise = liveRequest.origin == .focusFollowsMouse
-            && !settings.focus.raiseOnMouseFocus
+            && !raisesOnMouseFocus(entry.token)
         guard focusesWithoutRaise else {
             return frontManagedFocusRequest(liveRequest, entry: entry, raisesWindow: raisesWindow)
         }
@@ -94,7 +94,7 @@ extension WMController {
             )
             return
         }
-        let raisesWindow = settings.focus.raiseOnMouseFocus
+        let raisesWindow = raisesOnMouseFocus(entry.token)
         if raisesWindow {
             windowFocusOperations.activateApp(entry.pid)
         }

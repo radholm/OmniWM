@@ -107,6 +107,7 @@ struct SettingsExport: Equatable {
         var followsWindowToMonitor: Bool
         var crossesMonitorAtEdge: Bool
         var moveCrossesMonitorAtEdge: Bool
+        var floatingWindowsAlwaysOnTop: Bool? = false
     }
 
     struct MouseWarp: Codable, Equatable {
@@ -329,6 +330,12 @@ extension SettingsExport.Clipboard {
 }
 
 extension SettingsExport.Focus {
+    func normalized() -> Self {
+        var focus = self
+        focus.floatingWindowsAlwaysOnTop = floatingWindowsAlwaysOnTop ?? false
+        return focus
+    }
+
     static func defaults() -> Self {
         Self(
             followsMouse: false,
