@@ -330,12 +330,6 @@ extension SettingsExport.Clipboard {
 }
 
 extension SettingsExport.Focus {
-    func normalized() -> Self {
-        var focus = self
-        focus.floatingWindowsAlwaysOnTop = floatingWindowsAlwaysOnTop ?? false
-        return focus
-    }
-
     static func defaults() -> Self {
         Self(
             followsMouse: false,

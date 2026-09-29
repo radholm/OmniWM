@@ -151,15 +151,6 @@ extension CanonicalTOMLConfig {
         overview.matchFocusBorder = overview.matchFocusBorder ?? true
         overview.invertScrollDirection = overview.invertScrollDirection ?? false
         overview.mouseScrollSpeed = overview.mouseScrollSpeed ?? 1
-        var gestures = gestures
-        gestures.overviewGestureEnabled = gestures.overviewGestureEnabled ?? false
-        gestures.overviewGestureFingerCount = gestures.overviewGestureFingerCount ?? .four
-        gestures.windowMoveEnabled = gestures.windowMoveEnabled ?? false
-        gestures.windowMoveFingerCount = gestures.windowMoveFingerCount ?? .four
-        gestures.windowResizeEnabled = gestures.windowResizeEnabled ?? false
-        gestures.windowResizeFingerCount = gestures.windowResizeFingerCount ?? .three
-        gestures.windowGestureSensitivity = gestures.windowGestureSensitivity ?? 1.0
-        gestures.workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         return SettingsExport(
             hotkeysEnabled: general.hotkeysEnabled,
             focus: focus.normalized(),
@@ -187,7 +178,7 @@ extension CanonicalTOMLConfig {
             preventSleepEnabled: general.preventSleepEnabled,
             updateChecksEnabled: general.updateChecksEnabled,
             ipcEnabled: general.ipcEnabled,
-            gestures: gestures,
+            gestures: gestures.normalized(),
             statusBar: statusBar,
             hiddenBar: hiddenBar,
             animationsEnabled: general.animationsEnabled,
