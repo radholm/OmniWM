@@ -67,6 +67,20 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         transition.stop()
     }
 
+    func testFinishRecapturesSettledWindowsBeforeClosing() async throws {
+        var captureCount = 0
+        let transition = try makeTransition(capture: { _ in captureCount += 1
+            return try? self.makeImage()
+        })
+        XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: true))
+        transition.finish(after: WindowSnapshotTransition.duration, settled: { true })
+        for _ in 0 ..< 100 where transition.isActive {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertFalse(transition.isActive)
+        XCTAssertEqual(captureCount, 2)
+    }
+
     func testFinishClosesOverlayOnceSettled() async throws {
         let transition = try makeTransition()
         XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: false))

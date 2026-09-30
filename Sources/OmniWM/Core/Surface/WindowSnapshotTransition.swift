@@ -23,6 +23,7 @@ final class WindowSnapshotTransition {
 
     static let duration: CFTimeInterval = 0.25
     static let fadeDuration: CFTimeInterval = 0.12
+    static let crossfadeDuration: CFTimeInterval = 0.18
     static let settleDelay: Duration = .milliseconds(60)
     static let maxSettleWait: Duration = .milliseconds(700)
     static let timing = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
@@ -34,8 +35,15 @@ final class WindowSnapshotTransition {
     private var panel: SnapshotTransitionPanel?
     private var monitor: Monitor?
     private var layers: [Int: CALayer] = [:]
+    private var motions: [Int: Motion] = [:]
     private var finishTask: Task<Void, Never>?
     private var generation = 0
+
+    private struct Motion {
+        let start: CGRect
+        let end: CGRect
+        let beginTime: CFTimeInterval
+    }
 
     var isActive: Bool {
         panel != nil
@@ -122,9 +130,15 @@ final class WindowSnapshotTransition {
                 ?? (popIn ? end.insetBy(dx: end.width * 0.06, dy: end.height * 0.06)
                     : item.from.offsetBy(dx: origin.x, dy: origin.y))
             layer.removeAllAnimations()
+            promoteFreshContent(of: layer)
             layer.frame = end
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: end.size), transform: nil)
             layers[item.windowId] = layer
+            motions[item.windowId] = Motion(
+                start: animated ? start : end,
+                end: end,
+                beginTime: CACurrentMediaTime()
+            )
             layer.removeFromSuperlayer()
             root.addSublayer(layer)
             if animated, start != end { animate(layer, from: start, to: end, fadeIn: popIn) }
@@ -159,6 +173,7 @@ final class WindowSnapshotTransition {
             let target = frame.offsetBy(dx: origin.x, dy: origin.y)
             guard layer.frame != target else { continue }
             layer.removeAllAnimations()
+            motions[windowId] = Motion(start: target, end: target, beginTime: CACurrentMediaTime())
             layer.frame = target
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: target.size), transform: nil)
         }
@@ -183,6 +198,7 @@ final class WindowSnapshotTransition {
         panel = nil
         monitor = nil
         layers.removeAll()
+        motions.removeAll()
     }
 
     private func scheduleFinish(after delay: CFTimeInterval, settled: @escaping @MainActor () -> Bool) {
@@ -190,15 +206,69 @@ final class WindowSnapshotTransition {
         generation += 1
         let generation = generation
         finishTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(delay))
-            let deadline = ContinuousClock.now + Self.maxSettleWait
+            let start = ContinuousClock.now
+            let deadline = start + .seconds(delay) + Self.maxSettleWait
+            try? await Task.sleep(for: .milliseconds(20))
             while !Task.isCancelled, !settled(), ContinuousClock.now < deadline {
                 try? await Task.sleep(for: .milliseconds(10))
             }
             try? await Task.sleep(for: Self.settleDelay)
             guard !Task.isCancelled, let self, self.generation == generation else { return }
+            var fadeAt = start + .seconds(delay)
+            if crossfadeToFreshSnapshots() {
+                fadeAt = max(fadeAt, ContinuousClock.now + .seconds(Self.crossfadeDuration))
+            }
+            try? await Task.sleep(until: fadeAt)
+            guard !Task.isCancelled, self.generation == generation else { return }
             fadeOut(generation: generation)
         }
+    }
+
+    /// Recaptures the resized real windows and cross-fades them in over the stretched snapshots, following
+    /// the running motion, so removing the overlay afterwards shows no content change.
+    private func crossfadeToFreshSnapshots() -> Bool {
+        var didCrossfade = false
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for (windowId, layer) in layers {
+            guard let motion = motions[windowId], let image = captureWindow(windowId) else { continue }
+            layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+            let fresh = CALayer()
+            fresh.contents = image
+            fresh.contentsGravity = .resize
+            fresh.frame = CGRect(origin: .zero, size: motion.end.size)
+            if motion.start != motion.end {
+                let bounds = CABasicAnimation(keyPath: "bounds")
+                bounds.fromValue = NSValue(rect: CGRect(origin: .zero, size: motion.start.size))
+                bounds.toValue = NSValue(rect: CGRect(origin: .zero, size: motion.end.size))
+                let position = CABasicAnimation(keyPath: "position")
+                position.fromValue = NSValue(point: CGPoint(x: motion.start.width / 2, y: motion.start.height / 2))
+                position.toValue = NSValue(point: CGPoint(x: motion.end.width / 2, y: motion.end.height / 2))
+                let group = CAAnimationGroup()
+                group.animations = [bounds, position]
+                group.beginTime = motion.beginTime
+                group.duration = Self.duration
+                group.timingFunction = Self.timing
+                group.fillMode = .both
+                fresh.add(group, forKey: "snapshotTransition")
+            }
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0
+            fade.toValue = 1
+            fade.duration = Self.crossfadeDuration
+            fade.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            fresh.add(fade, forKey: "crossfade")
+            layer.addSublayer(fresh)
+            didCrossfade = true
+        }
+        CATransaction.commit()
+        return didCrossfade
+    }
+
+    private func promoteFreshContent(of layer: CALayer) {
+        guard let fresh = layer.sublayers?.last else { return }
+        layer.contents = fresh.contents
+        layer.sublayers?.forEach { $0.removeFromSuperlayer() }
     }
 
     private func fadeOut(generation: Int) {
