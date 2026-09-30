@@ -105,7 +105,7 @@ struct MouseTrackpadSettingsTab: View {
             }
 
             SettingsCaption(
-                "Focus follows mouse focuses tiled windows without raising them, and moving the pointer over a "
+                "Focus follows mouse does not raise a tiled window over a floating window, and moving the pointer over a "
                     + "tiled window does not take focus away from a focused floating window. "
                     + "Click a tiled window to focus it."
             )

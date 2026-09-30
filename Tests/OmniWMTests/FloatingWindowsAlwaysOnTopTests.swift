@@ -17,11 +17,13 @@ final class FloatingWindowsAlwaysOnTopTests: XCTestCase {
         var operations: [Operation] = []
     }
 
-    func testMouseFocusOnTiledWindowDoesNotRaiseItOverFloatingWindows() throws {
+    func testMouseFocusOnTiledWindowDoesNotRaiseItOverOverlappingFloatingWindow() throws {
         let fixture = try makeFixture()
         let source = addWindow(pid: 830_001, windowId: 830_101, fixture: fixture)
         let target = addWindow(pid: 830_002, windowId: 830_102, fixture: fixture)
-        _ = addWindow(pid: 830_003, windowId: 830_103, fixture: fixture, mode: .floating)
+        let floating = addWindow(pid: 830_003, windowId: 830_103, fixture: fixture, mode: .floating)
+        setFrame(CGRect(x: 800, y: 0, width: 800, height: 900), for: target, fixture: fixture)
+        setFrame(CGRect(x: 1000, y: 200, width: 400, height: 300), for: floating, fixture: fixture)
         setFocused(source, fixture: fixture)
         fixture.recorder.operations.removeAll()
 
@@ -31,6 +33,39 @@ final class FloatingWindowsAlwaysOnTopTests: XCTestCase {
         )
 
         XCTAssertEqual(fixture.recorder.operations, [.focus(target)])
+    }
+
+    func testMouseFocusOnTiledWindowRaisesWhenNoFloatingWindowOverlapsIt() throws {
+        let fixture = try makeFixture()
+        let source = addWindow(pid: 830_031, windowId: 830_131, fixture: fixture)
+        let target = addWindow(pid: 830_032, windowId: 830_132, fixture: fixture)
+        let floating = addWindow(pid: 830_033, windowId: 830_133, fixture: fixture, mode: .floating)
+        setFrame(CGRect(x: 800, y: 0, width: 800, height: 900), for: target, fixture: fixture)
+        setFrame(CGRect(x: 100, y: 200, width: 400, height: 300), for: floating, fixture: fixture)
+        setFocused(source, fixture: fixture)
+        fixture.recorder.operations.removeAll()
+
+        fixture.controller.mouseEventHandler.dispatchMouseMoved(
+            at: CGPoint(x: 100, y: 100),
+            windowIdUnderPointer: target.windowId
+        )
+
+        XCTAssertEqual(fixture.recorder.operations, [.activate(target.pid), .focus(target), .raise])
+    }
+
+    func testMouseFocusOnTiledWindowRaisesWithoutFloatingWindows() throws {
+        let fixture = try makeFixture()
+        let source = addWindow(pid: 830_071, windowId: 830_171, fixture: fixture)
+        let target = addWindow(pid: 830_072, windowId: 830_172, fixture: fixture)
+        setFocused(source, fixture: fixture)
+        fixture.recorder.operations.removeAll()
+
+        fixture.controller.mouseEventHandler.dispatchMouseMoved(
+            at: CGPoint(x: 100, y: 100),
+            windowIdUnderPointer: target.windowId
+        )
+
+        XCTAssertEqual(fixture.recorder.operations, [.activate(target.pid), .focus(target), .raise])
     }
 
     func testMouseFocusOnTiledWindowRaisesWhenSettingDisabled() throws {
@@ -159,6 +194,10 @@ final class FloatingWindowsAlwaysOnTopTests: XCTestCase {
             }
         }
         return token
+    }
+
+    private func setFrame(_ frame: CGRect, for token: WindowToken, fixture: Fixture) {
+        fixture.controller.axManager.frameLedger.confirmFrameWrite(for: token.windowId, frame: frame)
     }
 
     private func setFocused(_ token: WindowToken, fixture: Fixture) {
