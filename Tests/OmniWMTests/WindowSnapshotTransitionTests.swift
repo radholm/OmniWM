@@ -67,6 +67,25 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         transition.stop()
     }
 
+    func testOnScreenAppearingWindowSlidesInsteadOfFading() {
+        let display = CGRect(x: 0, y: 0, width: 1200, height: 800)
+        let onScreen = WindowSnapshotTransition.Item(
+            windowId: 3,
+            from: CGRect(x: 500, y: 40, width: 500, height: 700),
+            to: CGRect(x: 600, y: 30, width: 600, height: 750),
+            appearing: true
+        )
+        let offScreen = WindowSnapshotTransition.Item(
+            windowId: 4,
+            from: CGRect(x: 1195, y: 50, width: 400, height: 300),
+            to: CGRect(x: 0, y: 30, width: 600, height: 750),
+            appearing: true
+        )
+        let resolved = WindowSnapshotTransition.resolvingAppearance([onScreen, offScreen], in: display)
+        XCTAssertEqual(resolved.map(\.appearing), [false, true])
+        XCTAssertEqual(resolved.map(\.from), [onScreen.from, offScreen.from])
+    }
+
     func testFinishRecapturesSettledWindowsBeforeClosing() async throws {
         var captureCount = 0
         let transition = try makeTransition(capture: { _ in captureCount += 1

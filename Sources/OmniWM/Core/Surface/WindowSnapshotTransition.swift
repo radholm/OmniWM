@@ -78,7 +78,10 @@ final class WindowSnapshotTransition {
         generation += 1
         panel?.alphaValue = 1
         let frame = WorkspaceSwipePreview.overlayFrame(covering: monitor.visibleFrame, on: monitor)
-        let items = items.filter { Self.isVisible($0.from, in: frame) || Self.isVisible($0.to, in: frame) }
+        let items = Self.resolvingAppearance(
+            items.filter { Self.isVisible($0.from, in: frame) || Self.isVisible($0.to, in: frame) },
+            in: frame
+        )
         guard !items.isEmpty, hasCaptureAccess(), let images = captureMissingImages(items),
               let panel = panel ?? makePanel(frame: frame, monitor: monitor),
               let root = panel.contentView?.layer
@@ -358,5 +361,18 @@ private final class SnapshotTransitionPanel: NSPanel {
 
     override var canBecomeMain: Bool {
         false
+    }
+}
+
+extension WindowSnapshotTransition {
+    /// A new window that macOS already shows on this display (e.g. a Finder window opened at its
+    /// remembered frame) slides from where it is; fading it in would make it blink out first.
+    static func resolvingAppearance(_ items: [Item], in frame: CGRect) -> [Item] {
+        items.map { item in
+            guard item.appearing, isVisible(item.from, in: frame) else { return item }
+            var item = item
+            item.appearing = false
+            return item
+        }
     }
 }
