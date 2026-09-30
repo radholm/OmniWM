@@ -225,16 +225,24 @@ final class WorkspaceSwipePreview {
         CATransaction.commit()
     }
 
-    func stop() {
+    /// Hold before fading a finished preview out, so revealed windows can redraw underneath it first.
+    static let revealHold: Duration = .milliseconds(120)
+    static let revealFade: TimeInterval = 0.12
+
+    /// Stops the preview. With `revealingWindows`, the panel stays on screen briefly and fades out, hiding the
+    /// first frames of windows that were just moved on screen (stale content, activation redraws).
+    func stop(revealingWindows: Bool = false) {
         isWarming = false
         let previous = contents.values.flatMap { $0.map(\.preview) }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         CATransaction.setCompletionBlock { withExtendedLifetime(previous) {} }
         if let panel {
-            ownedWindowRegistry.unregister(panel)
-            panel.orderOut(nil)
-            panel.close()
+            if revealingWindows {
+                retire(panel, keepingAlive: previous)
+            } else {
+                close(panel)
+            }
             backdrop.clear()
         }
         panel = nil
@@ -243,6 +251,44 @@ final class WorkspaceSwipePreview {
         contents.removeAll()
         capture.clear()
         CATransaction.commit()
+    }
+
+    private func close(_ panel: NSPanel) {
+        ownedWindowRegistry.unregister(panel)
+        panel.orderOut(nil)
+        panel.close()
+    }
+
+    private func retire(_ panel: NSPanel, keepingAlive previews: [OverviewPreviewFrame]) {
+        // Free the display's surface id for the next preview while this one fades out.
+        ownedWindowRegistry.unregister(panel)
+        ownedWindowRegistry.register(
+            panel,
+            surfaceId: "workspace-swipe-retiring-\(ObjectIdentifier(panel).hashValue)",
+            policy: SurfacePolicy(
+                kind: .workspaceSwipe,
+                hitTestPolicy: .passthrough,
+                capturePolicy: .excluded,
+                suppressesManagedFocusRecovery: false
+            )
+        )
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.revealHold)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = Self.revealFade
+                panel.animator().alphaValue = 0
+            } completionHandler: {
+                MainActor.assumeIsolated {
+                    withExtendedLifetime(previews) {}
+                    if let self {
+                        self.close(panel)
+                    } else {
+                        panel.orderOut(nil)
+                        panel.close()
+                    }
+                }
+            }
+        }
     }
 
     private func makeWorkspaceLayer(

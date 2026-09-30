@@ -241,7 +241,7 @@ final class WorkspaceSwipePresentation {
         if controller?.axManager.workspaceFrameSettlement === flight.settlement {
             controller?.axManager.workspaceFrameSettlement = nil
         }
-        preview?.stop()
+        preview?.stop(revealingWindows: reason == "completed")
         preparation = nil
         trace(reason, progress: flight.progress)
         controller?.surfaceReconciler.noteWorldChanged()
