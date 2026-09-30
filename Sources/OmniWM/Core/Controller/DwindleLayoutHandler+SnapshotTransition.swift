@@ -29,9 +29,10 @@ extension DwindleLayoutHandler {
     ) -> Bool {
         let armed = consumeSnapshotTransitionArm(for: snapshot.workspaceId)
         let previousTokens = Set(transition.previousTargetFrames.keys)
+        let pastStartup = CACurrentMediaTime() - createdAt > Self.startupQuietPeriod
         let membershipChanged = !previousTokens.isEmpty && previousTokens != Set(transition.newFrames.keys)
-            && CACurrentMediaTime() - createdAt > Self.startupQuietPeriod
-        guard armed || membershipChanged,
+            && pastStartup
+        guard armed || membershipChanged || (pastStartup && Self.movesSlowFrameWriter(transition)),
               snapshotTransitionsEnabled,
               snapshot.isActiveWorkspace,
               let controller,
@@ -51,6 +52,20 @@ extension DwindleLayoutHandler {
         guard snapshotTransition.begin(items: items, monitor: monitor, animated: true) else { return false }
         snapshotTransition.finish(after: WindowSnapshotTransition.duration, settled: snapshotSettledCheck(items))
         return true
+    }
+
+    /// Apps that answer frame writes slowly (JetBrains IDEs, some PWAs) stutter when
+    /// animated frame by frame, so their moves animate as snapshots instead.
+    static func movesSlowFrameWriter(
+        _ transition: DwindleFrameTransition,
+        isSlow: (pid_t) -> Bool = { AXWriteMetrics.shared.isSlowFrameWriter(pid: $0) }
+    ) -> Bool {
+        transition.newFrames.contains { token, frame in
+            guard let old = transition.oldFrames[token] ?? transition.previousTargetFrames[token],
+                  !old.approximatelyEqual(to: frame, tolerance: 1)
+            else { return false }
+            return isSlow(token.pid)
+        }
     }
 
     private func consumeSnapshotTransitionArm(for workspaceId: WorkspaceDescriptor.ID) -> Bool {
