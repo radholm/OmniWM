@@ -23,6 +23,7 @@ import QuartzCore
     )
     var snapshotTransitionArm: (workspaceId: WorkspaceDescriptor.ID, time: TimeInterval)?
     var interactiveSnapshotWorkspaceId: WorkspaceDescriptor.ID?
+    let createdAt = CACurrentMediaTime()
 
     var dwindleAnimationByDisplay: [CGDirectDisplayID: (WorkspaceDescriptor.ID, Monitor)] = [:]
     private(set) var animationSessionByDisplay: [CGDirectDisplayID: AnimationSession] = [:]

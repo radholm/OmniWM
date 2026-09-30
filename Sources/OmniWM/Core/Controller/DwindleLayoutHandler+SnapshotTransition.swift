@@ -7,6 +7,8 @@ import QuartzCore
 
 extension DwindleLayoutHandler {
     static let snapshotTransitionArmWindow: TimeInterval = 1.0
+    /// Windows are discovered in batches right after launch; don't animate those relayouts.
+    static let startupQuietPeriod: TimeInterval = 3.0
 
     var snapshotTransitionsEnabled: Bool {
         guard let controller else { return false }
@@ -28,6 +30,7 @@ extension DwindleLayoutHandler {
         let armed = consumeSnapshotTransitionArm(for: snapshot.workspaceId)
         let previousTokens = Set(transition.previousTargetFrames.keys)
         let membershipChanged = !previousTokens.isEmpty && previousTokens != Set(transition.newFrames.keys)
+            && CACurrentMediaTime() - createdAt > Self.startupQuietPeriod
         guard armed || membershipChanged,
               snapshotTransitionsEnabled,
               snapshot.isActiveWorkspace,
