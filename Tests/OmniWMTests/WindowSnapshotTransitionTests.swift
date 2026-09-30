@@ -54,6 +54,19 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         XCTAssertFalse(transition.isActive)
     }
 
+    func testAppearingWindowPopsInAtTargetFrame() throws {
+        let transition = try makeTransition()
+        let appearing = WindowSnapshotTransition.Item(
+            windowId: 3,
+            from: CGRect(x: 300, y: 200, width: 500, height: 400),
+            to: CGRect(x: 600, y: 30, width: 600, height: 750),
+            appearing: true
+        )
+        XCTAssertTrue(transition.begin(items: [item(), appearing], monitor: monitor, animated: true))
+        XCTAssertTrue(transition.isActive)
+        transition.stop()
+    }
+
     func testFinishClosesOverlayOnceSettled() async throws {
         let transition = try makeTransition()
         XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: false))

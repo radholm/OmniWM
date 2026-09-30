@@ -19,15 +19,16 @@ extension DwindleLayoutHandler {
         snapshotTransitionArm = (workspaceId, CACurrentMediaTime())
     }
 
-    /// Runs a snapshot transition for an armed relayout. Returns `true` when the real windows should jump
-    /// straight to `transition.newFrames` underneath the overlay.
+    /// Runs a snapshot transition for an armed relayout or a relayout where tiles were added or removed.
+    /// Returns `true` when the real windows should jump straight to `transition.newFrames` under the overlay.
     func startSnapshotTransition(
         _ transition: DwindleFrameTransition,
         snapshot: DwindleWorkspaceSnapshot
     ) -> Bool {
-        guard let arm = snapshotTransitionArm, arm.workspaceId == snapshot.workspaceId else { return false }
-        snapshotTransitionArm = nil
-        guard CACurrentMediaTime() - arm.time < Self.snapshotTransitionArmWindow,
+        let armed = consumeSnapshotTransitionArm(for: snapshot.workspaceId)
+        let previousTokens = Set(transition.previousTargetFrames.keys)
+        let membershipChanged = !previousTokens.isEmpty && previousTokens != Set(transition.newFrames.keys)
+        guard armed || membershipChanged,
               snapshotTransitionsEnabled,
               snapshot.isActiveWorkspace,
               let controller,
@@ -38,10 +39,21 @@ extension DwindleLayoutHandler {
             return !old.approximatelyEqual(to: frame, tolerance: 1)
         }
         guard changed else { return false }
-        let items = snapshotItems(workspaceId: snapshot.workspaceId, targets: transition.newFrames)
+        let appearing = Set(transition.newFrames.keys).subtracting(previousTokens)
+        let items = snapshotItems(
+            workspaceId: snapshot.workspaceId,
+            targets: transition.newFrames,
+            appearing: appearing
+        )
         guard snapshotTransition.begin(items: items, monitor: monitor, animated: true) else { return false }
         snapshotTransition.finish(after: WindowSnapshotTransition.duration, settled: snapshotSettledCheck(items))
         return true
+    }
+
+    private func consumeSnapshotTransitionArm(for workspaceId: WorkspaceDescriptor.ID) -> Bool {
+        guard let arm = snapshotTransitionArm, arm.workspaceId == workspaceId else { return false }
+        snapshotTransitionArm = nil
+        return CACurrentMediaTime() - arm.time < Self.snapshotTransitionArmWindow
     }
 
     func beginInteractiveSnapshotResize(workspaceId: WorkspaceDescriptor.ID, monitor: Monitor) {
@@ -115,7 +127,8 @@ extension DwindleLayoutHandler {
     /// Visible managed windows of the workspace, bottom to top, with their target frames.
     func snapshotItems(
         workspaceId: WorkspaceDescriptor.ID,
-        targets: [WindowToken: CGRect]
+        targets: [WindowToken: CGRect],
+        appearing: Set<WindowToken> = []
     ) -> [WindowSnapshotTransition.Item] {
         guard let controller,
               let windows = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]]
@@ -136,7 +149,12 @@ extension DwindleLayoutHandler {
                   let cgFrame = CGRect(dictionaryRepresentation: bounds as CFDictionary)
             else { continue }
             let frame = ScreenCoordinateSpace.toAppKit(rect: cgFrame)
-            items.append(.init(windowId: windowId, from: frame, to: targets[token] ?? frame))
+            items.append(.init(
+                windowId: windowId,
+                from: frame,
+                to: targets[token] ?? frame,
+                appearing: appearing.contains(token)
+            ))
         }
         return items.reversed()
     }

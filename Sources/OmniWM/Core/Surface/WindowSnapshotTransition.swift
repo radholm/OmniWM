@@ -17,6 +17,8 @@ final class WindowSnapshotTransition {
         let from: CGRect
         /// Target frame (AppKit coordinates).
         let to: CGRect
+        /// Newly tiled windows pop in at their target frame instead of moving from their current frame.
+        var appearing = false
     }
 
     static let duration: CFTimeInterval = 0.25
@@ -114,15 +116,18 @@ final class WindowSnapshotTransition {
         for item in items {
             let existing = layers[item.windowId]
             let layer = existing ?? makeLayer(images[item.windowId])
-            let start = existing?.presentation()?.frame ?? item.from.offsetBy(dx: origin.x, dy: origin.y)
             let end = item.to.offsetBy(dx: origin.x, dy: origin.y)
+            let popIn = existing == nil && item.appearing
+            let start = existing?.presentation()?.frame
+                ?? (popIn ? end.insetBy(dx: end.width * 0.06, dy: end.height * 0.06)
+                    : item.from.offsetBy(dx: origin.x, dy: origin.y))
             layer.removeAllAnimations()
             layer.frame = end
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: end.size), transform: nil)
             layers[item.windowId] = layer
             layer.removeFromSuperlayer()
             root.addSublayer(layer)
-            if animated, start != end { animate(layer, from: start, to: end) }
+            if animated, start != end { animate(layer, from: start, to: end, fadeIn: popIn) }
         }
         CATransaction.commit()
     }
@@ -209,7 +214,7 @@ final class WindowSnapshotTransition {
         }
     }
 
-    private func animate(_ layer: CALayer, from start: CGRect, to end: CGRect) {
+    private func animate(_ layer: CALayer, from start: CGRect, to end: CGRect, fadeIn: Bool = false) {
         let position = CABasicAnimation(keyPath: "position")
         position.fromValue = NSValue(point: CGPoint(x: start.midX, y: start.midY))
         position.toValue = NSValue(point: CGPoint(x: end.midX, y: end.midY))
@@ -218,6 +223,12 @@ final class WindowSnapshotTransition {
         bounds.toValue = NSValue(rect: CGRect(origin: .zero, size: end.size))
         let group = CAAnimationGroup()
         group.animations = [position, bounds]
+        if fadeIn {
+            let opacity = CABasicAnimation(keyPath: "opacity")
+            opacity.fromValue = 0
+            opacity.toValue = 1
+            group.animations?.append(opacity)
+        }
         group.duration = Self.duration
         group.timingFunction = Self.timing
         layer.add(group, forKey: "snapshotTransition")
