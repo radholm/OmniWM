@@ -12,10 +12,11 @@ final class WorkspaceWallpaperParallax {
         let monitor: Monitor
         let position: CGFloat
         let axis: WorkspaceSwipeAxis
+        /// Extra wallpaper size, as a fraction of the display size, revealed across all workspaces.
+        var overscan: CGFloat = WorkspaceWallpaperParallax.defaultOverscan
     }
 
-    /// Extra wallpaper size, as a fraction of the display size, that is revealed across all workspaces.
-    static let overscan: CGFloat = 0.1
+    nonisolated static let defaultOverscan: CGFloat = 0.1
     static let animationDuration: CFTimeInterval = 0.35
     static let refreshInterval: Duration = .seconds(30)
 
@@ -65,7 +66,10 @@ final class WorkspaceWallpaperParallax {
 
     /// Wallpaper frame in AppKit coordinates for a pan `position` along `axis`. Horizontal pans move from the
     /// left edge of the wallpaper to the right edge; vertical pans from the top to the bottom.
-    static func frame(for monitorFrame: CGRect, position: CGFloat, axis: WorkspaceSwipeAxis) -> CGRect {
+    static func frame(
+        for monitorFrame: CGRect, position: CGFloat, axis: WorkspaceSwipeAxis, overscan: CGFloat = defaultOverscan
+    ) -> CGRect {
+        let overscan = max(overscan, 0)
         let extraWidth = monitorFrame.width * overscan
         let extraHeight = monitorFrame.height * overscan
         let position = min(max(position, 0), 1)
@@ -79,6 +83,10 @@ final class WorkspaceWallpaperParallax {
             width: monitorFrame.width + extraWidth,
             height: monitorFrame.height + extraHeight
         ))
+    }
+
+    static func frame(for target: Target) -> CGRect {
+        frame(for: target.monitor.frame, position: target.position, axis: target.axis, overscan: target.overscan)
     }
 
     static func interpolate(_ from: CGRect, _ to: CGRect, progress: CGFloat) -> CGRect {
@@ -95,7 +103,7 @@ final class WorkspaceWallpaperParallax {
         guard let display = displays[monitor.displayId], display.target.monitor.frame == monitor.frame else {
             return nil
         }
-        return Self.frame(for: monitor.frame, position: display.target.position, axis: display.target.axis)
+        return Self.frame(for: display.target)
     }
 
     /// Shows the wallpaper for `targets` and removes it from every other display.
@@ -193,7 +201,7 @@ final class WorkspaceWallpaperParallax {
 
     private func apply(_ display: Display, animated: Bool) {
         let monitorFrame = display.target.monitor.frame
-        let frame = Self.frame(for: monitorFrame, position: display.target.position, axis: display.target.axis)
+        let frame = Self.frame(for: display.target)
             .offsetBy(dx: -monitorFrame.minX, dy: -monitorFrame.minY)
         let layer = display.layer
         display.isPanned = false

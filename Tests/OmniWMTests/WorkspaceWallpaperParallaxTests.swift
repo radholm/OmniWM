@@ -38,6 +38,27 @@ final class WorkspaceWallpaperParallaxTests: XCTestCase {
         XCTAssertEqual(start.midX, monitorFrame.midX)
     }
 
+    func testOverscanSetsHowFarTheWallpaperPans() {
+        let start = WorkspaceWallpaperParallax.frame(
+            for: monitorFrame, position: 0, axis: .horizontal, overscan: 0.3
+        )
+        let end = WorkspaceWallpaperParallax.frame(for: monitorFrame, position: 1, axis: .horizontal, overscan: 0.3)
+        XCTAssertEqual(start.minX - end.minX, 600, accuracy: 0.001)
+        XCTAssertEqual(start.size, CGSize(width: 2600, height: 1300))
+    }
+
+    func testParallaxAmountNormalizes() {
+        let settings = GestureSettings()
+        XCTAssertEqual(settings.workspaceWallpaperParallaxAmount, 0.1)
+        for (value, expected) in [(Double.nan, 0.1), (0, 0.02), (9, 0.5), (0.25, 0.25)] {
+            settings.workspaceWallpaperParallaxAmount = value
+            XCTAssertEqual(settings.workspaceWallpaperParallaxAmount, expected)
+        }
+        var gestures = settings.export()
+        gestures.workspaceWallpaperParallaxAmount = nil
+        XCTAssertEqual(gestures.normalized().workspaceWallpaperParallaxAmount, 0.1)
+    }
+
     func testInterpolateBlendsFrames() {
         let from = CGRect(x: 0, y: 0, width: 100, height: 50)
         let to = CGRect(x: -20, y: 10, width: 100, height: 50)
@@ -55,6 +76,7 @@ final class WorkspaceWallpaperParallaxTests: XCTestCase {
 
         var export = SettingsExport.defaults()
         export.gestures.workspaceWallpaperParallax = false
+        export.gestures.workspaceWallpaperParallaxAmount = 0.2
         let encoded = try SettingsTOMLCodec.encode(export)
         XCTAssertEqual(try SettingsTOMLCodec.decode(encoded), export)
         XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: encoded).isEmpty)

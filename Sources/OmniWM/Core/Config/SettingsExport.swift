@@ -216,6 +216,7 @@ struct SettingsExport: Equatable {
         var windowGestureSensitivity: Double? = 1.0
         var workspaceSwipeSensitivity: Double? = 1.0
         var workspaceWallpaperParallax: Bool? = true
+        var workspaceWallpaperParallaxAmount: Double? = 0.1
     }
 
     struct StatusBar: Codable, Equatable {

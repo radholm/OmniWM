@@ -180,12 +180,7 @@ struct TrackpadGesturesSettingsPanel: View {
                 valueText: String(format: "%.1f", settings.gestures.workspaceSwipeSensitivity) + "x"
             )
             SettingsCaption("Higher values switch workspaces with shorter swipes.")
-            Toggle(isOn: Bindable(settings.gestures).workspaceWallpaperParallax) {
-                Text(verbatim: "Wallpaper parallax")
-            }
-            SettingsCaption(
-                "Scroll the wallpaper a little with each workspace switch. Needs Screen Recording permission."
-            )
+            wallpaperParallaxDetails
         case .overview:
             SettingsCaption(
                 localized: "Swipe up to open and down to close. Thumbnails follow your fingers; move past halfway or flick to commit. Lift all fingers between gestures."
@@ -198,6 +193,27 @@ struct TrackpadGesturesSettingsPanel: View {
             SettingsCaption(
                 localized: "Point at a tiled window and drag without clicking. Resize pulls the nearest movable edges. Lift your fingers to finish."
             )
+        }
+    }
+
+    private var wallpaperParallaxDetails: some View {
+        Group {
+            Toggle(isOn: Bindable(settings.gestures).workspaceWallpaperParallax) {
+                Text(verbatim: "Wallpaper parallax")
+            }
+            SettingsCaption(
+                "Scroll the wallpaper a little with each workspace switch. Needs Screen Recording permission."
+            )
+            if settings.gestures.workspaceWallpaperParallax {
+                SettingsSliderRow(
+                    label: "Wallpaper scroll amount",
+                    value: Bindable(settings.gestures).workspaceWallpaperParallaxAmount,
+                    range: GestureSettings.workspaceWallpaperParallaxAmountRange,
+                    step: 0.01,
+                    valueText: "\(Int((settings.gestures.workspaceWallpaperParallaxAmount * 100).rounded()))%"
+                )
+                SettingsCaption("How far the wallpaper scrolls from the first to the last workspace.")
+            }
         }
     }
 

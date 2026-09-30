@@ -15,6 +15,7 @@ final class GestureSettings {
 
     nonisolated static let windowGestureSensitivityRange = 0.1 ... 5.0
     nonisolated static let workspaceSwipeSensitivityRange = 0.5 ... 4.0
+    nonisolated static let workspaceWallpaperParallaxAmountRange = 0.02 ... 0.5
 
     private nonisolated static let scrollSensitivityRange = 0.1 ... 100.0
 
@@ -148,6 +149,21 @@ final class GestureSettings {
         }
     }
 
+    var workspaceWallpaperParallaxAmount = GestureSettings.defaults.workspaceWallpaperParallaxAmount ?? 0.1 {
+        didSet {
+            let range = GestureSettings.workspaceWallpaperParallaxAmountRange
+            let normalized = workspaceWallpaperParallaxAmount.isFinite
+                ? min(max(workspaceWallpaperParallaxAmount, range.lowerBound), range.upperBound)
+                : GestureSettings.defaults.workspaceWallpaperParallaxAmount ?? 0.1
+            guard normalized == workspaceWallpaperParallaxAmount else {
+                workspaceWallpaperParallaxAmount = normalized
+                return
+            }
+            guard oldValue != workspaceWallpaperParallaxAmount else { return }
+            notifyChange()
+        }
+    }
+
     var workspaceSwipeAxisLockedToVertical: Bool {
         scrollEnabled && workspaceSwipeFingerCount == fingerCount
     }
@@ -177,7 +193,8 @@ final class GestureSettings {
             windowResizeFingerCount: windowResizeFingerCount,
             windowGestureSensitivity: windowGestureSensitivity,
             workspaceSwipeSensitivity: workspaceSwipeSensitivity,
-            workspaceWallpaperParallax: workspaceWallpaperParallax
+            workspaceWallpaperParallax: workspaceWallpaperParallax,
+            workspaceWallpaperParallaxAmount: workspaceWallpaperParallaxAmount
         )
     }
 
@@ -209,6 +226,7 @@ final class GestureSettings {
         windowGestureSensitivity = gestures.windowGestureSensitivity ?? 1.0
         workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         workspaceWallpaperParallax = gestures.workspaceWallpaperParallax ?? true
+        workspaceWallpaperParallaxAmount = gestures.workspaceWallpaperParallaxAmount ?? 0.1
         isApplying = false
         if export() != previous {
             notifyChange()

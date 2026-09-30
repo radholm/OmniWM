@@ -84,6 +84,7 @@ final class WorkspaceSwipePresentation {
     private(set) var flight: Flight?
     private var preview: WorkspaceSwipePreview?
     var wallpaperParallax: WorkspaceWallpaperParallax?
+    var observesWallpaperSettings = false
     private let mediaTimeProvider: () -> TimeInterval
     private var keyboardSwitchTask: Task<Void, Never>?
     private var keyboardSwitchFallback: (() -> Void)?
