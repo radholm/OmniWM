@@ -75,7 +75,7 @@ final class WindowSnapshotTransition {
         finishTask = nil
         generation += 1
         panel?.alphaValue = 1
-        let frame = monitor.visibleFrame
+        let frame = WorkspaceSwipePreview.overlayFrame(covering: monitor.visibleFrame, on: monitor)
         let items = items.filter { Self.isVisible($0.from, in: frame) || Self.isVisible($0.to, in: frame) }
         guard !items.isEmpty, hasCaptureAccess(), let images = captureMissingImages(items),
               let panel = panel ?? makePanel(frame: frame, monitor: monitor),

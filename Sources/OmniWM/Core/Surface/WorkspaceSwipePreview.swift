@@ -164,9 +164,10 @@ final class WorkspaceSwipePreview {
             backdrop.clear()
             return false
         }
-        let frame = workingFrame ?? monitor.visibleFrame
-        let source = source.filter { $0.frame.intersects(frame) }
-        let destination = destination.filter { $0.frame.intersects(frame) }
+        let visibleFrame = workingFrame ?? monitor.visibleFrame
+        let source = source.filter { $0.frame.intersects(visibleFrame) }
+        let destination = destination.filter { $0.frame.intersects(visibleFrame) }
+        let frame = Self.overlayFrame(covering: visibleFrame, on: monitor)
         guard (source + destination).allSatisfy({
             tokens[$0.handle] == $0.handle.token && capture.preview(for: $0.handle) != nil
         }) else { return false }
@@ -290,6 +291,15 @@ final class WorkspaceSwipePreview {
             }
         }
     }
+
+    /// Real windows draw a 1pt dark outline just outside their frame. Windows touching the top of the visible
+    /// frame would leave that outline showing above an overlay limited to the visible frame, so extend it.
+    static func overlayFrame(covering frame: CGRect, on monitor: Monitor) -> CGRect {
+        let maxY = min(frame.maxY + outlineOverlap, max(frame.maxY, monitor.frame.maxY))
+        return CGRect(x: frame.minX, y: frame.minY, width: frame.width, height: maxY - frame.minY)
+    }
+
+    static let outlineOverlap: CGFloat = 2
 
     private func makeWorkspaceLayer(
         _ items: [Item], monitor: Monitor, frame: CGRect, scale: CGFloat, image: CGImage
