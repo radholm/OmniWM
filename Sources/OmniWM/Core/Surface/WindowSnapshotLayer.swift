@@ -20,6 +20,7 @@ final class WindowSnapshotLayer {
 
     static let maxBlur: CGFloat = 14
     static let cornerRadius: CGFloat = 12
+    static let restingBlurFraction: CGFloat = 0.6
     private static let blurName = "motionBlur"
 
     let layer = CALayer()
@@ -79,8 +80,16 @@ final class WindowSnapshotLayer {
         freshLayer.frame = CGRect(origin: .zero, size: motion.end.size)
         freshLayer.contentsRect = Self.cropRect(frameSize: motion.end.size, imageSize: size)
         if motion.start != motion.end {
-            animateContent(freshLayer, imageSize: size, motion: motion)
+            animateContent(freshLayer, imageSize: size, motion: motion, blurs: false)
         }
+        let fadeOut = CABasicAnimation(keyPath: "opacity")
+        fadeOut.fromValue = 1
+        fadeOut.toValue = 0
+        fadeOut.duration = WindowSnapshotTransition.crossfadeDuration
+        fadeOut.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        fadeOut.fillMode = .forwards
+        fadeOut.isRemovedOnCompletion = false
+        image.add(fadeOut, forKey: "crossfade")
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
         fade.toValue = 1
@@ -111,21 +120,23 @@ final class WindowSnapshotLayer {
         image.contentsRect = Self.cropRect(frameSize: frame.size, imageSize: imageSize)
     }
 
-    private func animateContent(_ content: CALayer, imageSize: CGSize, motion: Motion) {
+    /// Animates content geometry with the motion. The snapshot keeps a soft blur after moving so it reads as
+    /// "out of focus" until the real content is cross-faded in over it.
+    private func animateContent(_ content: CALayer, imageSize: CGSize, motion: Motion, blurs: Bool = true) {
         Self.animateFrame(content, from: motion.start, to: motion.end, beginTime: motion.beginTime, local: true)
         let crop = CABasicAnimation(keyPath: "contentsRect")
         crop.fromValue = NSValue(rect: Self.cropRect(frameSize: motion.start.size, imageSize: imageSize))
         crop.toValue = NSValue(rect: Self.cropRect(frameSize: motion.end.size, imageSize: imageSize))
         Self.time(crop, beginTime: motion.beginTime)
         content.add(crop, forKey: "crop")
-        guard motion.peakBlur > 0 else { return }
+        guard blurs, motion.peakBlur > 0 else { return }
         let blur = CAKeyframeAnimation(keyPath: "filters.\(Self.blurName).inputRadius")
-        blur.values = [0, motion.peakBlur, motion.peakBlur * 0.35, 0]
-        blur.keyTimes = [0, 0.18, 0.5, 0.8]
+        blur.values = [0, motion.peakBlur, motion.peakBlur * Self.restingBlurFraction]
+        blur.keyTimes = [0, 0.2, 1]
         blur.beginTime = motion.beginTime
         blur.duration = WindowSnapshotTransition.duration
         blur.fillMode = .both
-        blur.isRemovedOnCompletion = true
+        blur.isRemovedOnCompletion = false
         content.add(blur, forKey: "blur")
     }
 
