@@ -68,7 +68,7 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         transition.stop()
     }
 
-    func testOnScreenAppearingWindowSlidesInsteadOfFading() {
+    func testOnScreenAppearingWindowLeavesFadingGhost() {
         let display = CGRect(x: 0, y: 0, width: 1200, height: 800)
         let onScreen = WindowSnapshotTransition.Item(
             windowId: 3,
@@ -83,7 +83,8 @@ final class WindowSnapshotTransitionTests: XCTestCase {
             appearing: true
         )
         let resolved = WindowSnapshotTransition.resolvingAppearance([onScreen, offScreen], in: display)
-        XCTAssertEqual(resolved.map(\.appearing), [false, true])
+        XCTAssertEqual(resolved.map(\.appearing), [true, true])
+        XCTAssertEqual(resolved.map(\.leavesGhost), [true, false])
         XCTAssertEqual(resolved.map(\.from), [onScreen.from, offScreen.from])
     }
 
