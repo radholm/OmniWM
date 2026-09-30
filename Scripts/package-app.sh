@@ -15,14 +15,21 @@ esac
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 GHOSTTY_LIBRARY_DIR="$("$ROOT_DIR/Scripts/ghostty-preflight.sh" print-library-dir)"
 SWIFT_BUILD_ARGS=(-c "$CONFIG" --arch arm64)
+# Extra `swift build` arguments, e.g. a separate --scratch-path for local incremental builds.
+if [ -n "${OMNIWM_SWIFT_BUILD_ARGS:-}" ]; then
+  read -r -a extra_build_args <<<"$OMNIWM_SWIFT_BUILD_ARGS"
+  SWIFT_BUILD_ARGS+=("${extra_build_args[@]}")
+fi
 
 # Signing identity and notarization profile
 SIGNING_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-Developer ID Application: Oliver Nikolic (VF8LDJRGFM)}"
 NOTARIZE_PROFILE="${OMNIWM_NOTARIZE_PROFILE:-OmniWM-Notarize}"
 ENTITLEMENTS="$ROOT_DIR/OmniWM.entitlements"
 
-echo "Running release checks..."
-make -C "$ROOT_DIR" release-check
+if [ "${OMNIWM_SKIP_RELEASE_CHECK:-0}" != 1 ]; then
+  echo "Running release checks..."
+  make -C "$ROOT_DIR" release-check
+fi
 
 "$ROOT_DIR/Scripts/ghostty-preflight.sh" verify
 
