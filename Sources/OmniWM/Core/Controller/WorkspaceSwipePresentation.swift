@@ -37,6 +37,7 @@ final class WorkspaceSwipePresentation {
         }
 
         var settlement: AXFrameSettlement?
+        var wallpaper: (from: CGRect, to: CGRect)?
 
         init(
             preparation: Preparation,
@@ -82,6 +83,7 @@ final class WorkspaceSwipePresentation {
     var preparation: Preparation?
     private(set) var flight: Flight?
     private var preview: WorkspaceSwipePreview?
+    var wallpaperParallax: WorkspaceWallpaperParallax?
     private let mediaTimeProvider: () -> TimeInterval
     private var keyboardSwitchTask: Task<Void, Never>?
     private var keyboardSwitchFallback: (() -> Void)?
@@ -165,11 +167,13 @@ final class WorkspaceSwipePresentation {
             trace("fallback-participants")
             return
         }
+        flight.wallpaper = wallpaperMotion(for: flight)
         guard preview?.begin(
             source: preparation.source.items,
             destination: destination.items,
             monitor: preparation.monitor,
-            workingFrame: preparation.frame
+            workingFrame: preparation.frame,
+            wallpaperFrame: flight.wallpaper?.from
         ) == true else {
             trace("fallback-preview-unavailable")
             return
@@ -243,6 +247,7 @@ final class WorkspaceSwipePresentation {
         }
         preview?.stop(revealingWindows: reason == "completed")
         preparation = nil
+        syncWallpaper()
         trace(reason, progress: flight.progress)
         controller?.surfaceReconciler.noteWorldChanged()
         refreshController?.stopDisplayLinkIfIdle(for: flight.preparation.monitor.displayId)
@@ -415,12 +420,14 @@ extension WorkspaceSwipePresentation {
             timestamp: mediaTimeProvider(),
             recognitionMovement: nil
         )
+        flight.wallpaper = wallpaperMotion(for: flight)
         guard participantsAreCurrent(flight),
               preview?.begin(
                   source: preparation.source.items,
                   destination: destination.items,
                   monitor: preparation.monitor,
-                  workingFrame: preparation.frame
+                  workingFrame: preparation.frame,
+                  wallpaperFrame: flight.wallpaper?.from
               ) == true
         else { return false }
         refreshController?.stopScrollAnimation(for: preparation.monitor.displayId)
@@ -452,9 +459,11 @@ extension WorkspaceSwipePresentation {
 
     private func present(_ flight: Flight, at timestamp: TimeInterval) {
         flight.progress = flight.motion.progress(at: timestamp)
+        let wallpaperFrame = panWallpaper(for: flight)
         preview?.update(
             sourceOffset: flight.offset(destination: false),
-            destinationOffset: flight.offset(destination: true)
+            destinationOffset: flight.offset(destination: true),
+            wallpaperFrame: wallpaperFrame
         )
     }
 

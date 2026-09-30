@@ -69,6 +69,8 @@ final class WorkspaceSwipePreview {
     private var panel: WorkspaceSwipePreviewPanel?
     private var sourceLayer: CALayer?
     private var destinationLayer: CALayer?
+    private var wallpaperLayer: CALayer?
+    private var overlayOrigin = CGPoint.zero
     private var contents: [WindowHandle: [Content]] = [:]
     private(set) var isWarming = false
 
@@ -158,7 +160,12 @@ final class WorkspaceSwipePreview {
         capture.clear()
     }
 
-    func begin(source: [Item], destination: [Item], monitor: Monitor, workingFrame: CGRect? = nil) -> Bool {
+    /// Starts the slide. With `wallpaperFrame`, workspaces slide over one shared wallpaper drawn at that frame
+    /// (AppKit coordinates) that `update` pans separately; otherwise each workspace carries its own wallpaper.
+    func begin(
+        source: [Item], destination: [Item], monitor: Monitor, workingFrame: CGRect? = nil,
+        wallpaperFrame: CGRect? = nil
+    ) -> Bool {
         guard panel == nil, hasCaptureAccess() else { return false }
         guard let wallpaperImage = backdrop.image(for: monitor) else {
             backdrop.clear()
@@ -172,51 +179,44 @@ final class WorkspaceSwipePreview {
             tokens[$0.handle] == $0.handle.token && capture.preview(for: $0.handle) != nil
         }) else { return false }
 
-        let panel = WorkspaceSwipePreviewPanel(frame: frame)
-        let root = CALayer()
-        root.frame = CGRect(origin: .zero, size: frame.size)
-        root.masksToBounds = true
-        let view = NSView(frame: root.frame)
-        view.wantsLayer = true
-        view.layer = root
-        panel.contentView = view
-
+        let (panel, root) = Self.makePanel(frame: frame)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         let scale = Self.scale(for: monitor)
-        root.addSublayer(makeWallpaperLayer(wallpaperImage, monitor: monitor, frame: frame))
+        let wallpaperLayer = makeWallpaperLayer(wallpaperImage, monitor: monitor, frame: frame)
+        if let wallpaperFrame {
+            wallpaperLayer.frame = wallpaperFrame.offsetBy(dx: -frame.minX, dy: -frame.minY)
+        }
+        root.addSublayer(wallpaperLayer)
+        let workspaceWallpaper = wallpaperFrame == nil ? wallpaperImage : nil
         let sourceLayer = makeWorkspaceLayer(
-            source, monitor: monitor, frame: frame, scale: scale, image: wallpaperImage
+            source, monitor: monitor, frame: frame, scale: scale, image: workspaceWallpaper
         )
         let destinationLayer = makeWorkspaceLayer(
-            destination, monitor: monitor, frame: frame, scale: scale, image: wallpaperImage
+            destination, monitor: monitor, frame: frame, scale: scale, image: workspaceWallpaper
         )
         destinationLayer.isHidden = true
         root.addSublayer(sourceLayer)
         root.addSublayer(destinationLayer)
         self.sourceLayer = sourceLayer
         self.destinationLayer = destinationLayer
+        self.wallpaperLayer = wallpaperLayer
+        overlayOrigin = frame.origin
         self.panel = panel
         CATransaction.commit()
 
-        ownedWindowRegistry.register(
-            panel,
-            surfaceId: "workspace-swipe-\(monitor.displayId)",
-            policy: SurfacePolicy(
-                kind: .workspaceSwipe,
-                hitTestPolicy: .passthrough,
-                capturePolicy: .excluded,
-                suppressesManagedFocusRecovery: false
-            )
-        )
+        ownedWindowRegistry.register(panel, surfaceId: "workspace-swipe-\(monitor.displayId)", policy: Self.policy)
         panel.orderFrontRegardless()
         return true
     }
 
-    func update(sourceOffset: CGVector, destinationOffset: CGVector) {
+    func update(sourceOffset: CGVector, destinationOffset: CGVector, wallpaperFrame: CGRect? = nil) {
         guard panel != nil else { return }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        if let wallpaperFrame {
+            wallpaperLayer?.frame = wallpaperFrame.offsetBy(dx: -overlayOrigin.x, dy: -overlayOrigin.y)
+        }
         sourceLayer?.setAffineTransform(CGAffineTransform(translationX: sourceOffset.dx, y: sourceOffset.dy))
         destinationLayer?.setAffineTransform(CGAffineTransform(
             translationX: destinationOffset.dx,
@@ -249,6 +249,7 @@ final class WorkspaceSwipePreview {
         panel = nil
         sourceLayer = nil
         destinationLayer = nil
+        wallpaperLayer = nil
         contents.removeAll()
         capture.clear()
         CATransaction.commit()
@@ -264,14 +265,7 @@ final class WorkspaceSwipePreview {
         // Free the display's surface id for the next preview while this one fades out.
         ownedWindowRegistry.unregister(panel)
         ownedWindowRegistry.register(
-            panel,
-            surfaceId: "workspace-swipe-retiring-\(ObjectIdentifier(panel).hashValue)",
-            policy: SurfacePolicy(
-                kind: .workspaceSwipe,
-                hitTestPolicy: .passthrough,
-                capturePolicy: .excluded,
-                suppressesManagedFocusRecovery: false
-            )
+            panel, surfaceId: "workspace-swipe-retiring-\(ObjectIdentifier(panel).hashValue)", policy: Self.policy
         )
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: Self.revealHold)
@@ -292,6 +286,38 @@ final class WorkspaceSwipePreview {
         }
     }
 
+    private func updatePreview(_ frame: OverviewPreviewFrame?, for handle: WindowHandle) {
+        guard let frame, tokens[handle] == handle.token, let layers = contents[handle] else { return }
+        for content in layers {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            content.update(frame)
+            CATransaction.commit()
+        }
+    }
+}
+
+@MainActor
+extension WorkspaceSwipePreview {
+    fileprivate static let policy = SurfacePolicy(
+        kind: .workspaceSwipe,
+        hitTestPolicy: .passthrough,
+        capturePolicy: .excluded,
+        suppressesManagedFocusRecovery: false
+    )
+
+    fileprivate static func makePanel(frame: CGRect) -> (WorkspaceSwipePreviewPanel, CALayer) {
+        let panel = WorkspaceSwipePreviewPanel(frame: frame)
+        let root = CALayer()
+        root.frame = CGRect(origin: .zero, size: frame.size)
+        root.masksToBounds = true
+        let view = NSView(frame: root.frame)
+        view.wantsLayer = true
+        view.layer = root
+        panel.contentView = view
+        return (panel, root)
+    }
+
     /// Real windows draw a 1pt dark outline just outside their frame. Windows touching the top of the visible
     /// frame would leave that outline showing above an overlay limited to the visible frame, so extend it.
     static func overlayFrame(covering frame: CGRect, on monitor: Monitor) -> CGRect {
@@ -301,13 +327,13 @@ final class WorkspaceSwipePreview {
 
     static let outlineOverlap: CGFloat = 2
 
-    private func makeWorkspaceLayer(
-        _ items: [Item], monitor: Monitor, frame: CGRect, scale: CGFloat, image: CGImage
+    fileprivate func makeWorkspaceLayer(
+        _ items: [Item], monitor: Monitor, frame: CGRect, scale: CGFloat, image: CGImage?
     ) -> CALayer {
         let layer = CALayer()
         layer.frame = CGRect(origin: .zero, size: frame.size)
         layer.masksToBounds = true
-        layer.addSublayer(makeWallpaperLayer(image, monitor: monitor, frame: frame))
+        if let image { layer.addSublayer(makeWallpaperLayer(image, monitor: monitor, frame: frame)) }
         for item in items {
             guard let preview = capture.preview(for: item.handle) else { continue }
             let content = Content(
@@ -321,7 +347,7 @@ final class WorkspaceSwipePreview {
         return layer
     }
 
-    private func makeWallpaperLayer(_ image: CGImage, monitor: Monitor, frame: CGRect) -> CALayer {
+    fileprivate func makeWallpaperLayer(_ image: CGImage, monitor: Monitor, frame: CGRect) -> CALayer {
         let layer = CALayer()
         layer.frame = monitor.frame.offsetBy(dx: -frame.minX, dy: -frame.minY)
         layer.contentsGravity = .resizeAspectFill
@@ -329,17 +355,7 @@ final class WorkspaceSwipePreview {
         return layer
     }
 
-    private func updatePreview(_ frame: OverviewPreviewFrame?, for handle: WindowHandle) {
-        guard let frame, tokens[handle] == handle.token, let layers = contents[handle] else { return }
-        for content in layers {
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            content.update(frame)
-            CATransaction.commit()
-        }
-    }
-
-    private static func scale(for monitor: Monitor) -> CGFloat {
+    fileprivate static func scale(for monitor: Monitor) -> CGFloat {
         NSScreen.screens.first(where: { $0.displayId == monitor.displayId })?.backingScaleFactor ?? 1
     }
 }

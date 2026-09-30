@@ -314,6 +314,7 @@ final class ServiceLifecycleManager {
 
         controller.mouseEventHandler.cleanup()
         controller.layoutRefreshController.resetState()
+        controller.layoutRefreshController.workspaceSwipe.syncWallpaper()
         controller.resetMouseWarpPolicy()
         controller.axEventHandler.cleanup()
 

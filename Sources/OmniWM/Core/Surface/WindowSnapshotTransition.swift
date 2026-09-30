@@ -38,6 +38,8 @@ final class WindowSnapshotTransition {
     private var motions: [Int: Motion] = [:]
     private var finishTask: Task<Void, Never>?
     private var generation = 0
+    /// Where the desktop wallpaper is drawn on a display (AppKit coordinates), when it differs from the display.
+    var wallpaperFrame: @MainActor (Monitor) -> CGRect? = { _ in nil }
 
     private struct Motion {
         let start: CGRect
@@ -322,7 +324,7 @@ final class WindowSnapshotTransition {
         root.frame = CGRect(origin: .zero, size: frame.size)
         root.masksToBounds = true
         let wallpaperLayer = CALayer()
-        wallpaperLayer.frame = monitor.frame.offsetBy(dx: -frame.minX, dy: -frame.minY)
+        wallpaperLayer.frame = (wallpaperFrame(monitor) ?? monitor.frame).offsetBy(dx: -frame.minX, dy: -frame.minY)
         wallpaperLayer.contentsGravity = .resizeAspectFill
         wallpaperLayer.contents = wallpaper
         root.addSublayer(wallpaperLayer)

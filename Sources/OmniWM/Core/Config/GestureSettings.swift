@@ -141,6 +141,13 @@ final class GestureSettings {
         }
     }
 
+    var workspaceWallpaperParallax = GestureSettings.defaults.workspaceWallpaperParallax ?? true {
+        didSet {
+            guard oldValue != workspaceWallpaperParallax else { return }
+            notifyChange()
+        }
+    }
+
     var workspaceSwipeAxisLockedToVertical: Bool {
         scrollEnabled && workspaceSwipeFingerCount == fingerCount
     }
@@ -169,7 +176,8 @@ final class GestureSettings {
             windowResizeEnabled: windowResizeEnabled,
             windowResizeFingerCount: windowResizeFingerCount,
             windowGestureSensitivity: windowGestureSensitivity,
-            workspaceSwipeSensitivity: workspaceSwipeSensitivity
+            workspaceSwipeSensitivity: workspaceSwipeSensitivity,
+            workspaceWallpaperParallax: workspaceWallpaperParallax
         )
     }
 
@@ -200,6 +208,7 @@ final class GestureSettings {
         windowResizeFingerCount = gestures.windowResizeFingerCount ?? .three
         windowGestureSensitivity = gestures.windowGestureSensitivity ?? 1.0
         workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
+        workspaceWallpaperParallax = gestures.workspaceWallpaperParallax ?? true
         isApplying = false
         if export() != previous {
             notifyChange()

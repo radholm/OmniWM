@@ -18,6 +18,7 @@ extension WMController {
         case .border:
             surfaceReconciler.noteBorderChanged()
         }
+        layoutRefreshController.workspaceSwipe.syncWallpaper()
         let changeSet = focusNotificationDispatcher.notifyFocusChangesIfNeeded()
         if statusBarRefreshIsEnabled {
             refreshStatusBar()

@@ -180,6 +180,12 @@ struct TrackpadGesturesSettingsPanel: View {
                 valueText: String(format: "%.1f", settings.gestures.workspaceSwipeSensitivity) + "x"
             )
             SettingsCaption("Higher values switch workspaces with shorter swipes.")
+            Toggle(isOn: Bindable(settings.gestures).workspaceWallpaperParallax) {
+                Text(verbatim: "Wallpaper parallax")
+            }
+            SettingsCaption(
+                "Scroll the wallpaper a little with each workspace switch. Needs Screen Recording permission."
+            )
         case .overview:
             SettingsCaption(
                 localized: "Swipe up to open and down to close. Thumbnails follow your fingers; move past halfway or flick to commit. Lift all fingers between gestures."

@@ -14,6 +14,7 @@ extension SettingsExport.Gestures {
         normalized.windowResizeFingerCount = windowResizeFingerCount ?? .three
         normalized.windowGestureSensitivity = windowGestureSensitivity ?? 1.0
         normalized.workspaceSwipeSensitivity = workspaceSwipeSensitivity ?? 1.0
+        normalized.workspaceWallpaperParallax = workspaceWallpaperParallax ?? true
         return normalized
     }
 }
