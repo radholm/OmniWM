@@ -213,7 +213,7 @@ extension MouseEventHandler {
                 windowIdUnderPointer: windowIdUnderPointer
             )
         case .leftMouseDown:
-            _ = receiveTapMouseDown(at: location, modifiers: modifiers)
+            suppressEvent = receiveTapMouseDown(at: location, modifiers: modifiers)
         case .leftMouseDragged:
             suppressEvent = isCapturedInteraction(.left)
             receiveTapMouseDragged(at: location)

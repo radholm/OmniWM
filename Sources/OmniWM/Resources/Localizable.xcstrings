@@ -1,6 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Drag Tile Edges to Resize" : {},
+    "Drag Title Bar to Swap" : {},
+    "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them." : {},
+    "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier." : {},
     "%@×" : {},
     "1× is the default. Higher values make window and workspace transitions faster." : {},
     "Tiling Animation Speed" : {},

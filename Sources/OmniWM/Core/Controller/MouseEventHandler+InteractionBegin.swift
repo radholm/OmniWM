@@ -68,6 +68,7 @@ extension MouseEventHandler {
         engine: NiriLayoutEngine,
         wsId: WorkspaceDescriptor.ID,
         at location: CGPoint,
+        edges explicitEdges: ResizeEdge? = nil,
         source: MouseInputState.InteractionSource
     ) -> Bool {
         guard let controller,
@@ -75,7 +76,7 @@ extension MouseEventHandler {
               let frame = tiledWindow.renderedFrame ?? tiledWindow.frame
         else { return false }
 
-        let edges = resizeEdges(for: location, in: frame)
+        let edges = explicitEdges ?? resizeEdges(for: location, in: frame)
         let currentViewOffset = controller.workspaceManager.niriViewportState(for: wsId).viewOffset
         let orientation = resolvedNiriOrientation(
             engine: engine,
@@ -132,6 +133,7 @@ extension MouseEventHandler {
         wsId: WorkspaceDescriptor.ID,
         at location: CGPoint,
         edgePolicy: DwindleResizeEdgePolicy = .exact,
+        edges explicitEdges: ResizeEdge? = nil,
         source: MouseInputState.InteractionSource
     ) -> Bool {
         guard let controller,
@@ -144,7 +146,7 @@ extension MouseEventHandler {
         let innerGap = controller.resolvedDwindleSettings(for: monitor).innerGap
         guard engine.interactiveResizeBegin(
             token: token,
-            edges: resizeEdges(for: location, in: frame),
+            edges: explicitEdges ?? resizeEdges(for: location, in: frame),
             startLocation: location,
             in: wsId,
             innerGap: innerGap,

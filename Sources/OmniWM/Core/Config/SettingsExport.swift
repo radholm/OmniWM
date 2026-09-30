@@ -218,6 +218,8 @@ struct SettingsExport: Equatable {
         var workspaceSwipeSensitivity: Double? = 1.0
         var workspaceWallpaperParallax: Bool? = true
         var workspaceWallpaperParallaxAmount: Double? = 0.1
+        var mouseEdgeDragResize: Bool? = true
+        var mouseTitleBarDragSwap: Bool? = true
     }
 
     struct StatusBar: Codable, Equatable {

@@ -16,6 +16,8 @@ extension SettingsExport.Gestures {
         normalized.workspaceSwipeSensitivity = workspaceSwipeSensitivity ?? 1.0
         normalized.workspaceWallpaperParallax = workspaceWallpaperParallax ?? true
         normalized.workspaceWallpaperParallaxAmount = workspaceWallpaperParallaxAmount ?? 0.1
+        normalized.mouseEdgeDragResize = mouseEdgeDragResize ?? true
+        normalized.mouseTitleBarDragSwap = mouseTitleBarDragSwap ?? true
         return normalized
     }
 }

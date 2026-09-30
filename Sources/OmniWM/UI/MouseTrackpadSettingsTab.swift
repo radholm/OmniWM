@@ -76,6 +76,18 @@ struct MouseTrackpadSettingsTab: View {
             }
 
             SettingsCaption(localized: "Hold this modifier combo + right mouse drag to resize tiled windows")
+
+            Toggle("Drag Tile Edges to Resize", isOn: Bindable(settings.gestures).mouseEdgeDragResize)
+
+            SettingsCaption(
+                localized: "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier."
+            )
+
+            Toggle("Drag Title Bar to Swap", isOn: Bindable(settings.gestures).mouseTitleBarDragSwap)
+
+            SettingsCaption(
+                localized: "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them."
+            )
         }
     }
 

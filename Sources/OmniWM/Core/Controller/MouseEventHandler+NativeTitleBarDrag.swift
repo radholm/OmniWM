@@ -53,7 +53,7 @@ extension MouseEventHandler {
         controller.axManager.beginNativeTitleBarDrag(for: drag.token)
     }
 
-    func finishNativeTitleBarDragIfNeeded(button: MouseButton) {
+    func finishNativeTitleBarDragIfNeeded(button: MouseButton, at releaseLocation: CGPoint? = nil) {
         guard button == .left else { return }
         markNativeTitleBarDragFallbackReleased(button: button)
         if state.nativeTitleBarDrag == nil,
@@ -94,11 +94,16 @@ extension MouseEventHandler {
             observedFrame: observedFrame, lastAppliedFrame: lastAppliedFrame,
             receivedFrameChange: drag.receivedFrameChange
         )
-        settleReleasedNativeTitleBarDrag(
-            drag,
-            entry: entry,
-            needsCorrection: excludedFrameWrite || observedDisplacement
-        )
+        let needsCorrection = excludedFrameWrite || observedDisplacement
+        if needsCorrection, let releaseLocation {
+            swapNativeTitleBarDropTargetIfNeeded(
+                entry,
+                at: releaseLocation,
+                observedFrame: observedFrame,
+                lastAppliedFrame: lastAppliedFrame
+            )
+        }
+        settleReleasedNativeTitleBarDrag(drag, entry: entry, needsCorrection: needsCorrection)
     }
 
     private func settleReleasedNativeTitleBarDrag(

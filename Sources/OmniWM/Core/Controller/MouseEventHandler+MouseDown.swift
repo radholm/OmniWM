@@ -23,8 +23,11 @@ extension MouseEventHandler {
             return false
         }
 
-        if button == .left, modifiers.isDisjoint(with: Self.relevantModifierFlags) {
-            recordPointerFocusIntent(at: location, workspaceId: wsId, windowIdUnderPointer: windowIdUnderPointer)
+        if button == .left,
+           modifiers.isDisjoint(with: Self.relevantModifierFlags),
+           handlePlainLeftMouseDown(at: location, workspaceId: wsId, windowIdUnderPointer: windowIdUnderPointer)
+        {
+            return true
         }
 
         let layoutType = controller.workspaceManager.descriptor(for: wsId)
@@ -85,6 +88,17 @@ extension MouseEventHandler {
             .flatMap { engine.findNode(for: $0, in: wsId) }
         guard let window else { return false }
         return beginNiriResize(window: window, engine: engine, wsId: wsId, at: location, source: .mouse(button))
+    }
+
+    /// Returns true when the press started an edge-drag resize and must be consumed.
+    private func handlePlainLeftMouseDown(
+        at location: CGPoint, workspaceId wsId: WorkspaceDescriptor.ID, windowIdUnderPointer: Int?
+    ) -> Bool {
+        if beginEdgeDragResizeIfNeeded(at: location, workspaceId: wsId) {
+            return true
+        }
+        recordPointerFocusIntent(at: location, workspaceId: wsId, windowIdUnderPointer: windowIdUnderPointer)
+        return false
     }
 
     private func recordPointerFocusIntent(

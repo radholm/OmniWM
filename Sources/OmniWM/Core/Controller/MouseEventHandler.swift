@@ -22,6 +22,10 @@ final class MouseEventHandler {
         AXWindowService.framePreferFast($0)
     }
 
+    var edgeDragUnobstructedProvider: @MainActor (CGPoint, Set<Int>) -> Bool = {
+        MouseEventHandler.edgeDragPointIsUnobstructed($0, tiledWindowIds: $1)
+    }
+
     init(controller: WMController) {
         self.controller = controller
     }

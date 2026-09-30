@@ -149,6 +149,20 @@ final class GestureSettings {
         }
     }
 
+    var mouseEdgeDragResize = GestureSettings.defaults.mouseEdgeDragResize ?? true {
+        didSet {
+            guard oldValue != mouseEdgeDragResize else { return }
+            notifyChange()
+        }
+    }
+
+    var mouseTitleBarDragSwap = GestureSettings.defaults.mouseTitleBarDragSwap ?? true {
+        didSet {
+            guard oldValue != mouseTitleBarDragSwap else { return }
+            notifyChange()
+        }
+    }
+
     var workspaceWallpaperParallaxAmount = GestureSettings.defaults.workspaceWallpaperParallaxAmount ?? 0.1 {
         didSet {
             let range = GestureSettings.workspaceWallpaperParallaxAmountRange
@@ -194,7 +208,9 @@ final class GestureSettings {
             windowGestureSensitivity: windowGestureSensitivity,
             workspaceSwipeSensitivity: workspaceSwipeSensitivity,
             workspaceWallpaperParallax: workspaceWallpaperParallax,
-            workspaceWallpaperParallaxAmount: workspaceWallpaperParallaxAmount
+            workspaceWallpaperParallaxAmount: workspaceWallpaperParallaxAmount,
+            mouseEdgeDragResize: mouseEdgeDragResize,
+            mouseTitleBarDragSwap: mouseTitleBarDragSwap
         )
     }
 
@@ -227,6 +243,8 @@ final class GestureSettings {
         workspaceSwipeSensitivity = gestures.workspaceSwipeSensitivity ?? 1.0
         workspaceWallpaperParallax = gestures.workspaceWallpaperParallax ?? true
         workspaceWallpaperParallaxAmount = gestures.workspaceWallpaperParallaxAmount ?? 0.1
+        mouseEdgeDragResize = gestures.mouseEdgeDragResize ?? true
+        mouseTitleBarDragSwap = gestures.mouseTitleBarDragSwap ?? true
         isApplying = false
         if export() != previous {
             notifyChange()
