@@ -214,20 +214,8 @@ extension OverviewLayerRenderer {
         let text = state.searchQuery.isEmpty ? Self.searchPlaceholder : state.searchQuery
         if searchText.string as? String != text { searchText.string = text }
         searchText.foregroundColor = state.searchQuery.isEmpty ? Colors.textDimmed : Colors.textWhite
-        let textWidth = max(0, search.bounds.width - 124)
-        let rowHeight = search.bounds.height / 2
-        searchText.fontSize = min(16, max(11, rowHeight - 3))
-        searchText.frame = CGRect(
-            x: 62,
-            y: rowHeight - 1,
-            width: textWidth,
-            height: rowHeight
-        )
-        searchText.contentsScale = contentsScale
         searchStatus.string = layout.searchFeedback(query: state.searchQuery)
-        searchStatus.fontSize = min(11, max(9, rowHeight - 5))
-        searchStatus.frame = CGRect(x: 62, y: 1, width: textWidth, height: rowHeight - 1)
-        searchStatus.contentsScale = contentsScale
+        layoutSearchText()
         searchClear.isHidden = state.searchQuery.isEmpty
         searchClear.frame = CGRect(
             x: search.bounds.width - 62,
@@ -238,11 +226,12 @@ extension OverviewLayerRenderer {
         searchClear.contentsScale = contentsScale
         let width = (text as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: searchText.fontSize)])
             .width
+        let font = NSFont.systemFont(ofSize: searchText.fontSize)
         caret.frame = CGRect(
             x: min(search.bounds.midX + width / 2 + 2, search.bounds.maxX - 64),
-            y: rowHeight + 1,
+            y: searchText.frame.maxY - font.ascender - font.leading + font.descender,
             width: 2,
-            height: max(8, rowHeight - 5)
+            height: font.ascender - font.descender
         )
         caret.isHidden = state.searchQuery.isEmpty
         if !caret.isHidden, caretAnimated {
@@ -260,6 +249,27 @@ extension OverviewLayerRenderer {
             caret.removeAnimation(forKey: "blink")
             caret.opacity = 1
         }
+    }
+
+    /// Centers the query line and the status line as one block inside the search bar.
+    /// CATextLayer draws from the top of its frame, so frames are sized to the real line heights.
+    private func layoutSearchText() {
+        let textWidth = max(0, search.bounds.width - 124)
+        let rowHeight = search.bounds.height / 2
+        searchText.fontSize = min(16, max(11, rowHeight - 3))
+        searchStatus.fontSize = min(11, max(9, rowHeight - 5))
+        let lineHeight = { (size: CGFloat) -> CGFloat in
+            let font = NSFont.systemFont(ofSize: size)
+            return ceil(font.ascender - font.descender + font.leading)
+        }
+        let textHeight = lineHeight(searchText.fontSize)
+        let statusHeight = lineHeight(searchStatus.fontSize)
+        let spacing: CGFloat = 2
+        let bottom = ((search.bounds.height - textHeight - spacing - statusHeight) / 2).rounded()
+        searchStatus.frame = CGRect(x: 62, y: bottom, width: textWidth, height: statusHeight)
+        searchText.frame = CGRect(x: 62, y: bottom + statusHeight + spacing, width: textWidth, height: textHeight)
+        searchText.contentsScale = contentsScale
+        searchStatus.contentsScale = contentsScale
     }
 
     func updateDropTarget(_ layout: OverviewLayout) {
