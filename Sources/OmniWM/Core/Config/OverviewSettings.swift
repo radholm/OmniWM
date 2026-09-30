@@ -48,6 +48,10 @@ final class OverviewSettings {
         didSet { onChange?() }
     }
 
+    var workspaceGrid = OverviewSettings.defaults.workspaceGrid ?? true {
+        didSet { onChange?() }
+    }
+
     func export() -> SettingsExport.Overview {
         SettingsExport.Overview(
             enabled: enabled,
@@ -61,7 +65,8 @@ final class OverviewSettings {
             matchFocusBorder: matchFocusBorder,
             invertScrollDirection: invertScrollDirection,
             mouseScrollSpeed: mouseScrollSpeed,
-            mouseButton: mouseButton
+            mouseButton: mouseButton,
+            workspaceGrid: workspaceGrid
         )
     }
 
@@ -85,6 +90,7 @@ final class OverviewSettings {
             default: baseline.windowBorders.selected
         )
         matchFocusBorder = values.matchFocusBorder ?? baseline.matchFocusBorder ?? true
+        workspaceGrid = values.workspaceGrid ?? baseline.workspaceGrid ?? true
     }
 
     private static func validatedZoom(_ value: Double) -> Double {

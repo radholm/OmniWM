@@ -217,6 +217,7 @@ Zoom and colors for the Overview.
 | --- | --- | --- | --- |
 | `enabled` *(optional)* | boolean | `true` | Enables Overview. When off, its shortcuts, mouse button, trackpad gesture, and direct commands cannot open it; saved input assignments remain available when re-enabled. |
 | `zoom` | float | `1.0` | Overview zoom factor. |
+| `workspaceGrid` *(optional)* | boolean | `true` | Shows every workspace of a display in a grid that fits the screen instead of a vertical scrolling list. |
 | `backdrop` | color table | `0.05, 0.05, 0.08, 1.0` | Backdrop behind the zoomed-out workspaces. |
 | `windowBorders.normal` | color table | `0.3, 0.3, 0.35, 0.5` | Border for windows at rest. |
 | `windowBorders.hovered` | color table | `0.4, 0.6, 1.0, 1.0` | Border for the hovered window. |

@@ -607,6 +607,7 @@ final class OverviewSelectionUXTests: XCTestCase {
             autosaveEnabled: false
         )
         settings.animationsEnabled = false
+        settings.overview.workspaceGrid = false
         let monitors = (0 ... 1).map { index in
             let displayId = CGDirectDisplayID(98_300 + index)
             let width = orientation == .horizontal ? 1600 : 900

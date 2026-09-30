@@ -1603,6 +1603,7 @@ final class OverviewBehaviorTests: XCTestCase {
             recorder.releaseStorage()
         }
         let fixture = try makeRuntimeOverviewFixture(windowCount: 1)
+        fixture.controller.settings.overview.workspaceGrid = false
         let manager = fixture.controller.workspaceManager
         let monitorId = try XCTUnwrap(manager.monitors.first?.id)
         let empty = try XCTUnwrap(manager.workspaceId(for: "2", createIfMissing: true))
@@ -1654,6 +1655,7 @@ final class OverviewBehaviorTests: XCTestCase {
 
     func testKeyboardOverviewOpeningAndReopeningAllowPreciseScrolling() throws {
         let harness = try InteractiveOverviewHarness(fixture: makeRuntimeOverviewFixture(windowCount: 1))
+        harness.fixture.controller.settings.overview.workspaceGrid = false
         let overview = harness.overview
         let manager = harness.fixture.controller.workspaceManager
         let monitorId = try XCTUnwrap(manager.monitors.first?.id)

@@ -165,6 +165,7 @@ struct SettingsExport: Equatable {
         var invertScrollDirection: Bool?
         var mouseScrollSpeed: Double?
         var mouseButton: Int64?
+        var workspaceGrid: Bool?
     }
 
     struct OverviewWindowBorders: Codable, Equatable {
@@ -417,7 +418,8 @@ extension SettingsExport.Overview {
             ),
             matchFocusBorder: true,
             invertScrollDirection: false,
-            mouseScrollSpeed: 1.0
+            mouseScrollSpeed: 1.0,
+            workspaceGrid: true
         )
     }
 }

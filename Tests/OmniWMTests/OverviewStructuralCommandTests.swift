@@ -1466,6 +1466,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
             autosaveEnabled: false
         )
         settings.animationsEnabled = false
+        settings.overview.workspaceGrid = false
         settings.workspaces.configurations = layouts.enumerated().map { index, layout in
             WorkspaceConfiguration(name: String(index + 1), monitorAssignment: .main, layoutType: layout)
         }

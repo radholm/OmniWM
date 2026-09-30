@@ -147,7 +147,9 @@ final class OverviewViewportProjection {
         let viewportFrame = OverviewLayoutCalculator.viewportFrame(for: monitor.frame)
         let layout = OverviewLayoutCalculator(
             screenFrame: viewportFrame,
-            scale: scale
+            scale: scale,
+            topInset: NSScreen.screens.first { $0.displayId == monitor.displayId }?.safeAreaInsets.top ?? 0,
+            grid: wmController?.settings.overview.workspaceGrid ?? true
         ).calculateLayout(
             workspaces: workspaces,
             windows: localizedWindowData,

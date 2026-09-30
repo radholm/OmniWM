@@ -30,6 +30,13 @@ struct OverviewSettingsTab: View {
                     scheduleUpdate()
                 }
                 SettingsCaption(localized: "Zoom changes made in Overview are remembered when it closes.")
+                Toggle(isOn: Bindable(settings.overview).workspaceGrid) {
+                    Text(verbatim: "Show Workspaces in a Grid")
+                }
+                .onChange(of: settings.overview.workspaceGrid) { _, _ in
+                    scheduleUpdate()
+                }
+                SettingsCaption("Fits every workspace on screen at once instead of a scrolling list.")
             }
             .disabled(!settings.overview.enabled)
 

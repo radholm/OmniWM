@@ -65,8 +65,18 @@ extension OverviewNavigation {
             return candidates.first
         }
         if direction == .left || direction == .right {
-            guard let handle = current.windowHandle else { return current }
-            return findNextWindow(in: layout, from: handle, direction: direction).map(OverviewSelection.window)
+            let inSection = current.windowHandle.flatMap {
+                findNextWindow(in: layout, from: $0, direction: direction).map(OverviewSelection.window)
+            }
+            if let inSection, inSection != current { return inSection }
+            return neighborInRow(
+                of: current,
+                frame: frame,
+                in: layout,
+                candidates: candidates,
+                movingLeft: direction == .left
+            )
+                ?? inSection ?? current
         }
         let movingUp = direction == .up
         let windowCandidate = current.windowHandle.flatMap {
@@ -91,5 +101,48 @@ extension OverviewNavigation {
             }
         }
         return best ?? current
+    }
+
+    private static func workspaceId(of selection: OverviewSelection, in layout: OverviewLayout) -> WorkspaceDescriptor
+        .ID?
+    {
+        switch selection {
+        case let .window(handle): layout.window(for: handle)?.workspaceId
+        case let .workspace(id): id
+        case .newWorkspace: nil
+        }
+    }
+
+    /// Nearest selection in another workspace cell on the same grid row; list layouts never have one.
+    private static func neighborInRow(
+        of current: OverviewSelection,
+        frame: CGRect,
+        in layout: OverviewLayout,
+        candidates: [OverviewSelection],
+        movingLeft: Bool
+    ) -> OverviewSelection? {
+        let currentWorkspace = workspaceId(of: current, in: layout)
+        let row = layout.workspaceSections.first { $0.workspaceId == currentWorkspace }?.sectionFrame ?? frame
+        var best: OverviewSelection?
+        var bestDistance = CGSize(width: CGFloat.infinity, height: .infinity)
+        for candidate in candidates where candidate != current {
+            let candidateWorkspace = workspaceId(of: candidate, in: layout)
+            guard candidateWorkspace != currentWorkspace || candidateWorkspace == nil,
+                  let candidateFrame = candidate.frame(in: layout),
+                  candidateFrame.midY >= row.minY, candidateFrame.midY <= row.maxY
+            else { continue }
+            if let handle = candidate.windowHandle, layout.window(for: handle)?.isDisplayed != true { continue }
+            let delta = candidateFrame.midX - frame.midX
+            guard movingLeft ? delta < -0.5 : delta > 0.5 else { continue }
+            let horizontal = abs(delta)
+            let vertical = abs(candidateFrame.midY - frame.midY)
+            if horizontal < bestDistance.width - 0.5
+                || (abs(horizontal - bestDistance.width) <= 0.5 && vertical < bestDistance.height)
+            {
+                best = candidate
+                bestDistance = CGSize(width: horizontal, height: vertical)
+            }
+        }
+        return best
     }
 }

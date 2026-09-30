@@ -14,16 +14,22 @@ struct OverviewLayoutGeometry {
     let scaledWorkspaceLabelHeight: CGFloat
     let scaledWorkspaceSectionPadding: CGFloat
     let scaledWindowSpacing: CGFloat
-    let stripScale: CGFloat
+    private(set) var stripScale: CGFloat
+    /// Horizontal extent of the column the workspace sections are laid out in (the full padded width by
+    /// default, one grid cell in the workspace grid).
+    private(set) var cellMinX: CGFloat
+    private(set) var cellWidth: CGFloat
+    private(set) var isGridCell = false
     let initialContentY: CGFloat
     let contentTopPadding: CGFloat
     let contentBottomPadding: CGFloat
 
-    init(screenFrame: CGRect, scale: CGFloat) {
+    /// `topInset` keeps the search bar clear of screen areas such as the camera housing (notch).
+    init(screenFrame: CGRect, scale: CGFloat, topInset: CGFloat = 0) {
         let metricsScale = OverviewLayoutCalculator.clampedScale(scale)
         let scaledSearchBarHeight = OverviewLayoutMetrics.searchBarHeight * metricsScale
         let scaledSearchBarPadding = OverviewLayoutMetrics.searchBarPadding * metricsScale
-        let searchBarY = screenFrame.maxY - scaledSearchBarHeight - scaledSearchBarPadding
+        let searchBarY = screenFrame.maxY - max(topInset, 0) - scaledSearchBarHeight - scaledSearchBarPadding
         let searchBarFrame = CGRect(
             x: screenFrame.minX + screenFrame.width * 0.25,
             y: searchBarY,
@@ -46,6 +52,18 @@ struct OverviewLayoutGeometry {
         self.initialContentY = searchBarY - OverviewLayoutMetrics.contentTopPadding * metricsScale
         self.contentTopPadding = OverviewLayoutMetrics.contentTopPadding * metricsScale
         self.contentBottomPadding = OverviewLayoutMetrics.contentBottomPadding * metricsScale
+        cellMinX = screenFrame.minX + scaledWindowPadding
+        cellWidth = availableWidth
+    }
+
+    /// A copy that lays sections out in one grid cell, with workspace previews at `scale`.
+    func cell(minX: CGFloat, width: CGFloat, scale: CGFloat) -> OverviewLayoutGeometry {
+        var cell = self
+        cell.cellMinX = minX
+        cell.cellWidth = width
+        cell.stripScale = scale
+        cell.isGridCell = true
+        return cell
     }
 
     var monitorLocalFrame: CGRect {
@@ -55,9 +73,9 @@ struct OverviewLayoutGeometry {
     func makeWorkspaceLabelFrame(currentY: inout CGFloat) -> CGRect {
         currentY -= scaledWorkspaceLabelHeight
         let frame = CGRect(
-            x: screenFrame.minX + scaledWindowPadding,
+            x: cellMinX,
             y: currentY,
-            width: availableWidth,
+            width: cellWidth,
             height: scaledWorkspaceLabelHeight
         )
         currentY -= scaledWorkspaceSectionPadding
@@ -67,7 +85,7 @@ struct OverviewLayoutGeometry {
     func visibleFrame(top: CGFloat, scale: CGFloat) -> CGRect {
         let size = CGSize(width: screenFrame.width * scale, height: screenFrame.height * scale)
         return CGRect(
-            x: screenFrame.midX - size.width / 2,
+            x: cellMinX + cellWidth / 2 - size.width / 2,
             y: top - size.height,
             width: size.width,
             height: size.height
@@ -76,9 +94,9 @@ struct OverviewLayoutGeometry {
 
     func ribbonFrame(for visibleFrame: CGRect) -> CGRect {
         CGRect(
-            x: screenFrame.minX + scaledWindowPadding,
+            x: cellMinX,
             y: visibleFrame.minY,
-            width: availableWidth,
+            width: cellWidth,
             height: visibleFrame.height
         )
     }
@@ -102,9 +120,9 @@ struct OverviewLayoutGeometry {
         let ribbonFrame = ribbonFrame(for: visibleFrame)
         let sectionBottom = ribbonFrame.minY
         let sectionFrame = CGRect(
-            x: screenFrame.minX,
+            x: isGridCell ? cellMinX : screenFrame.minX,
             y: sectionBottom,
-            width: screenFrame.width,
+            width: isGridCell ? cellWidth : screenFrame.width,
             height: currentY + scaledWorkspaceLabelHeight - sectionBottom
         )
 

@@ -151,6 +151,7 @@ extension CanonicalTOMLConfig {
         overview.matchFocusBorder = overview.matchFocusBorder ?? true
         overview.invertScrollDirection = overview.invertScrollDirection ?? false
         overview.mouseScrollSpeed = overview.mouseScrollSpeed ?? 1
+        overview.workspaceGrid = overview.workspaceGrid ?? true
         return SettingsExport(
             hotkeysEnabled: general.hotkeysEnabled,
             focus: focus.normalized(),

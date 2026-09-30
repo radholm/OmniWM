@@ -45,10 +45,13 @@ enum OverviewLayoutMetrics {
 struct OverviewLayoutCalculator {
     private let geometry: OverviewLayoutGeometry
     private let scale: CGFloat
+    /// Lays workspaces out in a grid that fits the screen instead of a vertical list.
+    private let grid: Bool
 
-    init(screenFrame: CGRect, scale: CGFloat) {
-        geometry = OverviewLayoutGeometry(screenFrame: screenFrame, scale: scale)
+    init(screenFrame: CGRect, scale: CGFloat, topInset: CGFloat = 0, grid: Bool = false) {
+        geometry = OverviewLayoutGeometry(screenFrame: screenFrame, scale: scale, topInset: topInset)
         self.scale = scale
+        self.grid = grid
     }
 
     nonisolated static func clampedScale(_ scale: CGFloat) -> CGFloat {
@@ -83,40 +86,37 @@ struct OverviewLayoutCalculator {
         var sections: [OverviewWorkspaceSection] = []
         sections.reserveCapacity(workspaces.count)
         var currentY = context.initialContentY
-
-        for workspace in workspaces {
-            guard let workspaceWindows = windowsByWorkspace[workspace.id], !workspaceWindows.isEmpty else {
-                sections.append(context.buildEmptyWorkspaceSection(workspace: workspace, currentY: &currentY))
-                continue
-            }
-            if let snapshot = niriSnapshotsByWorkspace[workspace.id],
-               let projection = context.buildNiriWorkspaceProjection(
-                   workspace: workspace,
-                   snapshot: snapshot,
-                   windows: workspaceWindows,
-                   searchQuery: searchQuery,
-                   currentY: &currentY
-               )
-            {
-                sections.append(projection.section)
-                layout.niriColumnsByWorkspace[workspace.id] = projection.columns
-                layout.niriColumnDropZonesByWorkspace[workspace.id] = projection.columnDropZones
-            } else if let section = context.buildGenericWorkspaceSection(
-                workspace: workspace,
-                windows: workspaceWindows,
-                dwindleGroups: dwindleGroupsByWorkspace[workspace.id] ?? [],
+        let build = { (workspace: OverviewWorkspaceLayoutItem, geometry: OverviewLayoutGeometry, y: inout CGFloat) in
+            Self.appendSection(
+                for: workspace,
+                windows: windowsByWorkspace[workspace.id] ?? [],
+                geometry: geometry,
+                niriSnapshot: niriSnapshotsByWorkspace[workspace.id],
+                dwindleGroups: dwindleGroupsByWorkspace[workspace.id],
                 searchQuery: searchQuery,
-                currentY: &currentY
-            ) {
-                sections.append(section)
-                layout.dwindleGroupsByWorkspace[workspace.id] = dwindleGroupsByWorkspace[workspace.id]
-            }
+                currentY: &y,
+                sections: &sections,
+                layout: &layout
+            )
         }
 
-        if let monitorId {
-            let frame = context.ribbonFrame(for: context.visibleFrame(top: currentY, scale: context.stripScale))
-            layout.newWorkspaceTarget = OverviewNewWorkspaceTarget(monitorId: monitorId, frame: frame)
-            currentY = frame.minY - context.scaledWorkspaceSectionPadding
+        if grid {
+            layout.newWorkspaceTarget = Self.placeGrid(
+                workspaces,
+                monitorId: monitorId,
+                context: context,
+                currentY: &currentY,
+                build: build
+            )
+        } else {
+            for workspace in workspaces {
+                build(workspace, context, &currentY)
+            }
+            if let monitorId {
+                let frame = context.ribbonFrame(for: context.visibleFrame(top: currentY, scale: context.stripScale))
+                layout.newWorkspaceTarget = OverviewNewWorkspaceTarget(monitorId: monitorId, frame: frame)
+                currentY = frame.minY - context.scaledWorkspaceSectionPadding
+            }
         }
         layout.replaceWorkspaceSections(sections)
         layout.totalContentHeight = context.totalContentHeight(currentY: currentY)
@@ -125,6 +125,73 @@ struct OverviewLayoutCalculator {
         }
         layout.refreshOverflow()
         return layout
+    }
+
+    private static func placeGrid(
+        _ workspaces: [OverviewWorkspaceLayoutItem],
+        monitorId: Monitor.ID?,
+        context: OverviewLayoutGeometry,
+        currentY: inout CGFloat,
+        build: (OverviewWorkspaceLayoutItem, OverviewLayoutGeometry, inout CGFloat) -> Void
+    ) -> OverviewNewWorkspaceTarget? {
+        let arrangement = context.gridArrangement(count: workspaces.count + (monitorId == nil ? 0 : 1))
+        var bottom = currentY
+        for (index, workspace) in workspaces.enumerated() {
+            let cell = context.gridCell(index, in: arrangement)
+            var y = cell.top
+            build(workspace, cell.geometry, &y)
+            bottom = min(bottom, y)
+        }
+        var target: OverviewNewWorkspaceTarget?
+        if let monitorId {
+            let cell = context.gridCell(workspaces.count, in: arrangement)
+            let top = cell.top - context.scaledWorkspaceLabelHeight - context.scaledWorkspaceSectionPadding
+            let frame = cell.geometry.ribbonFrame(for: cell.geometry.visibleFrame(top: top, scale: arrangement.scale))
+            target = OverviewNewWorkspaceTarget(monitorId: monitorId, frame: frame)
+            bottom = min(bottom, frame.minY - context.scaledWorkspaceSectionPadding)
+        }
+        currentY = bottom
+        return target
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private static func appendSection(
+        for workspace: OverviewWorkspaceLayoutItem,
+        windows: [(WindowHandle, OverviewWindowLayoutData)],
+        geometry: OverviewLayoutGeometry,
+        niriSnapshot: NiriOverviewWorkspaceSnapshot?,
+        dwindleGroups: [OverviewDwindleGroup]?,
+        searchQuery: String,
+        currentY: inout CGFloat,
+        sections: inout [OverviewWorkspaceSection],
+        layout: inout OverviewLayout
+    ) {
+        guard !windows.isEmpty else {
+            sections.append(geometry.buildEmptyWorkspaceSection(workspace: workspace, currentY: &currentY))
+            return
+        }
+        if let niriSnapshot,
+           let projection = geometry.buildNiriWorkspaceProjection(
+               workspace: workspace,
+               snapshot: niriSnapshot,
+               windows: windows,
+               searchQuery: searchQuery,
+               currentY: &currentY
+           )
+        {
+            sections.append(projection.section)
+            layout.niriColumnsByWorkspace[workspace.id] = projection.columns
+            layout.niriColumnDropZonesByWorkspace[workspace.id] = projection.columnDropZones
+        } else if let section = geometry.buildGenericWorkspaceSection(
+            workspace: workspace,
+            windows: windows,
+            dwindleGroups: dwindleGroups ?? [],
+            searchQuery: searchQuery,
+            currentY: &currentY
+        ) {
+            sections.append(section)
+            layout.dwindleGroupsByWorkspace[workspace.id] = dwindleGroups
+        }
     }
 
     static func dragAutoScrollVelocity(
