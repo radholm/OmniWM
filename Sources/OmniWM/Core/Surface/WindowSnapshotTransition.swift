@@ -19,8 +19,6 @@ final class WindowSnapshotTransition {
         let to: CGRect
         /// Newly tiled windows pop in at their target frame instead of moving from their current frame.
         var appearing = false
-        /// An appearing window macOS already shows at `from` leaves a fading copy there, so it doesn't blink out.
-        var leavesGhost = false
     }
 
     static let duration: CFTimeInterval = 0.25
@@ -39,7 +37,6 @@ final class WindowSnapshotTransition {
     private var panel: SnapshotTransitionPanel?
     private var monitor: Monitor?
     private var layers: [Int: CALayer] = [:]
-    private var ghosts: [CALayer] = []
     private var motions: [Int: Motion] = [:]
     private var finishTask: Task<Void, Never>?
     private var generation = 0
@@ -133,16 +130,11 @@ final class WindowSnapshotTransition {
     ) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        ghosts.forEach { $0.removeFromSuperlayer() }
-        ghosts.removeAll()
         for item in items {
             let existing = layers[item.windowId]
             let layer = existing ?? makeLayer(images[item.windowId])
             let end = item.to.offsetBy(dx: origin.x, dy: origin.y)
             let popIn = existing == nil && item.appearing
-            if popIn, animated, item.leavesGhost, let image = images[item.windowId] {
-                addGhost(image, at: item.from.offsetBy(dx: origin.x, dy: origin.y), in: root)
-            }
             let start = existing?.presentation()?.frame
                 ?? (popIn ? end : item.from.offsetBy(dx: origin.x, dy: origin.y))
             layer.removeAllAnimations()
@@ -218,7 +210,6 @@ final class WindowSnapshotTransition {
         panel = nil
         monitor = nil
         layers.removeAll()
-        ghosts.removeAll()
         motions.removeAll()
     }
 
@@ -363,19 +354,24 @@ private final class SnapshotTransitionPanel: NSPanel {
 }
 
 extension WindowSnapshotTransition {
-    /// A new window that macOS already shows on this display (e.g. a Finder window opened at its
-    /// remembered frame) slides from where it is; fading it in would make it blink out first.
+    /// A new window that macOS already shows on this display (e.g. a Finder window opened at its remembered
+    /// frame) has already appeared once; it stays put or glides from there instead of appearing a second time.
     static func resolvingAppearance(_ items: [Item], in frame: CGRect) -> [Item] {
         items.map { item in
             guard item.appearing, isVisible(item.from, in: frame) else { return item }
             var item = item
-            item.leavesGhost = !item.from.approximatelyEqual(to: item.to, tolerance: 1)
+            item.appearing = false
+            if item.from.approximatelyEqual(to: item.to, tolerance: nearTargetTolerance) {
+                item = Item(windowId: item.windowId, from: item.to, to: item.to)
+            }
             return item
         }
     }
 
+    /// A window opened this close to its tile would only twitch into place, so it stays still.
+    static let nearTargetTolerance: CGFloat = 24
+
     static let jumpInScale: CGFloat = 0.86
-    static let ghostFadeDuration: CFTimeInterval = 0.14
 
     /// Springs a new window up from slightly smaller to full size at its tile while it fades in.
     static func jumpIn(_ layer: CALayer) {
@@ -393,27 +389,6 @@ extension WindowSnapshotTransition {
         opacity.timingFunction = CAMediaTimingFunction(name: .easeOut)
         layer.add(scale, forKey: "jumpInScale")
         layer.add(opacity, forKey: "jumpInOpacity")
-    }
-
-    /// Fades the window out where macOS opened it while its snapshot jumps into the tile.
-    private func addGhost(_ image: CGImage, at frame: CGRect, in root: CALayer) {
-        let ghost = makeLayer(image)
-        ghost.frame = frame
-        ghost.shadowOpacity = 0
-        ghost.opacity = 0
-        let fade = CABasicAnimation(keyPath: "opacity")
-        fade.fromValue = 1
-        fade.toValue = 0
-        let shrink = CABasicAnimation(keyPath: "transform.scale")
-        shrink.fromValue = 1
-        shrink.toValue = 0.94
-        let group = CAAnimationGroup()
-        group.animations = [fade, shrink]
-        group.duration = Self.ghostFadeDuration
-        group.timingFunction = CAMediaTimingFunction(name: .easeIn)
-        ghost.add(group, forKey: "ghost")
-        root.addSublayer(ghost)
-        ghosts.append(ghost)
     }
 
     private nonisolated static func images(for windowIds: [Int], capture: (Int) -> CGImage?) -> [Int: CGImage] {

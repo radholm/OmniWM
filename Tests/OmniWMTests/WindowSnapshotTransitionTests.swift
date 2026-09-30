@@ -68,11 +68,17 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         transition.stop()
     }
 
-    func testOnScreenAppearingWindowLeavesFadingGhost() {
+    func testOnScreenAppearingWindowDoesNotAppearTwice() {
         let display = CGRect(x: 0, y: 0, width: 1200, height: 800)
         let onScreen = WindowSnapshotTransition.Item(
             windowId: 3,
             from: CGRect(x: 500, y: 40, width: 500, height: 700),
+            to: CGRect(x: 600, y: 30, width: 600, height: 750),
+            appearing: true
+        )
+        let nearTarget = WindowSnapshotTransition.Item(
+            windowId: 5,
+            from: CGRect(x: 610, y: 36, width: 590, height: 740),
             to: CGRect(x: 600, y: 30, width: 600, height: 750),
             appearing: true
         )
@@ -82,10 +88,9 @@ final class WindowSnapshotTransitionTests: XCTestCase {
             to: CGRect(x: 0, y: 30, width: 600, height: 750),
             appearing: true
         )
-        let resolved = WindowSnapshotTransition.resolvingAppearance([onScreen, offScreen], in: display)
-        XCTAssertEqual(resolved.map(\.appearing), [true, true])
-        XCTAssertEqual(resolved.map(\.leavesGhost), [true, false])
-        XCTAssertEqual(resolved.map(\.from), [onScreen.from, offScreen.from])
+        let resolved = WindowSnapshotTransition.resolvingAppearance([onScreen, nearTarget, offScreen], in: display)
+        XCTAssertEqual(resolved.map(\.appearing), [false, false, true])
+        XCTAssertEqual(resolved.map(\.from), [onScreen.from, nearTarget.to, offScreen.from])
     }
 
     func testFinishRecapturesSettledWindowsBeforeClosing() async throws {
