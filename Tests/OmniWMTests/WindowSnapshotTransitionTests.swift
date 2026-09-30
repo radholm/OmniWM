@@ -3,6 +3,7 @@
 
 import AppKit
 @testable import OmniWM
+import os
 import XCTest
 
 @MainActor
@@ -100,6 +101,29 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         XCTAssertEqual(captureCount, 2)
     }
 
+    func testFinishRecapturesOffTheMainThreadWhenBackgroundCaptureIsAvailable() async throws {
+        let image = try makeImage()
+        let offMainCaptures = OSAllocatedUnfairLock(initialState: 0)
+        var mainCaptures = 0
+        let transition = try makeTransition(
+            capture: { _ in mainCaptures += 1
+                return image
+            },
+            backgroundCapture: { _ in
+                offMainCaptures.withLock { $0 += Thread.isMainThread ? 0 : 1 }
+                return image
+            }
+        )
+        XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: true))
+        transition.finish(after: WindowSnapshotTransition.duration, settled: { true })
+        for _ in 0 ..< 100 where transition.isActive {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertFalse(transition.isActive)
+        XCTAssertEqual(mainCaptures, 1)
+        XCTAssertEqual(offMainCaptures.withLock { $0 }, 1)
+    }
+
     func testFinishClosesOverlayOnceSettled() async throws {
         let transition = try makeTransition()
         XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: false))
@@ -112,7 +136,8 @@ final class WindowSnapshotTransitionTests: XCTestCase {
 
     private func makeTransition(
         hasCaptureAccess: Bool = true,
-        capture: (@MainActor (Int) -> CGImage?)? = nil
+        capture: (@MainActor (Int) -> CGImage?)? = nil,
+        backgroundCapture: (@Sendable (Int) -> CGImage?)? = nil
     ) throws -> WindowSnapshotTransition {
         let image = try makeImage()
         let wallpaper = try makeImage(width: 1200, height: 800)
@@ -123,7 +148,8 @@ final class WindowSnapshotTransitionTests: XCTestCase {
             ownedWindowRegistry: OwnedWindowRegistry(),
             backdrop: WorkspaceSwipeBackdrop(wallpaperCache: cache),
             captureWindow: capture ?? { _ in image },
-            hasCaptureAccess: { hasCaptureAccess }
+            hasCaptureAccess: { hasCaptureAccess },
+            backgroundCapture: backgroundCapture
         )
     }
 

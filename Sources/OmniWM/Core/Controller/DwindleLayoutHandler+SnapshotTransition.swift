@@ -10,6 +10,11 @@ extension DwindleLayoutHandler {
     /// Windows are discovered in batches right after launch; don't animate those relayouts.
     static let startupQuietPeriod: TimeInterval = 3.0
 
+    static func backgroundSnapshotCapture() -> (@Sendable (Int) -> CGImage?)? {
+        guard let capture = SkyLight.shared.backgroundWindowCapture() else { return nil }
+        return { windowId in capture(UInt32(windowId)) }
+    }
+
     var snapshotTransitionsEnabled: Bool {
         guard let controller else { return false }
         return controller.settings.dwindle.snapshotAnimations

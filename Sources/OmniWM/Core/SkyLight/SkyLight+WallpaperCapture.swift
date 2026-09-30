@@ -16,11 +16,19 @@ extension SkyLight {
     }
 
     func captureWindow(_ windowId: UInt32) -> CGImage? {
-        var windowId = windowId
-        guard let capture = surfaces.captureWindowList,
-              let images = capture(getMainConnectionID(), &windowId, 1, (1 << 11) | (1 << 19))?.takeRetainedValue()
-        else { return nil }
-        return Self.firstCapturedImage(in: images).flatMap { $0.width > 1 && $0.height > 1 ? $0 : nil }
+        backgroundWindowCapture()?(windowId)
+    }
+
+    /// A window capture function that is safe to call off the main thread, so slow captures don't stall it.
+    func backgroundWindowCapture() -> (@Sendable (UInt32) -> CGImage?)? {
+        guard let capture = surfaces.captureWindowList else { return nil }
+        let connection = getMainConnectionID()
+        return { windowId in
+            var windowId = windowId
+            guard let images = capture(connection, &windowId, 1, (1 << 11) | (1 << 19))?.takeRetainedValue()
+            else { return nil }
+            return Self.firstCapturedImage(in: images).flatMap { $0.width > 1 && $0.height > 1 ? $0 : nil }
+        }
     }
 
     static func wallpaperWindowId(in windows: [[String: Any]], frame: CGRect) -> UInt32? {
@@ -37,7 +45,7 @@ extension SkyLight {
         return nil
     }
 
-    static func firstCapturedImage(in images: CFArray) -> CGImage? {
+    nonisolated static func firstCapturedImage(in images: CFArray) -> CGImage? {
         guard CFArrayGetCount(images) == 1,
               let pointer = CFArrayGetValueAtIndex(images, 0)
         else { return nil }

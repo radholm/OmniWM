@@ -31,6 +31,8 @@ final class WindowSnapshotTransition {
     private let ownedWindowRegistry: OwnedWindowRegistry
     private let backdrop: WorkspaceSwipeBackdrop
     private let captureWindow: @MainActor (Int) -> CGImage?
+    /// Captures the fresh end-of-transition snapshots off the main thread when set.
+    private let backgroundCapture: (@Sendable (Int) -> CGImage?)?
     private let hasCaptureAccess: @MainActor () -> Bool
     private var panel: SnapshotTransitionPanel?
     private var monitor: Monitor?
@@ -55,11 +57,13 @@ final class WindowSnapshotTransition {
         ownedWindowRegistry: OwnedWindowRegistry,
         backdrop: WorkspaceSwipeBackdrop = WorkspaceSwipeBackdrop(),
         captureWindow: @escaping @MainActor (Int) -> CGImage? = { SkyLight.shared.captureWindow(UInt32($0)) },
-        hasCaptureAccess: @escaping @MainActor () -> Bool = { CGPreflightScreenCaptureAccess() }
+        hasCaptureAccess: @escaping @MainActor () -> Bool = { CGPreflightScreenCaptureAccess() },
+        backgroundCapture: (@Sendable (Int) -> CGImage?)? = nil
     ) {
         self.ownedWindowRegistry = ownedWindowRegistry
         self.backdrop = backdrop
         self.captureWindow = captureWindow
+        self.backgroundCapture = backgroundCapture
         self.hasCaptureAccess = hasCaptureAccess
     }
 
@@ -220,7 +224,9 @@ final class WindowSnapshotTransition {
             try? await Task.sleep(for: Self.settleDelay)
             guard !Task.isCancelled, let self, self.generation == generation else { return }
             var fadeAt = start + .seconds(delay)
-            if crossfadeToFreshSnapshots() {
+            let images = await captureFreshSnapshots()
+            guard !Task.isCancelled, self.generation == generation else { return }
+            if crossfadeToFreshSnapshots(images) {
                 fadeAt = max(fadeAt, ContinuousClock.now + .seconds(Self.crossfadeDuration))
             }
             try? await Task.sleep(until: fadeAt)
@@ -231,12 +237,12 @@ final class WindowSnapshotTransition {
 
     /// Recaptures the resized real windows and cross-fades them in over the stretched snapshots, following
     /// the running motion, so removing the overlay afterwards shows no content change.
-    private func crossfadeToFreshSnapshots() -> Bool {
+    private func crossfadeToFreshSnapshots(_ images: [Int: CGImage]) -> Bool {
         var didCrossfade = false
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         for (windowId, layer) in layers {
-            guard let motion = motions[windowId], let image = captureWindow(windowId) else { continue }
+            guard let motion = motions[windowId], let image = images[windowId] else { continue }
             layer.sublayers?.forEach { $0.removeFromSuperlayer() }
             let fresh = CALayer()
             fresh.contents = image
@@ -268,6 +274,17 @@ final class WindowSnapshotTransition {
         }
         CATransaction.commit()
         return didCrossfade
+    }
+
+    /// Capturing takes ~10-15 ms per window, so it runs off the main thread when possible.
+    private func captureFreshSnapshots() async -> [Int: CGImage] {
+        let windowIds = layers.keys.filter { motions[$0] != nil }
+        guard let backgroundCapture else {
+            return Self.images(for: windowIds, capture: captureWindow)
+        }
+        return await Task.detached(priority: .userInitiated) {
+            Self.images(for: windowIds, capture: backgroundCapture)
+        }.value
     }
 
     private func promoteFreshContent(of layer: CALayer) {
@@ -307,17 +324,6 @@ final class WindowSnapshotTransition {
         group.duration = Self.duration
         group.timingFunction = Self.timing
         layer.add(group, forKey: "snapshotTransition")
-    }
-
-    private func makeLayer(_ image: CGImage?) -> CALayer {
-        let layer = CALayer()
-        layer.contents = image
-        layer.contentsGravity = .resize
-        layer.shadowColor = NSColor.black.cgColor
-        layer.shadowOpacity = 0.45
-        layer.shadowRadius = 16
-        layer.shadowOffset = CGSize(width: 0, height: -8)
-        return layer
     }
 
     private func makePanel(frame: CGRect, monitor: Monitor) -> SnapshotTransitionPanel? {
@@ -374,5 +380,24 @@ extension WindowSnapshotTransition {
             item.appearing = false
             return item
         }
+    }
+
+    private nonisolated static func images(for windowIds: [Int], capture: (Int) -> CGImage?) -> [Int: CGImage] {
+        var images: [Int: CGImage] = [:]
+        for windowId in windowIds {
+            images[windowId] = capture(windowId)
+        }
+        return images
+    }
+
+    private func makeLayer(_ image: CGImage?) -> CALayer {
+        let layer = CALayer()
+        layer.contents = image
+        layer.contentsGravity = .resize
+        layer.shadowColor = NSColor.black.cgColor
+        layer.shadowOpacity = 0.45
+        layer.shadowRadius = 16
+        layer.shadowOffset = CGSize(width: 0, height: -8)
+        return layer
     }
 }

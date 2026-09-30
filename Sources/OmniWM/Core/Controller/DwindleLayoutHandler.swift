@@ -19,7 +19,10 @@ import QuartzCore
     weak var controller: WMController?
 
     private(set) lazy var snapshotTransition: WindowSnapshotTransition = {
-        let transition = WindowSnapshotTransition(ownedWindowRegistry: controller?.ownedWindowRegistry ?? .shared)
+        let transition = WindowSnapshotTransition(
+            ownedWindowRegistry: controller?.ownedWindowRegistry ?? .shared,
+            backgroundCapture: Self.backgroundSnapshotCapture()
+        )
         transition.wallpaperFrame = { [weak self] monitor in
             self?.controller?.layoutRefreshController.workspaceSwipe.wallpaperParallax?.wallpaperFrame(on: monitor)
         }
