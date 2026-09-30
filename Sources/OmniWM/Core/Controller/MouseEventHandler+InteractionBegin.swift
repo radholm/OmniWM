@@ -162,6 +162,7 @@ extension MouseEventHandler {
         state.capturedInteractionButton = source.mouseButton
         state.currentHoveredEdges = edges
         state.resizeLayout = .dwindle
+        controller.dwindleLayoutHandler.beginInteractiveSnapshotResize(workspaceId: wsId, monitor: monitor)
         edges.cursor.set()
         return true
     }

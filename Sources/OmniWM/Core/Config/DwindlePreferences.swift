@@ -41,6 +41,10 @@ final class DwindlePreferences {
         didSet { onChange?() }
     }
 
+    var snapshotAnimations = DwindlePreferences.defaults.snapshotAnimations ?? true {
+        didSet { onChange?() }
+    }
+
     var monitorOverrides: [MonitorDwindleSettings] = [] {
         didSet { onChange?() }
     }
@@ -52,7 +56,8 @@ final class DwindlePreferences {
             splitWidthMultiplier: splitWidthMultiplier,
             singleWindowFit: singleWindowFit,
             useGlobalGaps: useGlobalGaps,
-            moveToRootStable: moveToRootStable
+            moveToRootStable: moveToRootStable,
+            snapshotAnimations: snapshotAnimations
         )
     }
 
@@ -63,6 +68,7 @@ final class DwindlePreferences {
         singleWindowFit = dwindle.singleWindowFit
         useGlobalGaps = dwindle.useGlobalGaps
         moveToRootStable = dwindle.moveToRootStable
+        snapshotAnimations = dwindle.snapshotAnimations ?? true
     }
 
     func settings(for monitor: Monitor) -> MonitorDwindleSettings? {

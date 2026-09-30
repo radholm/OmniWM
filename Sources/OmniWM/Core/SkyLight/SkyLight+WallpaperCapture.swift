@@ -15,6 +15,14 @@ extension SkyLight {
         return Self.firstCapturedImage(in: images)
     }
 
+    func captureWindow(_ windowId: UInt32) -> CGImage? {
+        var windowId = windowId
+        guard let capture = surfaces.captureWindowList,
+              let images = capture(getMainConnectionID(), &windowId, 1, (1 << 11) | (1 << 19))?.takeRetainedValue()
+        else { return nil }
+        return Self.firstCapturedImage(in: images).flatMap { $0.width > 1 && $0.height > 1 ? $0 : nil }
+    }
+
     static func wallpaperWindowId(in windows: [[String: Any]], frame: CGRect) -> UInt32? {
         for window in windows {
             guard let level = window[kCGWindowLayer as String] as? Int32,

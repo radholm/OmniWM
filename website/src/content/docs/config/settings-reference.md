@@ -180,6 +180,7 @@ Options for the Dwindle (BSP) layout.
 | `singleWindowFit` | string | `"fill"` | Size of a lone window: `fill` (the "Full Screen" fit, which uses the fullscreen layout frame and honors `fullscreenUsesOuterGaps`) or `WIDTHxHEIGHT` (no span mode in Dwindle). |
 | `useGlobalGaps` | boolean | `true` | Uses the [`gaps`](#gaps) values; when `false`, the inner gap comes from a per-monitor `innerGap` override (falling back to `gaps.size`), clamped to the same 0–64 range as `gaps.size`. |
 | `moveToRootStable` | boolean | `true` | Keeps a window on the same screen side when moving it to the root. |
+| `snapshotAnimations` | boolean | `true` | Animates Dwindle layout commands (fullscreen, resize, swap, balance) and mouse resizing with window snapshots, then resizes the real windows once. Smoother for apps that redraw slowly. Needs Screen Recording permission; falls back to regular animations without it. |
 
 ## borders
 

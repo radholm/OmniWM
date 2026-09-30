@@ -140,11 +140,15 @@ extension MouseEventHandler {
     private func finishDwindleResize() {
         guard let controller, let engine = controller.dwindleEngine else { return }
         let workspaceId = engine.interactiveResize?.workspaceId
-        guard engine.interactiveResizeEnd(), let workspaceId else { return }
+        guard engine.interactiveResizeEnd(), let workspaceId else {
+            controller.dwindleLayoutHandler.cancelInteractiveSnapshotResize()
+            return
+        }
         controller.workspaceManager.recordLayoutOperation(.splitRatioChanged, in: workspaceId, source: .mouse)
         if controller.hasStartedServices {
             controller.layoutRefreshController.requestImmediateRelayout(reason: .interactiveGesture)
         }
+        controller.dwindleLayoutHandler.endInteractiveSnapshotResize(workspaceId: workspaceId)
     }
 
     private func finishNiriResize() {

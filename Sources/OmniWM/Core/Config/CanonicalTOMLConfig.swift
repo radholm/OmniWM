@@ -172,7 +172,7 @@ extension CanonicalTOMLConfig {
             appRules: appRules,
             monitorOrientationSettings: monitorOrientationOverrides,
             monitorNiriSettings: monitorNiriOverrides,
-            dwindle: dwindle,
+            dwindle: dwindle.normalized(),
             monitorDwindleSettings: monitorDwindleOverrides,
             monitorGapSettings: monitorGapOverrides,
             preventSleepEnabled: general.preventSleepEnabled,

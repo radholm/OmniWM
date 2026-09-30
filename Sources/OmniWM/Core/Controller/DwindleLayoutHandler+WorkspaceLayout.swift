@@ -44,5 +44,8 @@ extension DwindleLayoutHandler {
         source: WMEventSource = .command
     ) {
         controller?.workspaceManager.recordLayoutOperation(operation, in: workspaceId, source: source)
+        if source == .command {
+            armSnapshotTransition(for: workspaceId)
+        }
     }
 }

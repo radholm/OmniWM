@@ -18,6 +18,12 @@ import QuartzCore
 
     weak var controller: WMController?
 
+    private(set) lazy var snapshotTransition = WindowSnapshotTransition(
+        ownedWindowRegistry: controller?.ownedWindowRegistry ?? .shared
+    )
+    var snapshotTransitionArm: (workspaceId: WorkspaceDescriptor.ID, time: TimeInterval)?
+    var interactiveSnapshotWorkspaceId: WorkspaceDescriptor.ID?
+
     var dwindleAnimationByDisplay: [CGDirectDisplayID: (WorkspaceDescriptor.ID, Monitor)] = [:]
     private(set) var animationSessionByDisplay: [CGDirectDisplayID: AnimationSession] = [:]
     private var staleRelayoutWorkspaceByDisplay: [CGDirectDisplayID: WorkspaceDescriptor.ID] = [:]

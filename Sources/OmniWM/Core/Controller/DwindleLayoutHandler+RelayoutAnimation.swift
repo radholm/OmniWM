@@ -12,6 +12,10 @@ extension DwindleLayoutHandler {
         engine: DwindleLayoutEngine,
         now: TimeInterval
     ) -> Bool {
+        if startSnapshotTransition(transition, snapshot: snapshot) {
+            engine.cancelAnimations(in: snapshot.workspaceId)
+            return false
+        }
         engine.animateWindowMovements(
             transition,
             in: snapshot.workspaceId,

@@ -153,6 +153,7 @@ struct SettingsExport: Equatable {
         var singleWindowFit: SingleWindowFit
         var useGlobalGaps: Bool
         var moveToRootStable: Bool
+        var snapshotAnimations: Bool? = true
     }
 
     struct Overview: Codable, Equatable {

@@ -1,0 +1,279 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+
+import AppKit
+import QuartzCore
+
+/// Animates layout changes with window snapshots instead of per-frame Accessibility resizes.
+///
+/// Windows are captured at their current size, drawn on an overlay above the display and animated on the GPU
+/// to their new frames, while the real windows jump to their final frames once underneath. The overlay fades
+/// out after the real windows have been resized, so apps that redraw slowly never show a stuttering resize.
+@MainActor
+final class WindowSnapshotTransition {
+    struct Item: Equatable {
+        let windowId: Int
+        /// Current on-screen frame (AppKit coordinates). Used when the window has no snapshot on screen yet.
+        let from: CGRect
+        /// Target frame (AppKit coordinates).
+        let to: CGRect
+    }
+
+    static let duration: CFTimeInterval = 0.25
+    static let fadeDuration: CFTimeInterval = 0.12
+    static let settleDelay: Duration = .milliseconds(60)
+    static let maxSettleWait: Duration = .milliseconds(700)
+    static let timing = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
+
+    private let ownedWindowRegistry: OwnedWindowRegistry
+    private let backdrop: WorkspaceSwipeBackdrop
+    private let captureWindow: @MainActor (Int) -> CGImage?
+    private let hasCaptureAccess: @MainActor () -> Bool
+    private var panel: SnapshotTransitionPanel?
+    private var monitor: Monitor?
+    private var layers: [Int: CALayer] = [:]
+    private var finishTask: Task<Void, Never>?
+    private var generation = 0
+
+    var isActive: Bool {
+        panel != nil
+    }
+
+    init(
+        ownedWindowRegistry: OwnedWindowRegistry,
+        backdrop: WorkspaceSwipeBackdrop = WorkspaceSwipeBackdrop(),
+        captureWindow: @escaping @MainActor (Int) -> CGImage? = { SkyLight.shared.captureWindow(UInt32($0)) },
+        hasCaptureAccess: @escaping @MainActor () -> Bool = { CGPreflightScreenCaptureAccess() }
+    ) {
+        self.ownedWindowRegistry = ownedWindowRegistry
+        self.backdrop = backdrop
+        self.captureWindow = captureWindow
+        self.hasCaptureAccess = hasCaptureAccess
+    }
+
+    isolated deinit {
+        stop()
+    }
+
+    /// Shows (or retargets) snapshots for `items`, ordered bottom to top, and moves them to their target
+    /// frames. Returns `false` when the caller must fall back to regular frame updates.
+    func begin(items: [Item], monitor: Monitor, animated: Bool) -> Bool {
+        if let current = self.monitor, current.displayId != monitor.displayId || current.frame != monitor.frame {
+            stop()
+        }
+        finishTask?.cancel()
+        finishTask = nil
+        generation += 1
+        panel?.alphaValue = 1
+        let frame = monitor.visibleFrame
+        let items = items.filter { Self.isVisible($0.from, in: frame) || Self.isVisible($0.to, in: frame) }
+        guard !items.isEmpty, hasCaptureAccess(), let images = captureMissingImages(items),
+              let panel = panel ?? makePanel(frame: frame, monitor: monitor),
+              let root = panel.contentView?.layer
+        else {
+            stop()
+            return false
+        }
+        placeLayers(
+            items,
+            images: images,
+            in: root,
+            origin: CGPoint(x: -frame.minX, y: -frame.minY),
+            animated: animated
+        )
+        if self.panel == nil {
+            show(panel, monitor: monitor)
+        }
+        CATransaction.flush()
+        return true
+    }
+
+    static func isVisible(_ rect: CGRect, in frame: CGRect) -> Bool {
+        let visible = rect.intersection(frame)
+        return !visible.isNull && visible.width >= 8 && visible.height >= 8
+    }
+
+    private func captureMissingImages(_ items: [Item]) -> [Int: CGImage]? {
+        var images: [Int: CGImage] = [:]
+        for item in items where layers[item.windowId] == nil {
+            guard let image = captureWindow(item.windowId) else { return nil }
+            images[item.windowId] = image
+        }
+        return images
+    }
+
+    private func placeLayers(
+        _ items: [Item],
+        images: [Int: CGImage],
+        in root: CALayer,
+        origin: CGPoint,
+        animated: Bool
+    ) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for item in items {
+            let existing = layers[item.windowId]
+            let layer = existing ?? makeLayer(images[item.windowId])
+            let start = existing?.presentation()?.frame ?? item.from.offsetBy(dx: origin.x, dy: origin.y)
+            let end = item.to.offsetBy(dx: origin.x, dy: origin.y)
+            layer.removeAllAnimations()
+            layer.frame = end
+            layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: end.size), transform: nil)
+            layers[item.windowId] = layer
+            layer.removeFromSuperlayer()
+            root.addSublayer(layer)
+            if animated, start != end { animate(layer, from: start, to: end) }
+        }
+        CATransaction.commit()
+    }
+
+    private func show(_ panel: SnapshotTransitionPanel, monitor: Monitor) {
+        self.panel = panel
+        self.monitor = monitor
+        ownedWindowRegistry.register(
+            panel,
+            surfaceId: "window-snapshot-transition-\(monitor.displayId)",
+            policy: SurfacePolicy(
+                kind: .workspaceSwipe,
+                hitTestPolicy: .passthrough,
+                capturePolicy: .excluded,
+                suppressesManagedFocusRecovery: false
+            )
+        )
+        panel.orderFrontRegardless()
+    }
+
+    /// Moves snapshots to new frames immediately (interactive resizing).
+    func update(frames: [Int: CGRect]) {
+        guard let panel, finishTask == nil else { return }
+        let origin = CGPoint(x: -panel.frame.minX, y: -panel.frame.minY)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for (windowId, frame) in frames {
+            guard let layer = layers[windowId] else { continue }
+            let target = frame.offsetBy(dx: origin.x, dy: origin.y)
+            guard layer.frame != target else { continue }
+            layer.removeAllAnimations()
+            layer.frame = target
+            layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: target.size), transform: nil)
+        }
+        CATransaction.commit()
+    }
+
+    /// Fades the overlay out once `settled` reports the real windows caught up (or a timeout passes).
+    func finish(after delay: CFTimeInterval, settled: @escaping @MainActor () -> Bool) {
+        guard panel != nil else { return }
+        scheduleFinish(after: delay, settled: settled)
+    }
+
+    func stop() {
+        finishTask?.cancel()
+        finishTask = nil
+        generation += 1
+        if let panel {
+            ownedWindowRegistry.unregister(panel)
+            panel.orderOut(nil)
+            panel.close()
+        }
+        panel = nil
+        monitor = nil
+        layers.removeAll()
+    }
+
+    private func scheduleFinish(after delay: CFTimeInterval, settled: @escaping @MainActor () -> Bool) {
+        finishTask?.cancel()
+        generation += 1
+        let generation = generation
+        finishTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            let deadline = ContinuousClock.now + Self.maxSettleWait
+            while !Task.isCancelled, !settled(), ContinuousClock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+            try? await Task.sleep(for: Self.settleDelay)
+            guard !Task.isCancelled, let self, self.generation == generation else { return }
+            fadeOut(generation: generation)
+        }
+    }
+
+    private func fadeOut(generation: Int) {
+        guard let panel else { return }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.fadeDuration
+            panel.animator().alphaValue = 0
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.generation == generation else { return }
+                self.stop()
+            }
+        }
+    }
+
+    private func animate(_ layer: CALayer, from start: CGRect, to end: CGRect) {
+        let position = CABasicAnimation(keyPath: "position")
+        position.fromValue = NSValue(point: CGPoint(x: start.midX, y: start.midY))
+        position.toValue = NSValue(point: CGPoint(x: end.midX, y: end.midY))
+        let bounds = CABasicAnimation(keyPath: "bounds")
+        bounds.fromValue = NSValue(rect: CGRect(origin: .zero, size: start.size))
+        bounds.toValue = NSValue(rect: CGRect(origin: .zero, size: end.size))
+        let group = CAAnimationGroup()
+        group.animations = [position, bounds]
+        group.duration = Self.duration
+        group.timingFunction = Self.timing
+        layer.add(group, forKey: "snapshotTransition")
+    }
+
+    private func makeLayer(_ image: CGImage?) -> CALayer {
+        let layer = CALayer()
+        layer.contents = image
+        layer.contentsGravity = .resize
+        layer.shadowColor = NSColor.black.cgColor
+        layer.shadowOpacity = 0.45
+        layer.shadowRadius = 16
+        layer.shadowOffset = CGSize(width: 0, height: -8)
+        return layer
+    }
+
+    private func makePanel(frame: CGRect, monitor: Monitor) -> SnapshotTransitionPanel? {
+        guard let wallpaper = backdrop.image(for: monitor) else { return nil }
+        let panel = SnapshotTransitionPanel(frame: frame)
+        let root = CALayer()
+        root.frame = CGRect(origin: .zero, size: frame.size)
+        root.masksToBounds = true
+        let wallpaperLayer = CALayer()
+        wallpaperLayer.frame = monitor.frame.offsetBy(dx: -frame.minX, dy: -frame.minY)
+        wallpaperLayer.contentsGravity = .resizeAspectFill
+        wallpaperLayer.contents = wallpaper
+        root.addSublayer(wallpaperLayer)
+        let view = NSView(frame: root.frame)
+        view.wantsLayer = true
+        view.layer = root
+        panel.contentView = view
+        return panel
+    }
+}
+
+@MainActor
+private final class SnapshotTransitionPanel: NSPanel {
+    init(frame: CGRect) {
+        super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        isFloatingPanel = true
+        isOpaque = false
+        backgroundColor = .clear
+        level = .screenSaver
+        ignoresMouseEvents = true
+        hasShadow = false
+        hidesOnDeactivate = false
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        isReleasedWhenClosed = false
+        animationBehavior = .none
+    }
+
+    override var canBecomeKey: Bool {
+        false
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
+}

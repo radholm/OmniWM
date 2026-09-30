@@ -34,7 +34,8 @@ final class LayoutSectionsSettingsExportTests: XCTestCase {
             "splitWidthMultiplier": .float(1),
             "singleWindowFit": .string("fill"),
             "useGlobalGaps": .boolean(true),
-            "moveToRootStable": .boolean(true)
+            "moveToRootStable": .boolean(true),
+            "snapshotAnimations": .boolean(true)
         ]))
         XCTAssertEqual(try SettingsTOMLCodec.decode(data), defaults)
     }

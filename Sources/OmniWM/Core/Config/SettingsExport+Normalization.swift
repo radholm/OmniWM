@@ -18,6 +18,14 @@ extension SettingsExport.Gestures {
     }
 }
 
+extension SettingsExport.Dwindle {
+    func normalized() -> Self {
+        var dwindle = self
+        dwindle.snapshotAnimations = snapshotAnimations ?? true
+        return dwindle
+    }
+}
+
 extension SettingsExport.Focus {
     func normalized() -> Self {
         var focus = self

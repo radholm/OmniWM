@@ -78,6 +78,8 @@ extension LayoutRefreshController {
         guard let controller,
               let monitor = controller.workspaceManager.monitor(for: workspaceId)
         else { return }
+        guard !dwindleHandler.updateInteractiveSnapshotResize(workspaceId: workspaceId, monitor: monitor)
+        else { return }
         _ = dwindleHandler.applyFramesOnDemand(workspaceId: workspaceId, monitor: monitor)
     }
 

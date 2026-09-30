@@ -59,6 +59,14 @@ private struct GlobalDwindleSettingsSection: View {
             Toggle("Move to Root: Stable", isOn: Bindable(settings.dwindle).moveToRootStable)
             SettingsCaption(localized: "Keep window on same screen side when moving to root")
 
+            Toggle(isOn: Bindable(settings.dwindle).snapshotAnimations) {
+                Text(verbatim: "Snapshot Resize Animations")
+            }
+            SettingsCaption(
+                "Animate fullscreen, resize and swap with window snapshots, then resize the real windows once. "
+                    + "Smoother for slow-redrawing apps. Needs Screen Recording permission."
+            )
+
             SettingsSliderRow(
                 label: String(localized: "Default Split Ratio"),
                 value: Bindable(settings.dwindle).defaultSplitRatio,
