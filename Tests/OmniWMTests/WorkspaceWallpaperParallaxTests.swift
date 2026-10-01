@@ -106,36 +106,4 @@ final class WorkspaceWallpaperParallaxTests: XCTestCase {
         XCTAssertEqual(captures, 2)
         parallax.removeAll()
     }
-
-    func testRefreshRecapturesOnlyWhenWallpaperURLChangesOrForced() throws {
-        var captures = 0
-        var url = URL(fileURLWithPath: "/tmp/a.heic")
-        let context = try XCTUnwrap(CGContext(
-            data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 16,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
-        let image = try XCTUnwrap(context.makeImage())
-        let parallax = WorkspaceWallpaperParallax(
-            ownedWindowRegistry: OwnedWindowRegistry(),
-            captureWallpaper: { _ in
-                captures += 1
-                return image
-            },
-            desktopImageURL: { _ in url }
-        )
-        let monitor = Monitor(
-            id: .init(displayId: 997), displayId: 997, frame: monitorFrame, visibleFrame: monitorFrame,
-            hasNotch: false, name: "Parallax refresh test"
-        )
-        parallax.sync([.init(monitor: monitor, position: 0, axis: .horizontal)], animated: false)
-        XCTAssertEqual(captures, 1)
-        parallax.refreshImages()
-        XCTAssertEqual(captures, 1)
-        url = URL(fileURLWithPath: "/tmp/b.heic")
-        parallax.refreshImages()
-        XCTAssertEqual(captures, 2)
-        parallax.refreshImages(force: true)
-        XCTAssertEqual(captures, 3)
-        parallax.removeAll()
-    }
 }

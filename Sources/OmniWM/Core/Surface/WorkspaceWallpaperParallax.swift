@@ -19,16 +19,12 @@ final class WorkspaceWallpaperParallax {
     nonisolated static let defaultOverscan: CGFloat = 0.1
     static let animationDuration: CFTimeInterval = 0.35
     static let refreshInterval: Duration = .seconds(30)
-    /// Dynamic (time-of-day) wallpapers change without changing their URL, so every this many refresh
-    /// intervals the wallpaper is recaptured even when the URL is unchanged.
-    static let forcedRefreshEvery = 20
 
     private final class Display {
         let panel: WallpaperParallaxPanel
         let layer = CALayer()
         var target: Target
         var image: CGImage?
-        var imageURL: URL?
         var isPanned = false
 
         init(panel: WallpaperParallaxPanel, target: Target) {
@@ -39,7 +35,6 @@ final class WorkspaceWallpaperParallax {
 
     private let ownedWindowRegistry: OwnedWindowRegistry
     private let captureWallpaper: @MainActor (Monitor) -> CGImage?
-    private let desktopImageURL: @MainActor (Monitor) -> URL?
     private var displays: [CGDirectDisplayID: Display] = [:]
     /// Displays whose wallpaper couldn't be captured at this frame (e.g. a fullscreen-app Space). They are
     /// retried on a Space change or the periodic refresh, not on every world change.
@@ -55,15 +50,10 @@ final class WorkspaceWallpaperParallax {
         captureWallpaper: @escaping @MainActor (Monitor) -> CGImage? = { monitor in
             guard CGPreflightScreenCaptureAccess() else { return nil }
             return SkyLight.shared.captureWallpaper(in: ScreenCoordinateSpace.toWindowServer(rect: monitor.frame))
-        },
-        desktopImageURL: @escaping @MainActor (Monitor) -> URL? = { monitor in
-            NSScreen.screens.first { $0.displayId == monitor.displayId }
-                .flatMap { NSWorkspace.shared.desktopImageURL(for: $0) }
         }
     ) {
         self.ownedWindowRegistry = ownedWindowRegistry
         self.captureWallpaper = captureWallpaper
-        self.desktopImageURL = desktopImageURL
     }
 
     isolated deinit {
@@ -193,20 +183,24 @@ final class WorkspaceWallpaperParallax {
         stopObserving()
     }
 
-    /// Captures the macOS wallpaper again when its file changed, or always with `force` (dynamic wallpapers
-    /// change content without changing their URL). Checking the URL is cheap; capturing is not.
-    func refreshImages(force: Bool = false) {
+    /// Captures the current macOS wallpaper again, e.g. after the user changed it.
+    func refreshImages() {
         for display in displays.values {
-            let url = desktopImageURL(display.target.monitor)
-            guard force || url == nil || url != display.imageURL else { continue }
             guard let image = captureWallpaper(display.target.monitor) else { continue }
+            if let current = display.image, Self.sameContent(current, image) { continue }
             display.image = image
-            display.imageURL = url
             CATransaction.begin()
             CATransaction.setDisableActions(true)
             display.layer.contents = image
             CATransaction.commit()
         }
+    }
+
+    private static func sameContent(_ lhs: CGImage, _ rhs: CGImage) -> Bool {
+        guard lhs.width == rhs.width, lhs.height == rhs.height,
+              let left = lhs.dataProvider?.data, let right = rhs.dataProvider?.data
+        else { return false }
+        return CFEqual(left, right)
     }
 
     private func makeDisplay(_ target: Target) -> Display? {
@@ -215,7 +209,6 @@ final class WorkspaceWallpaperParallax {
         let panel = WallpaperParallaxPanel(frame: frame)
         let display = Display(panel: panel, target: target)
         display.image = image
-        display.imageURL = desktopImageURL(target.monitor)
         let root = CALayer()
         root.frame = CGRect(origin: .zero, size: frame.size)
         root.masksToBounds = true
@@ -285,13 +278,11 @@ final class WorkspaceWallpaperParallax {
         }
         guard refreshTask == nil else { return }
         refreshTask = Task { @MainActor [weak self] in
-            var tick = 0
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.refreshInterval)
                 guard !Task.isCancelled, let self else { return }
-                tick += 1
                 retryFailedDisplays()
-                refreshImages(force: tick % Self.forcedRefreshEvery == 0)
+                refreshImages()
             }
         }
     }
