@@ -55,7 +55,7 @@ extension DwindleLayoutHandler {
             appearing: appearing
         )
         guard snapshotTransition.begin(items: items, monitor: monitor, animated: true) else { return false }
-        snapshotTransition.finish(after: WindowSnapshotTransition.duration, settled: snapshotSettledCheck(items))
+        snapshotTransition.finish(after: snapshotTransition.scaledDuration, settled: snapshotSettledCheck(items))
         return true
     }
 
@@ -79,12 +79,28 @@ extension DwindleLayoutHandler {
         return CACurrentMediaTime() - arm.time < Self.snapshotTransitionArmWindow
     }
 
+    /// Starts snapshotting an interactive resize. Runs after the mouse event tap returns and captures off the
+    /// main thread (~10-15 ms per window), so pressing the mouse never stalls input; the real windows resize
+    /// directly until the snapshots are ready.
     func beginInteractiveSnapshotResize(workspaceId: WorkspaceDescriptor.ID, monitor: Monitor) {
         guard snapshotTransitionsEnabled else { return }
-        let items = snapshotItems(workspaceId: workspaceId, targets: [:])
-        interactiveSnapshotWorkspaceId = snapshotTransition.begin(items: items, monitor: monitor, animated: false)
-            ? workspaceId
-            : nil
+        interactiveSnapshotRequestCounter &+= 1
+        let request = interactiveSnapshotRequestCounter
+        pendingInteractiveSnapshot = (workspaceId, request)
+        Task { @MainActor [weak self] in
+            guard let self, self.pendingInteractiveSnapshot?.request == request else { return }
+            let windowIds = self.snapshotItems(workspaceId: workspaceId, targets: [:]).map(\.windowId)
+            let images = await self.snapshotTransition.prefetchImages(for: windowIds)
+            guard self.pendingInteractiveSnapshot?.request == request else { return }
+            self.pendingInteractiveSnapshot = nil
+            let items = self.snapshotItems(workspaceId: workspaceId, targets: [:])
+            self.interactiveSnapshotWorkspaceId = self.snapshotTransition.begin(
+                items: items,
+                monitor: monitor,
+                animated: false,
+                prefetched: images
+            ) ? workspaceId : nil
+        }
     }
 
     /// Moves snapshots during an interactive resize. Returns `false` when the real windows must be updated.
@@ -115,6 +131,9 @@ extension DwindleLayoutHandler {
 
     /// Ends an interactive snapshot resize; the following relayout writes the final frames once.
     func endInteractiveSnapshotResize(workspaceId: WorkspaceDescriptor.ID) {
+        if pendingInteractiveSnapshot?.workspaceId == workspaceId {
+            pendingInteractiveSnapshot = nil
+        }
         guard interactiveSnapshotWorkspaceId == workspaceId else { return }
         interactiveSnapshotWorkspaceId = nil
         guard let engine = controller?.dwindleEngine,
@@ -142,6 +161,7 @@ extension DwindleLayoutHandler {
     }
 
     func cancelInteractiveSnapshotResize() {
+        pendingInteractiveSnapshot = nil
         guard interactiveSnapshotWorkspaceId != nil else { return }
         interactiveSnapshotWorkspaceId = nil
         snapshotTransition.stop()

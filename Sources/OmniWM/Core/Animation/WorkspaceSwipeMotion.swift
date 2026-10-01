@@ -91,7 +91,7 @@ final class WorkspaceSwipeMotion {
 
     /// Settles toward `destination` without finger input, e.g. for keyboard workspace switches.
     @discardableResult
-    func animate(to destination: Double, animationTime: TimeInterval) -> Bool {
+    func animate(to destination: Double, animationTime: TimeInterval, motion: MotionSnapshot = .enabled) -> Bool {
         guard spring == nil, destination.isFinite, animationTime.isFinite else { return false }
         target = destination
         spring = SpringAnimation(
@@ -99,14 +99,14 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: 0,
             startTime: animationTime,
-            config: Self.springConfig
+            config: motion.scaled(Self.springConfig)
         )
         return true
     }
 
     /// Redirects a settling animation toward `destination`, keeping its current position and velocity.
     @discardableResult
-    func retarget(to destination: Double, animationTime: TimeInterval) -> Bool {
+    func retarget(to destination: Double, animationTime: TimeInterval, motion: MotionSnapshot = .enabled) -> Bool {
         guard spring != nil, destination.isFinite, animationTime.isFinite else { return false }
         let current = progress(at: animationTime)
         let currentVelocity = velocity(at: animationTime)
@@ -117,7 +117,7 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: currentVelocity,
             startTime: animationTime,
-            config: Self.springConfig
+            config: motion.scaled(Self.springConfig)
         )
         return true
     }

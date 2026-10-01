@@ -55,6 +55,48 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         XCTAssertFalse(transition.isActive)
     }
 
+    func testRetargetDropsSnapshotsOfWindowsThatLeft() throws {
+        var captured: [Int] = []
+        let transition = try makeTransition(capture: { captured.append($0)
+            return try? self.makeImage()
+        })
+        XCTAssertTrue(transition.begin(items: [item(windowId: 1), item(windowId: 2)], monitor: monitor, animated: true))
+        XCTAssertTrue(transition.begin(items: [item(windowId: 1)], monitor: monitor, animated: true))
+        // Window 2's snapshot was removed, so bringing it back captures it again.
+        XCTAssertTrue(transition.begin(items: [item(windowId: 1), item(windowId: 2)], monitor: monitor, animated: true))
+        XCTAssertEqual(captured.sorted(), [1, 2, 2])
+        transition.stop()
+    }
+
+    func testBeginUsesPrefetchedImages() throws {
+        var captureCount = 0
+        let transition = try makeTransition(capture: { _ in captureCount += 1
+            return try? self.makeImage()
+        })
+        let prefetched = try [1: makeImage()]
+        XCTAssertTrue(transition.begin(
+            items: [item(windowId: 1), item(windowId: 2)],
+            monitor: monitor,
+            animated: false,
+            prefetched: prefetched
+        ))
+        XCTAssertEqual(captureCount, 1)
+        transition.stop()
+    }
+
+    func testDurationFollowsAnimationSpeed() throws {
+        let transition = try makeTransition()
+        XCTAssertEqual(transition.scaledDuration, WindowSnapshotTransition.duration, accuracy: 1e-9)
+        transition.animationSpeed = { 2 }
+        XCTAssertEqual(transition.scaledDuration, WindowSnapshotTransition.duration / 2, accuracy: 1e-9)
+        transition.animationSpeed = { 100 }
+        XCTAssertEqual(
+            transition.scaledDuration,
+            WindowSnapshotTransition.duration / AnimationSpeed.range.upperBound,
+            accuracy: 1e-9
+        )
+    }
+
     func testAppearingWindowPopsInAtTargetFrame() throws {
         let transition = try makeTransition()
         let appearing = WindowSnapshotTransition.Item(

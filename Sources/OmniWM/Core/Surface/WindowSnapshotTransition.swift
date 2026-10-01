@@ -42,11 +42,23 @@ final class WindowSnapshotTransition {
     private var generation = 0
     /// Where the desktop wallpaper is drawn on a display (AppKit coordinates), when it differs from the display.
     var wallpaperFrame: @MainActor (Monitor) -> CGRect? = { _ in nil }
+    /// The user's animation speed multiplier (`general.animationSpeed`).
+    var animationSpeed: @MainActor () -> Double = { 1 }
 
     private struct Motion {
         let start: CGRect
         let end: CGRect
         let beginTime: CFTimeInterval
+        let duration: CFTimeInterval
+    }
+
+    private var speed: Double {
+        AnimationSpeed.normalized(animationSpeed())
+    }
+
+    /// Duration of the snapshot move, scaled by the animation speed.
+    var scaledDuration: CFTimeInterval {
+        Self.duration / speed
     }
 
     var isActive: Bool {
@@ -73,7 +85,7 @@ final class WindowSnapshotTransition {
 
     /// Shows (or retargets) snapshots for `items`, ordered bottom to top, and moves them to their target
     /// frames. Returns `false` when the caller must fall back to regular frame updates.
-    func begin(items: [Item], monitor: Monitor, animated: Bool) -> Bool {
+    func begin(items: [Item], monitor: Monitor, animated: Bool, prefetched: [Int: CGImage] = [:]) -> Bool {
         if let current = self.monitor, current.displayId != monitor.displayId || current.frame != monitor.frame {
             stop()
         }
@@ -86,13 +98,14 @@ final class WindowSnapshotTransition {
             items.filter { Self.isVisible($0.from, in: frame) || Self.isVisible($0.to, in: frame) },
             in: frame
         )
-        guard !items.isEmpty, hasCaptureAccess(), let images = captureMissingImages(items),
+        guard !items.isEmpty, hasCaptureAccess(), let images = captureMissingImages(items, prefetched: prefetched),
               let panel = panel ?? makePanel(frame: frame, monitor: monitor),
               let root = panel.contentView?.layer
         else {
             stop()
             return false
         }
+        removeLayers(notIn: Set(items.map(\.windowId)))
         placeLayers(
             items,
             images: images,
@@ -112,15 +125,6 @@ final class WindowSnapshotTransition {
         return !visible.isNull && visible.width >= 8 && visible.height >= 8
     }
 
-    private func captureMissingImages(_ items: [Item]) -> [Int: CGImage]? {
-        var images: [Int: CGImage] = [:]
-        for item in items where layers[item.windowId] == nil {
-            guard let image = captureWindow(item.windowId) else { return nil }
-            images[item.windowId] = image
-        }
-        return images
-    }
-
     private func placeLayers(
         _ items: [Item],
         images: [Int: CGImage],
@@ -128,6 +132,8 @@ final class WindowSnapshotTransition {
         origin: CGPoint,
         animated: Bool
     ) {
+        let duration = scaledDuration
+        let speed = speed
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         for item in items {
@@ -145,14 +151,15 @@ final class WindowSnapshotTransition {
             motions[item.windowId] = Motion(
                 start: animated ? start : end,
                 end: end,
-                beginTime: CACurrentMediaTime()
+                beginTime: CACurrentMediaTime(),
+                duration: duration
             )
             layer.removeFromSuperlayer()
             root.addSublayer(layer)
             if animated, popIn {
-                Self.jumpIn(layer)
+                Self.jumpIn(layer, speed: speed)
             } else if animated, start != end {
-                animate(layer, from: start, to: end)
+                animate(layer, from: start, to: end, duration: duration)
             }
         }
         CATransaction.commit()
@@ -185,7 +192,7 @@ final class WindowSnapshotTransition {
             let target = frame.offsetBy(dx: origin.x, dy: origin.y)
             guard layer.frame != target else { continue }
             layer.removeAllAnimations()
-            motions[windowId] = Motion(start: target, end: target, beginTime: CACurrentMediaTime())
+            motions[windowId] = Motion(start: target, end: target, beginTime: CACurrentMediaTime(), duration: 0)
             layer.frame = target
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: target.size), transform: nil)
         }
@@ -230,7 +237,7 @@ final class WindowSnapshotTransition {
             let images = await captureFreshSnapshots()
             guard !Task.isCancelled, self.generation == generation else { return }
             if crossfadeToFreshSnapshots(images) {
-                fadeAt = max(fadeAt, ContinuousClock.now + .seconds(Self.crossfadeDuration))
+                fadeAt = max(fadeAt, ContinuousClock.now + .seconds(Self.crossfadeDuration / speed))
             }
             try? await Task.sleep(until: fadeAt)
             guard !Task.isCancelled, self.generation == generation else { return }
@@ -261,7 +268,7 @@ final class WindowSnapshotTransition {
                 let group = CAAnimationGroup()
                 group.animations = [bounds, position]
                 group.beginTime = motion.beginTime
-                group.duration = Self.duration
+                group.duration = motion.duration
                 group.timingFunction = Self.timing
                 group.fillMode = .both
                 fresh.add(group, forKey: "snapshotTransition")
@@ -269,7 +276,7 @@ final class WindowSnapshotTransition {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 0
             fade.toValue = 1
-            fade.duration = Self.crossfadeDuration
+            fade.duration = Self.crossfadeDuration / speed
             fade.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             fresh.add(fade, forKey: "crossfade")
             layer.addSublayer(fresh)
@@ -299,7 +306,7 @@ final class WindowSnapshotTransition {
     private func fadeOut(generation: Int) {
         guard let panel else { return }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = Self.fadeDuration
+            context.duration = Self.fadeDuration / speed
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
             MainActor.assumeIsolated {
@@ -374,18 +381,19 @@ extension WindowSnapshotTransition {
     static let jumpInScale: CGFloat = 0.86
 
     /// Springs a new window up from slightly smaller to full size at its tile while it fades in.
-    static func jumpIn(_ layer: CALayer) {
+    static func jumpIn(_ layer: CALayer, speed: Double = 1) {
         let scale = CASpringAnimation(keyPath: "transform.scale")
         scale.fromValue = jumpInScale
         scale.toValue = 1
         scale.mass = 1
-        scale.stiffness = 420
-        scale.damping = 26
+        // Same damping ratio at any speed: stiffness scales with speed², damping with speed.
+        scale.stiffness = 420 * speed * speed
+        scale.damping = 26 * speed
         scale.duration = scale.settlingDuration
         let opacity = CABasicAnimation(keyPath: "opacity")
         opacity.fromValue = 0
         opacity.toValue = 1
-        opacity.duration = 0.12
+        opacity.duration = 0.12 / speed
         opacity.timingFunction = CAMediaTimingFunction(name: .easeOut)
         layer.add(scale, forKey: "jumpInScale")
         layer.add(opacity, forKey: "jumpInOpacity")
@@ -410,7 +418,7 @@ extension WindowSnapshotTransition {
         return layer
     }
 
-    private func animate(_ layer: CALayer, from start: CGRect, to end: CGRect) {
+    private func animate(_ layer: CALayer, from start: CGRect, to end: CGRect, duration: CFTimeInterval) {
         let position = CABasicAnimation(keyPath: "position")
         position.fromValue = NSValue(point: CGPoint(x: start.midX, y: start.midY))
         position.toValue = NSValue(point: CGPoint(x: end.midX, y: end.midY))
@@ -419,8 +427,40 @@ extension WindowSnapshotTransition {
         bounds.toValue = NSValue(rect: CGRect(origin: .zero, size: end.size))
         let group = CAAnimationGroup()
         group.animations = [position, bounds]
-        group.duration = Self.duration
+        group.duration = duration
         group.timingFunction = Self.timing
         layer.add(group, forKey: "snapshotTransition")
+    }
+}
+
+extension WindowSnapshotTransition {
+    fileprivate func captureMissingImages(_ items: [Item], prefetched: [Int: CGImage]) -> [Int: CGImage]? {
+        var images: [Int: CGImage] = [:]
+        for item in items where layers[item.windowId] == nil {
+            guard let image = prefetched[item.windowId] ?? captureWindow(item.windowId) else { return nil }
+            images[item.windowId] = image
+        }
+        return images
+    }
+
+    /// Captures windows off the main thread, so a later `begin` doesn't block on capturing them.
+    func prefetchImages(for windowIds: [Int]) async -> [Int: CGImage] {
+        guard let backgroundCapture, hasCaptureAccess() else { return [:] }
+        return await Task.detached(priority: .userInitiated) {
+            Self.images(for: windowIds, capture: backgroundCapture)
+        }.value
+    }
+
+    /// Drops snapshots of windows that left the transition (closed or moved away) while it was running.
+    fileprivate func removeLayers(notIn windowIds: Set<Int>) {
+        let stale = layers.keys.filter { !windowIds.contains($0) }
+        guard !stale.isEmpty else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for windowId in stale {
+            layers.removeValue(forKey: windowId)?.removeFromSuperlayer()
+            motions.removeValue(forKey: windowId)
+        }
+        CATransaction.commit()
     }
 }

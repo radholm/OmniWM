@@ -81,4 +81,29 @@ final class WorkspaceWallpaperParallaxTests: XCTestCase {
         XCTAssertEqual(try SettingsTOMLCodec.decode(encoded), export)
         XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: encoded).isEmpty)
     }
+
+    func testFailedCaptureIsNotRetriedOnEverySync() {
+        var captures = 0
+        let parallax = WorkspaceWallpaperParallax(
+            ownedWindowRegistry: OwnedWindowRegistry(),
+            captureWallpaper: { _ in
+                captures += 1
+                return nil
+            }
+        )
+        let monitor = Monitor(
+            id: .init(displayId: 998), displayId: 998, frame: monitorFrame, visibleFrame: monitorFrame,
+            hasNotch: false, name: "Parallax test"
+        )
+        let target = WorkspaceWallpaperParallax.Target(monitor: monitor, position: 0, axis: .horizontal)
+        parallax.sync([target], animated: false)
+        parallax.sync([target], animated: false)
+        parallax.sync([target], animated: false)
+        XCTAssertEqual(captures, 1)
+        XCTAssertFalse(parallax.isActive)
+        parallax.removeAll()
+        parallax.sync([target], animated: false)
+        XCTAssertEqual(captures, 2)
+        parallax.removeAll()
+    }
 }

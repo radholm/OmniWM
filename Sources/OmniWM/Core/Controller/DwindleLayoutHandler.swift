@@ -26,11 +26,17 @@ import QuartzCore
         transition.wallpaperFrame = { [weak self] monitor in
             self?.controller?.layoutRefreshController.workspaceSwipe.wallpaperParallax?.wallpaperFrame(on: monitor)
         }
+        transition.animationSpeed = { [weak self] in
+            self?.controller?.motionPolicy.animationSpeed ?? 1
+        }
         return transition
     }()
 
     var snapshotTransitionArm: (workspaceId: WorkspaceDescriptor.ID, time: TimeInterval)?
     var interactiveSnapshotWorkspaceId: WorkspaceDescriptor.ID?
+    /// An interactive snapshot resize whose snapshots are still being captured.
+    var pendingInteractiveSnapshot: (workspaceId: WorkspaceDescriptor.ID, request: UInt64)?
+    var interactiveSnapshotRequestCounter: UInt64 = 0
     let createdAt = CACurrentMediaTime()
 
     var dwindleAnimationByDisplay: [CGDirectDisplayID: (WorkspaceDescriptor.ID, Monitor)] = [:]

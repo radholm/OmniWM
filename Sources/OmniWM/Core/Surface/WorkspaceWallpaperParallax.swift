@@ -36,6 +36,12 @@ final class WorkspaceWallpaperParallax {
     private let ownedWindowRegistry: OwnedWindowRegistry
     private let captureWallpaper: @MainActor (Monitor) -> CGImage?
     private var displays: [CGDirectDisplayID: Display] = [:]
+    /// Displays whose wallpaper couldn't be captured at this frame (e.g. a fullscreen-app Space). They are
+    /// retried on a Space change or the periodic refresh, not on every world change.
+    private var failedDisplays: [CGDirectDisplayID: CGRect] = [:]
+    private var lastTargets: [Target] = []
+    /// The user's animation speed multiplier (`general.animationSpeed`).
+    var animationSpeed: @MainActor () -> Double = { 1 }
     private var refreshTask: Task<Void, Never>?
     private var spaceObserver: NSObjectProtocol?
 
@@ -108,11 +114,13 @@ final class WorkspaceWallpaperParallax {
 
     /// Shows the wallpaper for `targets` and removes it from every other display.
     func sync(_ targets: [Target], animated: Bool) {
+        lastTargets = targets
         let ids = Set(targets.map(\.monitor.displayId))
         for (displayId, display) in displays where !ids.contains(displayId) {
             close(display)
             displays[displayId] = nil
         }
+        failedDisplays = failedDisplays.filter { ids.contains($0.key) }
         for target in targets {
             if let display = displays[target.monitor.displayId], display.target.monitor.frame == target.monitor.frame {
                 guard display.target != target || display.isPanned else { continue }
@@ -120,11 +128,37 @@ final class WorkspaceWallpaperParallax {
                 display.target = target
                 apply(display, animated: animate)
             } else {
-                if let stale = displays[target.monitor.displayId] { close(stale) }
-                displays[target.monitor.displayId] = makeDisplay(target)
+                let displayId = target.monitor.displayId
+                if let stale = displays[displayId] {
+                    close(stale)
+                    displays[displayId] = nil
+                }
+                guard failedDisplays[displayId] != target.monitor.frame else { continue }
+                if let display = makeDisplay(target) {
+                    displays[displayId] = display
+                    failedDisplays[displayId] = nil
+                } else {
+                    failedDisplays[displayId] = target.monitor.frame
+                }
             }
         }
-        if displays.isEmpty { stopObserving() } else { startObserving() }
+        if displays.isEmpty, failedDisplays.isEmpty { stopObserving() } else { startObserving() }
+    }
+
+    /// Tries again to show the wallpaper on displays where capturing it failed.
+    private func retryFailedDisplays() {
+        guard !failedDisplays.isEmpty else { return }
+        let failed = failedDisplays
+        failedDisplays.removeAll()
+        for target in lastTargets {
+            let displayId = target.monitor.displayId
+            guard failed[displayId] != nil, displays[displayId] == nil else { continue }
+            if let display = makeDisplay(target) {
+                displays[displayId] = display
+            } else {
+                failedDisplays[displayId] = target.monitor.frame
+            }
+        }
     }
 
     /// Pans the wallpaper on `displayId` to an explicit frame, e.g. to follow a workspace swipe.
@@ -144,6 +178,8 @@ final class WorkspaceWallpaperParallax {
     func removeAll() {
         for display in displays.values { close(display) }
         displays.removeAll()
+        failedDisplays.removeAll()
+        lastTargets = []
         stopObserving()
     }
 
@@ -212,7 +248,7 @@ final class WorkspaceWallpaperParallax {
             let animation = CABasicAnimation(keyPath: "position")
             animation.fromValue = NSValue(point: from)
             animation.toValue = NSValue(point: CGPoint(x: frame.midX, y: frame.midY))
-            animation.duration = Self.animationDuration
+            animation.duration = Self.animationDuration / AnimationSpeed.normalized(animationSpeed())
             animation.timingFunction = WindowSnapshotTransition.timing
             layer.add(animation, forKey: "parallax")
         } else {
@@ -235,6 +271,7 @@ final class WorkspaceWallpaperParallax {
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     try? await Task.sleep(for: .milliseconds(500))
+                    self?.retryFailedDisplays()
                     self?.refreshImages()
                 }
             }
@@ -244,6 +281,7 @@ final class WorkspaceWallpaperParallax {
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.refreshInterval)
                 guard !Task.isCancelled, let self else { return }
+                retryFailedDisplays()
                 refreshImages()
             }
         }

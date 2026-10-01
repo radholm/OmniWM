@@ -12,9 +12,11 @@ extension WorkspaceSwipePresentation {
         observeWallpaperSettings()
         let targets = wallpaperTargets()
         guard !targets.isEmpty || wallpaperParallax != nil, let controller else { return }
-        let parallax = wallpaperParallax ?? WorkspaceWallpaperParallax(
-            ownedWindowRegistry: controller.ownedWindowRegistry
-        )
+        let parallax = wallpaperParallax ?? {
+            let parallax = WorkspaceWallpaperParallax(ownedWindowRegistry: controller.ownedWindowRegistry)
+            parallax.animationSpeed = { [weak controller] in controller?.motionPolicy.animationSpeed ?? 1 }
+            return parallax
+        }()
         wallpaperParallax = parallax
         parallax.sync(targets, animated: controller.motionPolicy.animationsEnabled)
     }

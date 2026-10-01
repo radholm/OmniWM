@@ -229,6 +229,8 @@ final class WorkspaceSwipePreview {
     /// Hold before fading a finished preview out, so revealed windows can redraw underneath it first.
     static let revealHold: Duration = .milliseconds(120)
     static let revealFade: TimeInterval = 0.12
+    /// The user's animation speed multiplier (`general.animationSpeed`).
+    var animationSpeed: @MainActor () -> Double = { 1 }
 
     /// Stops the preview. With `revealingWindows`, the panel stays on screen briefly and fades out, hiding the
     /// first frames of windows that were just moved on screen (stale content, activation redraws).
@@ -267,10 +269,11 @@ final class WorkspaceSwipePreview {
         ownedWindowRegistry.register(
             panel, surfaceId: "workspace-swipe-retiring-\(ObjectIdentifier(panel).hashValue)", policy: Self.policy
         )
+        let fade = Self.revealFade / AnimationSpeed.normalized(animationSpeed())
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: Self.revealHold)
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = Self.revealFade
+                context.duration = fade
                 panel.animator().alphaValue = 0
             } completionHandler: {
                 MainActor.assumeIsolated {

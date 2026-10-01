@@ -400,7 +400,11 @@ extension WorkspaceSwipePresentation {
         } else {
             return false
         }
-        guard flight.motion.retarget(to: destination, animationTime: mediaTimeProvider()) else { return false }
+        guard flight.motion.retarget(
+            to: destination,
+            animationTime: mediaTimeProvider(),
+            motion: controller?.motionPolicy.snapshot() ?? .enabled
+        ) else { return false }
         trace("keyboard-redirected", progress: flight.progress)
         return true
     }
@@ -436,7 +440,11 @@ extension WorkspaceSwipePresentation {
         self.flight = flight
         trace("keyboard-began")
         controller.surfaceReconciler.reconcileNow()
-        guard flight.motion.animate(to: 1, animationTime: mediaTimeProvider()) else {
+        guard flight.motion.animate(
+            to: 1,
+            animationTime: mediaTimeProvider(),
+            motion: controller.motionPolicy.snapshot()
+        ) else {
             cancel(reason: "keyboard-invalid")
             return false
         }
@@ -454,6 +462,7 @@ extension WorkspaceSwipePresentation {
     func previewSurface(_ controller: WMController) -> WorkspaceSwipePreview {
         if let preview { return preview }
         let preview = WorkspaceSwipePreview(ownedWindowRegistry: controller.ownedWindowRegistry)
+        preview.animationSpeed = { [weak controller] in controller?.motionPolicy.animationSpeed ?? 1 }
         self.preview = preview
         return preview
     }
