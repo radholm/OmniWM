@@ -25,7 +25,7 @@ struct SnapshotStackEffect: Equatable {
     static let deckStepX: CGFloat = 0.07
     static let deckStepY: CGFloat = 0.06
     /// Cards turn their left edge away a little, like a fanned deck seen from the right.
-    static let deckYaw: CGFloat = -.pi / 36
+    static let deckYaw: CGFloat = -.pi / 72
     /// Cards beyond this many are not drawn in the deck.
     static let maximumDeckSize = 7
 
