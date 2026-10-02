@@ -116,7 +116,14 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertTrue(CATransform3DIsIdentity(stripPerspective(SnapshotStackEffect.pose(depth: 0, size: size))))
         let behind = SnapshotStackEffect.pose(depth: 1, size: size)
         let behindScale = 1 - SnapshotStackEffect.depthScale
-        XCTAssertEqual(behind.m42, size.height * (1 - behindScale) / 2, accuracy: 0.001, "zooms around its centre")
+        let peek = size.height * SnapshotStackEffect.depthPeek
+        // With the card pivoting on its bottom centre, these place its right edge further right and its bottom
+        // edge lower than the card in front.
+        XCTAssertEqual(behind.m41, size.width * (1 - behindScale) / 2 + peek, accuracy: 0.001)
+        XCTAssertEqual(behind.m42, -peek, accuracy: 0.001)
+        let deeper = SnapshotStackEffect.pose(depth: 2, size: size)
+        XCTAssertGreaterThan(deeper.m41, behind.m41, "each deeper card sticks out further to the right")
+        XCTAssertLessThan(deeper.m42, behind.m42, "and further down")
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: 0), SnapshotStackEffect.zPosition(depth: 1))
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
@@ -126,6 +133,7 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(lowest.m11, 0.85, "and stays almost full size")
         let settled = SnapshotStackEffect.tuckPose(progress: 1, toDepth: 1, size: size)
         XCTAssertEqual(settled.m42, behind.m42, accuracy: 0.001, "and ends in its place in the deck")
+        XCTAssertEqual(settled.m41, behind.m41, accuracy: 0.001)
         XCTAssertEqual(
             SnapshotStackEffect.tuckProgress(CGFloat(SnapshotStackEffect.orderSwapTime.doubleValue)), 0.5,
             accuracy: 0.0001, "it passes under the next card at its lowest point"
