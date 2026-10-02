@@ -16,9 +16,9 @@ struct SnapshotStackEffect: Equatable {
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1400
     /// Per depth level: how much smaller, how far raised (fraction of height) and how far leaned back a card is.
-    static let depthScale: CGFloat = 0.06
-    static let depthRaise: CGFloat = 0.075
-    static let depthLean: CGFloat = -.pi / 40
+    static let depthScale: CGFloat = 0.12
+    static let depthRaise: CGFloat = 0.14
+    static let depthLean: CGFloat = -.pi / 24
     /// Cards deeper than this are hidden.
     static let visibleDepth = 3
 
