@@ -105,45 +105,38 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         let shown = slide.items(from: items)
         XCTAssertEqual(shown.map(\.windowId), [9, 1, 3, 2])
         XCTAssertNil(shown[0].stackEffect)
-        XCTAssertEqual(shown[1].stackEffect, SnapshotStackEffect(fromDepth: 0, toDepth: 2, tucksUnder: true))
-        XCTAssertEqual(shown[2].stackEffect, SnapshotStackEffect(fromDepth: 2, toDepth: 1))
-        XCTAssertEqual(shown[3].stackEffect, SnapshotStackEffect(fromDepth: 1, toDepth: 0))
+        XCTAssertEqual(
+            shown[1].stackEffect,
+            SnapshotStackEffect(fromDepth: 0, toDepth: 2, deckSize: 3, tucksUnder: true)
+        )
+        XCTAssertEqual(shown[2].stackEffect, SnapshotStackEffect(fromDepth: 2, toDepth: 1, deckSize: 3))
+        XCTAssertEqual(shown[3].stackEffect, SnapshotStackEffect(fromDepth: 1, toDepth: 0, deckSize: 3))
         XCTAssertTrue(shown.dropFirst().allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
     }
 
-    func testDeckPosesZoomOutAndSortAboveTheWallpaper() {
+    func testDeckFansTowardsTheBottomRightAndPageTurnZoomsOutAndIn() {
         let size = CGSize(width: 1000, height: 800)
-        XCTAssertTrue(CATransform3DIsIdentity(stripPerspective(SnapshotStackEffect.pose(depth: 0, size: size))))
-        let behind = SnapshotStackEffect.pose(depth: 1, size: size)
-        let behindScale = 1 - SnapshotStackEffect.depthScale
-        let peek = size.height * SnapshotStackEffect.depthPeek
-        // With the card pivoting on its bottom centre, these place its right edge further right and its bottom
-        // edge lower than the card in front.
-        XCTAssertEqual(behind.m41, size.width * (1 - behindScale) / 2 + peek, accuracy: 0.001)
-        XCTAssertEqual(behind.m42, -peek, accuracy: 0.001)
-        let deeper = SnapshotStackEffect.pose(depth: 2, size: size)
-        XCTAssertGreaterThan(deeper.m41, behind.m41, "each deeper card sticks out further to the right")
-        XCTAssertLessThan(deeper.m42, behind.m42, "and further down")
+        let front = SnapshotStackEffect.deckPose(slot: 0, count: 3, size: size)
+        let back = SnapshotStackEffect.deckPose(slot: 2, count: 3, size: size)
+        XCTAssertGreaterThan(back.m41, front.m41, "cards further back sit further right")
+        XCTAssertLessThan(back.m42, front.m42, "and lower")
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: 0), SnapshotStackEffect.zPosition(depth: 1))
-        XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
+        XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.maximumDeckSize), size.width)
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
-        XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
-        let lowest = SnapshotStackEffect.tuckPose(progress: 0.5, toDepth: 1, size: size)
-        XCTAssertLessThan(lowest.m42, 0, "the leaving card moves down")
-        XCTAssertGreaterThan(lowest.m11, 0.85, "and stays almost full size")
-        let settled = SnapshotStackEffect.tuckPose(progress: 1, toDepth: 1, size: size)
-        XCTAssertEqual(settled.m42, behind.m42, accuracy: 0.001, "and ends in its place in the deck")
-        XCTAssertEqual(settled.m41, behind.m41, accuracy: 0.001)
-        XCTAssertEqual(
-            SnapshotStackEffect.tuckProgress(CGFloat(SnapshotStackEffect.orderSwapTime.doubleValue)), 0.5,
-            accuracy: 0.0001, "it passes under the next card at its lowest point"
-        )
-    }
 
-    private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {
-        var transform = transform
-        transform.m34 = 0
-        return transform
+        let leaving = SnapshotStackEffect(fromDepth: 0, toDepth: 2, deckSize: 3, tucksUnder: true)
+        let (values, times) = leaving.keyframes(size: size)
+        XCTAssertTrue(CATransform3DIsIdentity(values[0]), "starts at full size")
+        XCTAssertTrue(CATransform3DIsIdentity(values[values.count - 1]), "and ends at full size")
+        XCTAssertEqual(times.first, 0)
+        XCTAssertEqual(times.last, 1)
+        XCTAssertEqual(times, times.sorted())
+        let lowest = values.min { $0.m42 < $1.m42 }
+        XCTAssertLessThan(lowest?.m42 ?? 0, back.m42, "it dips below the deck on its way to the back")
+
+        let next = SnapshotStackEffect(fromDepth: 1, toDepth: 0, deckSize: 3).keyframes(size: size)
+        XCTAssertEqual(next.values.count, 4, "zoom out, move up one place, zoom in")
+        XCTAssertTrue(CATransform3DIsIdentity(next.values[3]))
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

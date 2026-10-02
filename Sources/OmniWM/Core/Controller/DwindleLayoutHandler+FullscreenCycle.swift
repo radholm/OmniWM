@@ -6,8 +6,8 @@ import Foundation
 import QuartzCore
 
 /// Pages through fullscreen windows like a deck of cards: every window is stacked at the fullscreen frame.
-/// During the page turn the deck shows: the top window slides down under the next window to the back while
-/// every window behind it moves up one place, the next one coming forward into view as the top card.
+/// During the page turn the view zooms out to the whole deck, fanned towards the bottom right; the top window
+/// moves to the back of the deck, and the view zooms back in on the next window.
 struct FullscreenSlide: Equatable {
     let workspaceId: WorkspaceDescriptor.ID
     let previousWindowId: Int
@@ -18,7 +18,7 @@ struct FullscreenSlide: Equatable {
     let time: TimeInterval
 
     /// Paging is a deliberate, visible motion, so it runs longer than regular layout snapshot transitions.
-    static let duration: CFTimeInterval = 0.6
+    static let duration: CFTimeInterval = 0.85
 
     /// Snapshot items for the page turn. `items` holds the real targets; the deck's windows instead stay at
     /// their fullscreen frame and move between deck depths, drawn above any other (floating) windows.
@@ -32,8 +32,8 @@ struct FullscreenSlide: Equatable {
         let cards = deck.enumerated().reversed().map { index, windowId -> WindowSnapshotTransition.Item in
             let frame = byId[windowId]?.from ?? .zero
             let effect = windowId == previousWindowId
-                ? SnapshotStackEffect(fromDepth: 0, toDepth: index, tucksUnder: true)
-                : SnapshotStackEffect(fromDepth: index + 1, toDepth: index)
+                ? SnapshotStackEffect(fromDepth: 0, toDepth: index, deckSize: deck.count, tucksUnder: true)
+                : SnapshotStackEffect(fromDepth: index + 1, toDepth: index, deckSize: deck.count)
             return .init(windowId: windowId, from: frame, to: frame, stackEffect: effect)
         }
         return others + cards
