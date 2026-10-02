@@ -72,8 +72,12 @@ extension DwindleLayoutHandler {
                     plannedSeq: controller.workspaceManager.worldSeq
                 )
             )
-            controller.focusWindow(cycle.next)
-            controller.layoutRefreshController.requestLayoutCommandRelayout(affectedWorkspaceIds: [wsId])
+            // Raise the next window only once the slide overlay covers the stack, so it doesn't flash on top first.
+            let next = cycle.next
+            controller.layoutRefreshController.requestLayoutCommandRelayout(
+                affectedWorkspaceIds: [wsId],
+                postLayout: { [weak controller] in controller?.focusWindow(next) }
+            )
         }
         return cycled
     }

@@ -33,6 +33,7 @@ extension DwindleLayoutHandler {
         snapshot: DwindleWorkspaceSnapshot
     ) -> Bool {
         let armed = consumeSnapshotTransitionArm(for: snapshot.workspaceId)
+        let slide = consumeFullscreenSlideArm(for: snapshot.workspaceId)
         let previousTokens = Set(transition.previousTargetFrames.keys)
         let pastStartup = CACurrentMediaTime() - createdAt > Self.startupQuietPeriod
         let membershipChanged = !previousTokens.isEmpty && previousTokens != Set(transition.newFrames.keys)
@@ -47,14 +48,14 @@ extension DwindleLayoutHandler {
             guard let old = transition.oldFrames[token] ?? transition.previousTargetFrames[token] else { return false }
             return !old.approximatelyEqual(to: frame, tolerance: 1)
         }
-        guard changed else { return false }
+        // Paging a fullscreen stack changes no frames (every window is already stacked at full size).
+        guard changed || slide != nil else { return false }
         let appearing = Set(transition.newFrames.keys).subtracting(previousTokens)
         let items = snapshotItems(
             workspaceId: snapshot.workspaceId,
             targets: transition.newFrames,
             appearing: appearing
         )
-        let slide = consumeFullscreenSlideArm(for: snapshot.workspaceId)
         let shownItems = slide.map { $0.items(from: items) } ?? items
         let duration = slide == nil
             ? snapshotTransition.scaledDuration
