@@ -58,7 +58,7 @@ struct SnapshotStackEffect: Equatable {
     static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
-        transform = CATransform3DTranslate(transform, -size.width * 0.1, -size.height * 0.22, 0)
+        transform = CATransform3DTranslate(transform, -size.width * 0.1, -size.height * 0.06, 0)
         transform = CATransform3DRotate(transform, .pi / 45, 0, 0, 1)
         transform = CATransform3DRotate(transform, -.pi / 14, 1, 0, 0)
         return CATransform3DScale(transform, 0.88, 0.88, 1)
