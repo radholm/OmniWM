@@ -86,8 +86,8 @@ final class WorkspaceSwipePresentation {
     var wallpaperParallax: WorkspaceWallpaperParallax?
     var observesWallpaperSettings = false
     private let mediaTimeProvider: () -> TimeInterval
-    private var keyboardSwitchTask: Task<Void, Never>?
-    private var keyboardSwitchFallback: (() -> Void)?
+    var keyboardSwitchTask: Task<Void, Never>?
+    var keyboardSwitchFallback: (() -> Void)?
     static let keyboardPreviewWait: Duration = .milliseconds(250)
 
     init(
@@ -323,8 +323,7 @@ extension WorkspaceSwipePresentation {
     }
 
     /// Animates a keyboard workspace switch with the swipe presentation. Returns `false` when the caller
-    /// must switch without animation. If window previews are not ready yet, waits briefly and runs
-    /// `fallback` (an unanimated switch) when they do not arrive in time.
+    /// must switch without animation; see `waitForKeyboardPreviews` for when previews aren't fresh yet.
     func animateSwitch(to targetId: WorkspaceDescriptor.ID, fallback: @escaping () -> Void) -> Bool {
         flushPendingKeyboardSwitch()
         if let flight {
@@ -359,22 +358,8 @@ extension WorkspaceSwipePresentation {
             monitor: monitor,
             workingFrame: preparation.frame
         )
-        if beginKeyboardFlight(isNext: isNext) { return true }
-        keyboardSwitchFallback = fallback
-        keyboardSwitchTask = Task { @MainActor [weak self] in
-            let deadline = ContinuousClock.now + Self.keyboardPreviewWait
-            while ContinuousClock.now < deadline {
-                try? await Task.sleep(for: .milliseconds(8))
-                guard !Task.isCancelled, let self else { return }
-                if beginKeyboardFlight(isNext: isNext) {
-                    keyboardSwitchTask = nil
-                    keyboardSwitchFallback = nil
-                    return
-                }
-            }
-            guard !Task.isCancelled, let self else { return }
-            flushPendingKeyboardSwitch()
-        }
+        if beginKeyboardFlight(isNext: isNext, requireFresh: true) { return true }
+        waitForKeyboardPreviews(isNext: isNext, fallback: fallback)
         return true
     }
 
@@ -409,13 +394,21 @@ extension WorkspaceSwipePresentation {
         return true
     }
 
-    private func beginKeyboardFlight(isNext: Bool) -> Bool {
+    func beginKeyboardFlight(isNext: Bool, requireFresh: Bool) -> Bool {
         guard flight == nil, let controller, let preparation,
               controller.motionPolicy.animationsEnabled,
               let destination = isNext ? preparation.next : preparation.previous,
               controller.workspaceManager.activeWorkspaceOrFirst(on: preparation.monitor.id)?.id
               == preparation.source.id
         else { return false }
+        if requireFresh, preview?.hasFreshPreviews(
+            source: preparation.source.items,
+            destination: destination.items,
+            monitor: preparation.monitor,
+            workingFrame: preparation.frame
+        ) != true {
+            return false
+        }
         let flight = Flight(
             preparation: preparation,
             destination: destination,

@@ -72,6 +72,9 @@ final class WorkspaceSwipePreview {
     private var wallpaperLayer: CALayer?
     private var overlayOrigin = CGPoint.zero
     private var contents: [WindowHandle: [Content]] = [:]
+    /// Windows that delivered a frame since the last `prepare`; cached previews of other windows may be
+    /// minutes old (captured when their workspace was last shown).
+    private var freshHandles: Set<WindowHandle> = []
     private(set) var isWarming = false
 
     var isVisible: Bool {
@@ -102,6 +105,7 @@ final class WorkspaceSwipePreview {
             hasCaptureAccess: hasCaptureAccess
         )
         capture.onPreview = { [weak self] handle, frame in
+            if frame != nil { self?.freshHandles.insert(handle) }
             self?.updatePreview(frame, for: handle)
         }
         capture.onReadinessChange = { [weak self] in self?.finishWarmupIfReady() }
@@ -143,6 +147,7 @@ final class WorkspaceSwipePreview {
             capture.remove(handle: item.handle)
         }
         tokens = Dictionary(items.map { ($0.handle, $0.handle.token) }, uniquingKeysWith: { _, latest in latest })
+        if !warming { freshHandles.removeAll() }
         let scale = Self.scale(for: monitor)
         isWarming = warming
         let requested = warming ? items.filter { capture.preview(for: $0.handle) == nil } : items
@@ -152,6 +157,12 @@ final class WorkspaceSwipePreview {
             retainingUnrepresentedPreviews: true,
             firstFrameOnly: warming
         )
+    }
+
+    /// Whether every window shown by `begin` has a frame captured since `prepare`, not just a cached one.
+    func hasFreshPreviews(source: [Item], destination: [Item], monitor: Monitor, workingFrame: CGRect? = nil) -> Bool {
+        let frame = workingFrame ?? monitor.visibleFrame
+        return (source + destination).allSatisfy { !$0.frame.intersects(frame) || freshHandles.contains($0.handle) }
     }
 
     private func finishWarmupIfReady() {

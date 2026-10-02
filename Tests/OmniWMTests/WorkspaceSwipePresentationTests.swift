@@ -459,6 +459,58 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
         await driver.waitForStops(1)
     }
 
+    func testCachedPreviewIsNotFreshUntilANewFrameArrivesAfterPrepare() async throws {
+        let driver = OverviewPreviewTestDriver()
+        let capture = driver.makeCapture()
+        let preview = WorkspaceSwipePreview(
+            ownedWindowRegistry: OwnedWindowRegistry(), previewCapture: capture,
+            backdrop: try makeBackdrop(), hasCaptureAccess: { true }
+        )
+        let (controller, swipe, monitor, source) = try fixture(previewSurface: preview)
+        controller.niriLayoutHandler.enableNiriLayout()
+        let pid: pid_t = 764_951
+        let windowId = 764_952
+        let token = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
+            pid: pid, windowId: windowId, to: source
+        )
+        controller.workspaceManager.setCachedConstraints(.unconstrained, for: token)
+        let engine = try XCTUnwrap(controller.niriEngine)
+        let node = engine.addWindow(token: token, to: source, afterSelection: nil)
+        controller.workspaceManager.withNiriViewportState(for: source) { $0.selectedNodeId = node.id }
+        controller.axManager.confirmFrameWrite(
+            for: windowId, frame: CGRect(x: 50, y: 50, width: 600, height: 500)
+        )
+        let preparation = try XCTUnwrap(swipe.makePreparation(monitorId: monitor.id))
+        let items = preparation.source.items
+        preview.warm(source: items, destination: [], monitor: monitor, workingFrame: preparation.frame)
+        await driver.waitForStarts(1)
+        driver.completeAllStarts()
+        driver.streams[0].output.offer(try makeOverviewPreviewFrame())
+        for _ in 0 ..< 200 where capture.preview(for: driver.streams[0].request.handle) == nil {
+            await Task.yield()
+        }
+        XCTAssertNotNil(capture.preview(for: driver.streams[0].request.handle))
+
+        preview.prepare(source: items, destination: [], monitor: monitor, workingFrame: preparation.frame)
+        XCTAssertFalse(preview.hasFreshPreviews(
+            source: items, destination: [], monitor: monitor, workingFrame: preparation.frame
+        ))
+
+        await driver.waitForStarts(2)
+        driver.completeAllStarts()
+        driver.streams[1].output.offer(try makeOverviewPreviewFrame())
+        for _ in 0 ..< 200 where !preview.hasFreshPreviews(
+            source: items, destination: [], monitor: monitor, workingFrame: preparation.frame
+        ) {
+            await Task.yield()
+        }
+        XCTAssertTrue(preview.hasFreshPreviews(
+            source: items, destination: [], monitor: monitor, workingFrame: preparation.frame
+        ))
+        preview.stop()
+    }
+
     private func makeSettings() -> SettingsStore {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         return SettingsStore(
