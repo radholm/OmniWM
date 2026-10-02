@@ -159,7 +159,7 @@ final class WindowSnapshotTransition {
             SnapshotStackEffect.resetPose(of: layer)
             layer.frame = end
             if animated, let effect = item.stackEffect {
-                effect.animate(layer, duration: duration, timing: Self.timing)
+                effect.animate(layer, duration: duration)
             }
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: end.size), transform: nil)
             layers[item.windowId] = layer

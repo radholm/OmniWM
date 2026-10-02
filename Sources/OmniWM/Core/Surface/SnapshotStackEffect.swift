@@ -12,6 +12,28 @@ enum SnapshotStackEffect: Equatable {
 
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1400
+    /// Eases in and out so the tilt reads as a deliberate page turn instead of snapping into place.
+    static var timing: CAMediaTimingFunction {
+        CAMediaTimingFunction(controlPoints: 0.45, 0, 0.2, 1)
+    }
+
+    /// Cards with a 3D transform are depth-sorted against their siblings, so a card tipped back (negative z)
+    /// would vanish behind the overlay's flat wallpaper layer. These lift the cards well above any tilt depth,
+    /// the outgoing card above the incoming one.
+    private var zPosition: CGFloat {
+        switch self {
+        case .out: 20000
+        case .in: 10000
+        }
+    }
+
+    /// Opacity over the effect: the outgoing card stays visible while it tips, the incoming one appears early.
+    private var opacityKeyframes: (values: [Float], times: [NSNumber]) {
+        switch self {
+        case .out: ([1, 0.9, 0], [0, 0.45, 1])
+        case .in: ([0, 1, 1], [0, 0.55, 1])
+        }
+    }
 
     private var angle: CGFloat {
         switch self {
@@ -48,12 +70,14 @@ enum SnapshotStackEffect: Equatable {
     static func resetPose(of layer: CALayer) {
         layer.transform = CATransform3DIdentity
         layer.opacity = 1
+        layer.zPosition = 0
         layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
     }
 
     /// Plays the effect on `layer`, which is already placed at its frame.
-    func animate(_ layer: CALayer, duration: CFTimeInterval, timing: CAMediaTimingFunction) {
+    func animate(_ layer: CALayer, duration: CFTimeInterval) {
         let frame = layer.frame
+        layer.zPosition = zPosition
         layer.anchorPoint = CGPoint(x: 0.5, y: 0)
         layer.position = CGPoint(x: frame.midX, y: frame.minY)
         let tipped = tippedTransform(height: frame.height)
@@ -65,13 +89,13 @@ enum SnapshotStackEffect: Equatable {
         let transform = CABasicAnimation(keyPath: "transform")
         transform.fromValue = NSValue(caTransform3D: fromTransform)
         transform.toValue = NSValue(caTransform3D: toTransform)
-        let opacity = CABasicAnimation(keyPath: "opacity")
-        opacity.fromValue = 1 - toOpacity
-        opacity.toValue = toOpacity
+        transform.timingFunction = Self.timing
+        let opacity = CAKeyframeAnimation(keyPath: "opacity")
+        opacity.values = opacityKeyframes.values
+        opacity.keyTimes = opacityKeyframes.times
         let group = CAAnimationGroup()
         group.animations = [transform, opacity]
         group.duration = duration
-        group.timingFunction = timing
         layer.add(group, forKey: "stack")
     }
 }
