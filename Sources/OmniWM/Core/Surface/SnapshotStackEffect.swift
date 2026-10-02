@@ -96,8 +96,9 @@ struct SnapshotStackEffect: Equatable {
             transform.values = [start, tuck, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, 0.45, 1]
             transform.timingFunctions = [Self.timing, Self.timing]
-            opacity.values = [Self.opacity(depth: fromDepth), 0.85, endOpacity]
-            opacity.keyTimes = [0, 0.45, 1]
+            // Fades quickly while it slides under, then settles at its dimmed place at the back of the deck.
+            opacity.values = [Self.opacity(depth: fromDepth), 0.25, endOpacity]
+            opacity.keyTimes = [0, 0.3, 1]
             zPosition.values = [Self.tuckZPosition, endZ]
         } else {
             transform.values = [start, end].map { NSValue(caTransform3D: $0) }
