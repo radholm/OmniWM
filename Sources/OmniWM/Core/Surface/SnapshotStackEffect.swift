@@ -47,6 +47,8 @@ struct SnapshotStackEffect: Equatable {
     static let tuckSamples = 24
     static let orderSwapTime: NSNumber = 0.5
     static let advanceStartTime = orderSwapTime
+    /// When the next card has fully appeared, shortly before the leaving card settles behind it.
+    static let appearedTime: NSNumber = 0.9
 
     static func opacity(depth: Int) -> Float {
         depth > visibleDepth ? 0 : 1
@@ -127,7 +129,14 @@ struct SnapshotStackEffect: Equatable {
             transform.values = [start, start, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, Self.advanceStartTime, 1]
             transform.timingFunctions = [Self.timing, Self.departTiming]
-            opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
+            if toDepth == 0 {
+                // The next card appears gradually over the leaving card as it slides in behind, instead of
+                // covering it at once.
+                opacity.values = [0, 0, endOpacity]
+                opacity.keyTimes = [0, Self.advanceStartTime, Self.appearedTime]
+            } else {
+                opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
+            }
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
         }
         let group = CAAnimationGroup()
