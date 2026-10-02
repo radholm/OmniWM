@@ -111,20 +111,18 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertTrue(shown.dropFirst().allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
     }
 
-    func testDeckPosesPeekAboveAndSortAboveTheWallpaper() {
+    func testDeckPosesZoomOutAndSortAboveTheWallpaper() {
         let size = CGSize(width: 1000, height: 800)
         XCTAssertTrue(CATransform3DIsIdentity(stripPerspective(SnapshotStackEffect.pose(depth: 0, size: size))))
         let behind = SnapshotStackEffect.pose(depth: 1, size: size)
-        XCTAssertGreaterThan(behind.m42, 0, "cards behind are raised so their top edge peeks out")
-        let raisedTop = behind.m42 + size.height * (1 - SnapshotStackEffect.depthScale)
-        XCTAssertGreaterThan(raisedTop, size.height)
+        let behindScale = 1 - SnapshotStackEffect.depthScale
+        XCTAssertEqual(behind.m42, size.height * (1 - behindScale) / 2, accuracy: 0.001, "zooms around its centre")
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: 0), SnapshotStackEffect.zPosition(depth: 1))
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
         XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
-        let tuck = SnapshotStackEffect.tuckPose(size: size)
-        XCTAssertLessThan(tuck.m42, 0, "the leaving card dips down to slide under the next one")
-        XCTAssertLessThan(tuck.m41, 0, "and leans to the left")
+        XCTAssertLessThan(SnapshotStackEffect.tuckScale, behindScale, "the leaving card zooms out past the deck")
+        XCTAssertLessThan(SnapshotStackEffect.tuckPose(size: size).m41, 0, "and leans to the left")
     }
 
     private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {

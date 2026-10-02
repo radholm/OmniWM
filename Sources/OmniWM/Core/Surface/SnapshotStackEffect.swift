@@ -4,21 +4,19 @@
 import QuartzCore
 
 /// Moves a window snapshot within a 3D deck of cards. Depth 0 is the top card at the snapshot's frame; deeper
-/// cards sit smaller, raised and dimmer behind it, so their top edges peek out above. Paging rotates the deck:
-/// the top card dips down and slides under the next card to the back while every other card moves up one place,
-/// the next card coming forward into view.
+/// cards sit zoomed out and dimmer behind it. Paging rotates the deck: the top card zooms out and flies back under
+/// the next card while every other card moves up one place, the next card zooming in to full size.
 struct SnapshotStackEffect: Equatable {
     let fromDepth: Int
     let toDepth: Int
-    /// The card leaves the top by dipping down and sliding under the next card to the back of the deck.
+    /// The card leaves the top by zooming out and flying under the next card to the back of the deck.
     var tucksUnder = false
 
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1400
-    /// Per depth level: how much smaller, how far raised (fraction of height) and how far leaned back a card is.
-    static let depthScale: CGFloat = 0.12
-    static let depthRaise: CGFloat = 0.14
-    static let depthLean: CGFloat = -.pi / 24
+    /// Per depth level: how much smaller and how far leaned back a card is.
+    static let depthScale: CGFloat = 0.25
+    static let depthLean: CGFloat = -.pi / 60
     /// Cards deeper than this are hidden.
     static let visibleDepth = 3
 
@@ -42,26 +40,31 @@ struct SnapshotStackEffect: Equatable {
         depth > visibleDepth ? 0 : 1 - Float(depth) * 0.22
     }
 
-    /// The card's resting pose at `depth` in the deck, pivoting on its bottom edge.
+    /// The card's resting pose at `depth` in the deck: zoomed out around its centre (it pivots on its bottom
+    /// edge, so it is raised by half the size it loses) and leaned back slightly.
     static func pose(depth: Int, size: CGSize) -> CATransform3D {
         let level = CGFloat(min(depth, visibleDepth + 1))
+        let scale = max(0.2, 1 - depthScale * level)
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
-        transform = CATransform3DTranslate(transform, 0, size.height * depthRaise * level, 0)
+        transform = CATransform3DTranslate(transform, 0, size.height * (1 - scale) / 2, 0)
         transform = CATransform3DRotate(transform, depthLean * level, 1, 0, 0)
-        let scale = 1 - depthScale * level
         return CATransform3DScale(transform, scale, scale, 1)
     }
 
-    /// Pose of the leaving card as it slides under the next one: dipped down, nudged and tilted to the left,
-    /// tipped back and shrunk.
+    /// How far the leaving card zooms out as it flies back under the next one.
+    static let tuckScale: CGFloat = 0.62
+
+    /// Pose of the leaving card as it flies under the next one: zoomed out around its centre, nudged left and
+    /// tipped back a little.
     static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
-        transform = CATransform3DTranslate(transform, -size.width * 0.1, -size.height * 0.06, 0)
-        transform = CATransform3DRotate(transform, .pi / 45, 0, 0, 1)
-        transform = CATransform3DRotate(transform, -.pi / 14, 1, 0, 0)
-        return CATransform3DScale(transform, 0.88, 0.88, 1)
+        transform = CATransform3DTranslate(
+            transform, -size.width * 0.06, size.height * (1 - tuckScale) / 2, 0
+        )
+        transform = CATransform3DRotate(transform, -.pi / 30, 1, 0, 0)
+        return CATransform3DScale(transform, tuckScale, tuckScale, 1)
     }
 
     /// Undoes a previous stack effect, so the layer can be placed by frame again.
