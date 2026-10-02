@@ -4,7 +4,7 @@
 import QuartzCore
 
 /// Moves a window snapshot within a 3D deck of cards. Depth 0 is the top card at the snapshot's frame; deeper
-/// cards sit zoomed out and dimmer behind it. Paging rotates the deck: the top card zooms out and flies back under
+/// cards sit zoomed out behind it. Paging rotates the deck: the top card zooms out and flies back under
 /// the next card while every other card moves up one place, the next card zooming in to full size.
 struct SnapshotStackEffect: Equatable {
     let fromDepth: Int
@@ -34,10 +34,11 @@ struct SnapshotStackEffect: Equatable {
 
     /// The leaving card stays above the deck only until it has dipped away, then it slides under the next card.
     static let tuckZPosition: CGFloat = 30000
-    static let orderSwapTime: NSNumber = 0.3
+    /// The leaving card passes behind the next card once it has moved out to the side, so it visibly goes under.
+    static let orderSwapTime: NSNumber = 0.45
 
     static func opacity(depth: Int) -> Float {
-        depth > visibleDepth ? 0 : 1 - Float(depth) * 0.22
+        depth > visibleDepth ? 0 : 1
     }
 
     /// The card's resting pose at `depth` in the deck: zoomed out around its centre (it pivots on its bottom
@@ -55,13 +56,13 @@ struct SnapshotStackEffect: Equatable {
     /// How far the leaving card zooms out as it flies back under the next one.
     static let tuckScale: CGFloat = 0.62
 
-    /// Pose of the leaving card as it flies under the next one: zoomed out around its centre, nudged left and
-    /// tipped back a little.
+    /// Pose of the leaving card halfway through: zoomed out around its centre, moved out to the left so the
+    /// next card shows beside it, and tipped back a little. From here it slides back in under the next card.
     static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
         transform = CATransform3DTranslate(
-            transform, -size.width * 0.06, size.height * (1 - tuckScale) / 2, 0
+            transform, -size.width * 0.32, size.height * (1 - tuckScale) / 2, 0
         )
         transform = CATransform3DRotate(transform, -.pi / 30, 1, 0, 0)
         return CATransform3DScale(transform, tuckScale, tuckScale, 1)
@@ -99,9 +100,9 @@ struct SnapshotStackEffect: Equatable {
             transform.values = [start, tuck, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, 0.45, 1]
             transform.timingFunctions = [Self.timing, Self.timing]
-            // Fades quickly while it slides under, then settles at its dimmed place at the back of the deck.
-            opacity.values = [Self.opacity(depth: fromDepth), 0.25, endOpacity]
-            opacity.keyTimes = [0, 0.3, 1]
+            // Stays fully visible: it moves out to the side, then slides back in under the next card.
+            opacity.values = [Self.opacity(depth: fromDepth), 1, endOpacity]
+            opacity.keyTimes = [0, 0.45, 1]
             zPosition.values = [Self.tuckZPosition, endZ]
         } else {
             transform.values = [start, end].map { NSValue(caTransform3D: $0) }
