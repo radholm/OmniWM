@@ -106,16 +106,18 @@ final class DwindleFullscreenCycleTests: XCTestCase {
     }
 
     func testStackPoseTipsBackAroundTheBottomEdge() {
-        let height: CGFloat = 800
+        let size = CGSize(width: 1000, height: 800)
         for effect in [SnapshotStackEffect.in, .out] {
-            let pose = effect.tippedTransform(height: height)
+            let pose = effect.tippedTransform(size: size)
             XCTAssertFalse(CATransform3DIsIdentity(pose))
             XCTAssertLessThan(pose.m34, 0, "uses perspective")
             XCTAssertLessThan(pose.m42, 0, "sinks below its frame")
         }
-        let out = SnapshotStackEffect.out.tippedTransform(height: height)
-        let lifted = SnapshotStackEffect.in.tippedTransform(height: height)
+        let out = SnapshotStackEffect.out.tippedTransform(size: size)
+        let lifted = SnapshotStackEffect.in.tippedTransform(size: size)
         XCTAssertLessThan(out.m42, lifted.m42, "the outgoing card sinks further than the incoming one starts")
+        XCTAssertLessThan(out.m41, 0, "the outgoing card swings to the left")
+        XCTAssertGreaterThan(lifted.m41, 0, "the incoming card arrives from the right")
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

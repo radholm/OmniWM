@@ -57,11 +57,38 @@ enum SnapshotStackEffect: Equatable {
         }
     }
 
-    /// The tipped-back pose: rotated back around the bottom edge, lowered and shrunk.
-    func tippedTransform(height: CGFloat) -> CATransform3D {
+    /// Sideways shift as a fraction of the width: the stack swings to the left, so the outgoing card leaves
+    /// leftwards and the incoming card arrives from slightly right.
+    private var sideShift: CGFloat {
+        switch self {
+        case .out: -0.22
+        case .in: 0.06
+        }
+    }
+
+    /// Turn around the vertical axis; negative turns the card's left edge away, facing it to the left.
+    private var yaw: CGFloat {
+        switch self {
+        case .out: -.pi / 9
+        case .in: .pi / 24
+        }
+    }
+
+    /// In-plane tilt; positive tilts counterclockwise (to the left).
+    private var roll: CGFloat {
+        switch self {
+        case .out: .pi / 22
+        case .in: -.pi / 45
+        }
+    }
+
+    /// The tipped-back pose: swung to the side, tilted, rotated back around the bottom edge, lowered and shrunk.
+    func tippedTransform(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / Self.perspective
-        transform = CATransform3DTranslate(transform, 0, -height * drop, 0)
+        transform = CATransform3DTranslate(transform, size.width * sideShift, -size.height * drop, 0)
+        transform = CATransform3DRotate(transform, roll, 0, 0, 1)
+        transform = CATransform3DRotate(transform, yaw, 0, 1, 0)
         transform = CATransform3DRotate(transform, angle, 1, 0, 0)
         return CATransform3DScale(transform, scale, scale, 1)
     }
@@ -80,7 +107,7 @@ enum SnapshotStackEffect: Equatable {
         layer.zPosition = zPosition
         layer.anchorPoint = CGPoint(x: 0.5, y: 0)
         layer.position = CGPoint(x: frame.midX, y: frame.minY)
-        let tipped = tippedTransform(height: frame.height)
+        let tipped = tippedTransform(size: frame.size)
         let fromTransform = self == .out ? CATransform3DIdentity : tipped
         let toTransform = self == .out ? tipped : CATransform3DIdentity
         let toOpacity: Float = self == .out ? 0 : 1
