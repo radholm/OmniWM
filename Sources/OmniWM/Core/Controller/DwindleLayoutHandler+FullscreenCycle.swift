@@ -18,7 +18,7 @@ struct FullscreenSlide: Equatable {
     let time: TimeInterval
 
     /// Paging is a deliberate, visible motion, so it runs longer than regular layout snapshot transitions.
-    static let duration: CFTimeInterval = 0.55
+    static let duration: CFTimeInterval = 0.4
 
     /// Snapshot items for the page turn. `items` holds the real targets; the deck's windows instead stay at
     /// their fullscreen frame and move between deck depths, drawn above any other (floating) windows.
