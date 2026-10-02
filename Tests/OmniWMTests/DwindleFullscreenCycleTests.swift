@@ -3,6 +3,7 @@
 
 import CoreGraphics
 @testable import OmniWM
+import QuartzCore
 import XCTest
 
 final class DwindleFullscreenCycleTests: XCTestCase {
@@ -88,7 +89,7 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertTrue(tiledEngine.fullscreenTokens(in: tiledWorkspace).isEmpty)
     }
 
-    func testSlideRevealsNextCardUnderneathTheOutgoingOne() {
+    func testPageTurnStacksOutgoingCardOverIncomingCardInPlace() {
         let fullscreen = CGRect(x: 0, y: 0, width: 1000, height: 800)
         let items: [WindowSnapshotTransition.Item] = [
             .init(windowId: 3, from: fullscreen, to: fullscreen),
@@ -100,15 +101,21 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         )
         let shown = slide.items(from: items)
         XCTAssertEqual(shown.map(\.windowId), [3, 2, 1])
-        XCTAssertEqual(shown[1].to, fullscreen)
-        XCTAssertEqual(shown[1].from, fullscreen.insetBy(dx: 60, dy: 48))
-        XCTAssertEqual(shown[2].from, fullscreen)
-        XCTAssertEqual(shown[2].to, fullscreen.insetBy(dx: 60, dy: 48).offsetBy(dx: -1000, dy: 0))
+        XCTAssertEqual(shown.map(\.stackEffect), [nil, .in, .out])
+        XCTAssertTrue(shown.allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
+    }
 
-        let backward = FullscreenSlide(
-            workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2, forward: false, time: 0
-        ).items(from: items)
-        XCTAssertEqual(backward[2].to, fullscreen.insetBy(dx: 60, dy: 48).offsetBy(dx: 1000, dy: 0))
+    func testStackPoseTipsBackAroundTheBottomEdge() {
+        let height: CGFloat = 800
+        for effect in [SnapshotStackEffect.in, .out] {
+            let pose = effect.tippedTransform(height: height)
+            XCTAssertFalse(CATransform3DIsIdentity(pose))
+            XCTAssertLessThan(pose.m34, 0, "uses perspective")
+            XCTAssertLessThan(pose.m42, 0, "sinks below its frame")
+        }
+        let out = SnapshotStackEffect.out.tippedTransform(height: height)
+        let lifted = SnapshotStackEffect.in.tippedTransform(height: height)
+        XCTAssertLessThan(out.m42, lifted.m42, "the outgoing card sinks further than the incoming one starts")
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

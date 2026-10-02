@@ -19,6 +19,8 @@ final class WindowSnapshotTransition {
         let to: CGRect
         /// Newly tiled windows pop in at their target frame instead of moving from their current frame.
         var appearing = false
+        /// Animates the window in place with a 3D stack effect instead of moving it between frames.
+        var stackEffect: SnapshotStackEffect?
     }
 
     static let duration: CFTimeInterval = 0.25
@@ -154,20 +156,24 @@ final class WindowSnapshotTransition {
                 ?? (popIn ? end : item.from.offsetBy(dx: origin.x, dy: origin.y))
             layer.removeAllAnimations()
             promoteFreshContent(of: layer)
+            SnapshotStackEffect.resetPose(of: layer)
             layer.frame = end
+            if animated, let effect = item.stackEffect {
+                effect.animate(layer, duration: duration, timing: Self.timing)
+            }
             layer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: end.size), transform: nil)
             layers[item.windowId] = layer
             motions[item.windowId] = Motion(
-                start: animated ? start : end,
+                start: animated && item.stackEffect == nil ? start : end,
                 end: end,
                 beginTime: CACurrentMediaTime(),
                 duration: duration
             )
             layer.removeFromSuperlayer()
             root.addSublayer(layer)
-            if animated, popIn {
+            if animated, item.stackEffect == nil, popIn {
                 Self.jumpIn(layer, speed: speed)
-            } else if animated, start != end {
+            } else if animated, item.stackEffect == nil, start != end {
                 animate(layer, from: start, to: end, duration: duration)
             }
         }

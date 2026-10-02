@@ -6,7 +6,7 @@ import Foundation
 import QuartzCore
 
 /// Pages through fullscreen windows like a stack of cards: every window is stacked at the fullscreen frame,
-/// the top one slides off to one side and the next one, already in place underneath, settles forward.
+/// the top one tips back and fades away while the next one, already in place underneath, rises up and fades in.
 struct FullscreenSlide: Equatable {
     let workspaceId: WorkspaceDescriptor.ID
     let previousWindowId: Int
@@ -14,27 +14,19 @@ struct FullscreenSlide: Equatable {
     let forward: Bool
     let time: TimeInterval
 
-    /// How far the next card sits back in the stack before it settles forward, as a fraction of its size.
-    static let stackDepth: CGFloat = 0.12
     /// Paging is a deliberate, visible motion, so it runs longer than regular layout snapshot transitions.
     static let duration: CFTimeInterval = 0.55
 
-    /// Snapshot items for the slide, bottom to top. `items` holds the real targets: the previous window, on top,
-    /// shrinks back as it slides off the screen instead, revealing the next window right underneath it.
+    /// Snapshot items for the page turn, bottom to top. `items` holds the real targets: the previous window,
+    /// on top, tips back and fades out, while the next window underneath rises up and fades in.
     func items(from items: [WindowSnapshotTransition.Item]) -> [WindowSnapshotTransition.Item] {
         guard let previous = items.first(where: { $0.windowId == previousWindowId }),
               let next = items.first(where: { $0.windowId == nextWindowId })
         else { return items }
-        let fullscreen = next.to
-        let shift = fullscreen.width * (forward ? 1 : -1)
-        let behind = fullscreen.insetBy(
-            dx: fullscreen.width * Self.stackDepth / 2,
-            dy: fullscreen.height * Self.stackDepth / 2
-        )
         let others = items.filter { $0.windowId != previousWindowId && $0.windowId != nextWindowId }
         return others + [
-            .init(windowId: nextWindowId, from: behind, to: fullscreen),
-            .init(windowId: previousWindowId, from: previous.from, to: behind.offsetBy(dx: -shift, dy: 0))
+            .init(windowId: nextWindowId, from: next.to, to: next.to, stackEffect: .in),
+            .init(windowId: previousWindowId, from: previous.from, to: previous.from, stackEffect: .out)
         ]
     }
 }
