@@ -16,13 +16,23 @@ struct SnapshotStackEffect: Equatable {
     static let perspective: CGFloat = 1400
     /// Per depth level: how much smaller and how far leaned back a card is.
     static let depthScale: CGFloat = 0.08
-    static let depthLean: CGFloat = -.pi / 60
+    static let depthLean: CGFloat = -.pi / 180
     /// Cards deeper than this are hidden.
     static let visibleDepth = 3
 
     /// Eases in and out so the page turn reads as one deliberate motion.
     static var timing: CAMediaTimingFunction {
         CAMediaTimingFunction(controlPoints: 0.45, 0, 0.2, 1)
+    }
+
+    /// Starts moving at once, so the page turn responds immediately to the key press.
+    static var departTiming: CAMediaTimingFunction {
+        CAMediaTimingFunction(controlPoints: 0.2, 0.6, 0.4, 1)
+    }
+
+    /// Carries the motion through without stopping between phases.
+    static var throughTiming: CAMediaTimingFunction {
+        CAMediaTimingFunction(name: .easeInEaseOut)
     }
 
     /// Cards with a 3D transform are depth-sorted against their siblings, so cards leaning back (negative z)
@@ -37,9 +47,9 @@ struct SnapshotStackEffect: Equatable {
     /// Phases of a page turn, as fractions of its duration: the leaving card moves down until `tuckDownTime`,
     /// passes behind the next card and slides back up under it until `tuckedTime`. The other cards wait until
     /// `advanceStartTime`, then move up one place, the next card zooming into view.
-    static let tuckDownTime: NSNumber = 0.35
-    static let tuckedTime: NSNumber = 0.6
-    static let advanceStartTime: NSNumber = 0.55
+    static let tuckDownTime: NSNumber = 0.4
+    static let tuckedTime: NSNumber = 0.75
+    static let advanceStartTime: NSNumber = 0.5
     static let orderSwapTime: NSNumber = tuckDownTime
 
     static func opacity(depth: Int) -> Float {
@@ -69,7 +79,7 @@ struct SnapshotStackEffect: Equatable {
         transform = CATransform3DTranslate(
             transform, 0, -size.height * 0.28, 0
         )
-        transform = CATransform3DRotate(transform, -.pi / 30, 1, 0, 0)
+        transform = CATransform3DRotate(transform, -.pi / 90, 1, 0, 0)
         return CATransform3DScale(transform, tuckScale, tuckScale, 1)
     }
 
@@ -105,14 +115,14 @@ struct SnapshotStackEffect: Equatable {
             let tuck = Self.tuckPose(size: frame.size)
             transform.values = [start, tuck, end, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, Self.tuckDownTime, Self.tuckedTime, 1]
-            transform.timingFunctions = [Self.timing, Self.timing, Self.timing]
+            transform.timingFunctions = [Self.departTiming, Self.throughTiming, Self.timing]
             opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.tuckZPosition, endZ]
         } else {
             // Waits until the leaving card is tucked under, then moves up one place.
             transform.values = [start, start, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, Self.advanceStartTime, 1]
-            transform.timingFunctions = [Self.timing, Self.timing]
+            transform.timingFunctions = [Self.timing, Self.departTiming]
             opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
         }
