@@ -182,6 +182,32 @@ final class WindowSnapshotTransitionTests: XCTestCase {
         XCTAssertFalse(transition.isActive)
     }
 
+    func testOverlayUsesTheShownWallpaperImageInsteadOfTheCachedCapture() throws {
+        var backdropCaptures = 0
+        let wallpaper = try makeImage(width: 1200, height: 800)
+        let cache = OverviewWallpaperCache()
+        cache.desktopImageURL = { _ in nil }
+        cache.captureWallpaper = { _ in
+            backdropCaptures += 1
+            return wallpaper
+        }
+        let transition = WindowSnapshotTransition(
+            ownedWindowRegistry: OwnedWindowRegistry(),
+            backdrop: WorkspaceSwipeBackdrop(wallpaperCache: cache),
+            captureWindow: { _ in try? self.makeImage() },
+            hasCaptureAccess: { true }
+        )
+        transition.wallpaperImage = { _ in wallpaper }
+        XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: true))
+        XCTAssertEqual(backdropCaptures, 0)
+        transition.stop()
+
+        transition.wallpaperImage = { _ in nil }
+        XCTAssertTrue(transition.begin(items: [item()], monitor: monitor, animated: true))
+        XCTAssertEqual(backdropCaptures, 1)
+        transition.stop()
+    }
+
     private func makeTransition(
         hasCaptureAccess: Bool = true,
         capture: (@MainActor (Int) -> CGImage?)? = nil,

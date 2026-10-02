@@ -104,6 +104,14 @@ final class WorkspaceWallpaperParallax {
         )
     }
 
+    /// Wallpaper image currently shown on `monitor`, or `nil` when the parallax wallpaper is not shown there.
+    func wallpaperImage(on monitor: Monitor) -> CGImage? {
+        guard let display = displays[monitor.displayId], display.target.monitor.frame == monitor.frame else {
+            return nil
+        }
+        return display.image
+    }
+
     /// Wallpaper frame currently shown on `monitor`, or `nil` when the parallax wallpaper is not shown there.
     func wallpaperFrame(on monitor: Monitor) -> CGRect? {
         guard let display = displays[monitor.displayId], display.target.monitor.frame == monitor.frame else {

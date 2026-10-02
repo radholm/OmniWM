@@ -25,7 +25,6 @@ final class WindowSnapshotTransition {
 
     static let duration: CFTimeInterval = 0.25
     static let fadeDuration: CFTimeInterval = 0.12
-    static let crossfadeDuration: CFTimeInterval = 0.18
     static let settleDelay: Duration = .milliseconds(60)
     static let maxSettleWait: Duration = .milliseconds(700)
     static let timing = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
@@ -44,6 +43,9 @@ final class WindowSnapshotTransition {
     private var generation = 0
     /// Where the desktop wallpaper is drawn on a display (AppKit coordinates), when it differs from the display.
     var wallpaperFrame: @MainActor (Monitor) -> CGRect? = { _ in nil }
+    /// The wallpaper image shown on a display (the parallax wallpaper), so the overlay matches it exactly.
+    var wallpaperImage: @MainActor (Monitor) -> CGImage? = { _ in nil }
+    private var backdropCapturedAt: CFTimeInterval?
     /// The user's animation speed multiplier (`general.animationSpeed`).
     var animationSpeed: @MainActor () -> Double = { 1 }
 
@@ -332,7 +334,7 @@ final class WindowSnapshotTransition {
     }
 
     private func makePanel(frame: CGRect, monitor: Monitor) -> SnapshotTransitionPanel? {
-        guard let wallpaper = backdrop.image(for: monitor) else { return nil }
+        guard let wallpaper = wallpaperImage(monitor) ?? freshBackdropImage(for: monitor) else { return nil }
         let panel = SnapshotTransitionPanel(frame: frame)
         let root = CALayer()
         root.frame = CGRect(origin: .zero, size: frame.size)
@@ -477,5 +479,22 @@ extension WindowSnapshotTransition {
             motions.removeValue(forKey: windowId)
         }
         CATransaction.commit()
+    }
+}
+
+extension WindowSnapshotTransition {
+    static let crossfadeDuration: CFTimeInterval = 0.18
+    /// The captured macOS wallpaper is reused for this long; dynamic wallpapers change over the day.
+    static let backdropMaximumAge: CFTimeInterval = 30
+
+    /// The captured macOS wallpaper, captured again once it is older than `backdropMaximumAge`.
+    fileprivate func freshBackdropImage(for monitor: Monitor) -> CGImage? {
+        let now = CACurrentMediaTime()
+        if let capturedAt = backdropCapturedAt, now - capturedAt > Self.backdropMaximumAge {
+            backdrop.clear()
+            backdropCapturedAt = nil
+        }
+        if backdropCapturedAt == nil { backdropCapturedAt = now }
+        return backdrop.image(for: monitor)
     }
 }

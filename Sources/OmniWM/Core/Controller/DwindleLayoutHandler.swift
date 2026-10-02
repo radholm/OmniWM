@@ -26,6 +26,9 @@ import QuartzCore
         transition.wallpaperFrame = { [weak self] monitor in
             self?.controller?.layoutRefreshController.workspaceSwipe.wallpaperParallax?.wallpaperFrame(on: monitor)
         }
+        transition.wallpaperImage = { [weak self] monitor in
+            self?.controller?.layoutRefreshController.workspaceSwipe.wallpaperParallax?.wallpaperImage(on: monitor)
+        }
         transition.animationSpeed = { [weak self] in
             self?.controller?.motionPolicy.animationSpeed ?? 1
         }
