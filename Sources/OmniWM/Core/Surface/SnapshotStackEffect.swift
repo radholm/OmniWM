@@ -43,12 +43,13 @@ struct SnapshotStackEffect: Equatable {
     /// next card into its place in the deck. It starts gently and slows into place (ease-in-out), reaching its lowest
     /// point at `orderSwapTime`, where it passes behind the next card. The other cards wait until then and move
     /// up one place, the next card zooming into view.
-    static let tuckDrop: CGFloat = 0.35
+    /// The leaving card drops far enough, and shrinks a little, to clear most of the next card before it passes
+    /// behind it, so the next card is revealed rather than dropped over it.
+    static let tuckDrop: CGFloat = 0.7
+    static let tuckShrink: CGFloat = 0.08
     static let tuckSamples = 24
     static let orderSwapTime: NSNumber = 0.5
     static let advanceStartTime = orderSwapTime
-    /// When the next card has fully appeared, shortly before the leaving card settles behind it.
-    static let appearedTime: NSNumber = 0.9
 
     static func opacity(depth: Int) -> Float {
         depth > visibleDepth ? 0 : 1
@@ -70,8 +71,8 @@ struct SnapshotStackEffect: Equatable {
     /// it settles into the deck pose while dipping down by up to `tuckDrop` of its height and back up.
     static func tuckPose(progress: CGFloat, toDepth depth: Int, size: CGSize) -> CATransform3D {
         let level = CGFloat(min(depth, visibleDepth + 1)) * progress
-        let scale = max(0.2, 1 - depthScale * level)
         let dip = sin(.pi * progress)
+        let scale = max(0.2, 1 - depthScale * level - tuckShrink * dip)
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
         transform = CATransform3DTranslate(
@@ -129,14 +130,7 @@ struct SnapshotStackEffect: Equatable {
             transform.values = [start, start, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, Self.advanceStartTime, 1]
             transform.timingFunctions = [Self.timing, Self.departTiming]
-            if toDepth == 0 {
-                // The next card appears gradually over the leaving card as it slides in behind, instead of
-                // covering it at once.
-                opacity.values = [0, 0, endOpacity]
-                opacity.keyTimes = [0, Self.advanceStartTime, Self.appearedTime]
-            } else {
-                opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
-            }
+            opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
         }
         let group = CAAnimationGroup()
