@@ -5,29 +5,38 @@ import AppKit
 import Foundation
 import QuartzCore
 
-/// Pages through fullscreen windows like a stack of cards: every window is stacked at the fullscreen frame,
-/// the top one tips back and fades away while the next one, already in place underneath, rises up and fades in.
+/// Pages through fullscreen windows like a deck of cards: every window is stacked at the fullscreen frame.
+/// During the page turn the deck shows: the top window swings away to the left and drops to the back while
+/// every window behind it moves up one place, the next one becoming the top card.
 struct FullscreenSlide: Equatable {
     let workspaceId: WorkspaceDescriptor.ID
     let previousWindowId: Int
     let nextWindowId: Int
+    /// Window ids in paging order from the next window on, ending with the previous one.
+    var deckWindowIds: [Int] = []
     let forward: Bool
     let time: TimeInterval
 
     /// Paging is a deliberate, visible motion, so it runs longer than regular layout snapshot transitions.
-    static let duration: CFTimeInterval = 0.55
+    static let duration: CFTimeInterval = 0.65
 
-    /// Snapshot items for the page turn, bottom to top. `items` holds the real targets: the previous window,
-    /// on top, tips back and fades out, while the next window underneath rises up and fades in.
+    /// Snapshot items for the page turn. `items` holds the real targets; the deck's windows instead stay at
+    /// their fullscreen frame and move between deck depths, drawn above any other (floating) windows.
     func items(from items: [WindowSnapshotTransition.Item]) -> [WindowSnapshotTransition.Item] {
-        guard let previous = items.first(where: { $0.windowId == previousWindowId }),
-              let next = items.first(where: { $0.windowId == nextWindowId })
+        let deck = deckWindowIds.isEmpty ? [nextWindowId, previousWindowId] : deckWindowIds
+        let byId = Dictionary(items.map { ($0.windowId, $0) }, uniquingKeysWith: { first, _ in first })
+        guard deck.last == previousWindowId, deck.first == nextWindowId,
+              deck.allSatisfy({ byId[$0] != nil })
         else { return items }
-        let others = items.filter { $0.windowId != previousWindowId && $0.windowId != nextWindowId }
-        return others + [
-            .init(windowId: nextWindowId, from: next.to, to: next.to, stackEffect: .in),
-            .init(windowId: previousWindowId, from: previous.from, to: previous.from, stackEffect: .out)
-        ]
+        let others = items.filter { !deck.contains($0.windowId) }
+        let cards = deck.enumerated().reversed().map { index, windowId -> WindowSnapshotTransition.Item in
+            let frame = byId[windowId]?.from ?? .zero
+            let effect = windowId == previousWindowId
+                ? SnapshotStackEffect(fromDepth: 0, toDepth: index, swingsAway: true)
+                : SnapshotStackEffect(fromDepth: index + 1, toDepth: index)
+            return .init(windowId: windowId, from: frame, to: frame, stackEffect: effect)
+        }
+        return others + cards
     }
 }
 
@@ -53,6 +62,7 @@ extension DwindleLayoutHandler {
                 workspaceId: wsId,
                 previousWindowId: cycle.previous.windowId,
                 nextWindowId: cycle.next.windowId,
+                deckWindowIds: cycle.deck.map(\.windowId),
                 forward: forward,
                 time: CACurrentMediaTime()
             )

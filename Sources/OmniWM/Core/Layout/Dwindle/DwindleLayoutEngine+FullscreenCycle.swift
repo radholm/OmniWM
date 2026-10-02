@@ -8,6 +8,8 @@ extension DwindleLayoutEngine {
     struct FullscreenCycle: Equatable {
         let previous: WindowToken
         let next: WindowToken
+        /// Windows in paging order from `next` on, ending with `previous` (the new back of the stack).
+        var deck: [WindowToken] = []
     }
 
     /// Moves fullscreen from the workspace's fullscreen window to the next tiled window in layout order
@@ -43,7 +45,8 @@ extension DwindleLayoutEngine {
         currentLeaf.tile?.setFullscreen(false, for: currentMember.token)
         nextLeaf.tile?.setFullscreen(true, for: nextMember.token)
         setSelectedNode(nextLeaf, in: workspaceId)
-        return FullscreenCycle(previous: currentMember.token, next: nextMember.token)
+        let deck = (1 ... leaves.count).map { leaves[(currentIndex + step * $0) % leaves.count].1.token }
+        return FullscreenCycle(previous: currentMember.token, next: nextMember.token, deck: deck)
     }
 
     /// Moves fullscreen to `token` when another window of its workspace is fullscreen, e.g. when the user

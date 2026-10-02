@@ -20,16 +20,16 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertEqual(engine.toggleFullscreen(in: workspace), order[0])
 
         var cycle = try XCTUnwrap(engine.cycleFullscreen(in: workspace))
-        XCTAssertEqual(cycle, .init(previous: order[0], next: order[1]))
+        XCTAssertEqual(cycle, .init(previous: order[0], next: order[1], deck: [order[1], order[2], order[0]]))
         XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[1]])
         XCTAssertEqual(engine.selectedNode(in: workspace)?.tile?.activeToken, order[1])
         XCTAssertNotEqual(tiled[order[0]], screen)
         XCTAssertEqual(Set(layout(engine, in: workspace).values), [screen], "windows stack under the fullscreen one")
 
         cycle = try XCTUnwrap(engine.cycleFullscreen(in: workspace))
-        XCTAssertEqual(cycle, .init(previous: order[1], next: order[2]))
+        XCTAssertEqual(cycle, .init(previous: order[1], next: order[2], deck: [order[2], order[0], order[1]]))
         cycle = try XCTUnwrap(engine.cycleFullscreen(in: workspace))
-        XCTAssertEqual(cycle, .init(previous: order[2], next: order[0]))
+        XCTAssertEqual(cycle, .init(previous: order[2], next: order[0], deck: [order[0], order[1], order[2]]))
         XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[0]])
     }
 
@@ -89,35 +89,46 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertTrue(tiledEngine.fullscreenTokens(in: tiledWorkspace).isEmpty)
     }
 
-    func testPageTurnStacksOutgoingCardOverIncomingCardInPlace() {
+    func testPageTurnRotatesTheDeck() {
         let fullscreen = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let floating = CGRect(x: 10, y: 10, width: 200, height: 100)
         let items: [WindowSnapshotTransition.Item] = [
+            .init(windowId: 9, from: floating, to: floating),
             .init(windowId: 3, from: fullscreen, to: fullscreen),
             .init(windowId: 2, from: fullscreen, to: fullscreen),
             .init(windowId: 1, from: fullscreen, to: fullscreen)
         ]
         let slide = FullscreenSlide(
-            workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2, forward: true, time: 0
+            workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2,
+            deckWindowIds: [2, 3, 1], forward: true, time: 0
         )
         let shown = slide.items(from: items)
-        XCTAssertEqual(shown.map(\.windowId), [3, 2, 1])
-        XCTAssertEqual(shown.map(\.stackEffect), [nil, .in, .out])
-        XCTAssertTrue(shown.allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
+        XCTAssertEqual(shown.map(\.windowId), [9, 1, 3, 2])
+        XCTAssertNil(shown[0].stackEffect)
+        XCTAssertEqual(shown[1].stackEffect, SnapshotStackEffect(fromDepth: 0, toDepth: 2, swingsAway: true))
+        XCTAssertEqual(shown[2].stackEffect, SnapshotStackEffect(fromDepth: 2, toDepth: 1))
+        XCTAssertEqual(shown[3].stackEffect, SnapshotStackEffect(fromDepth: 1, toDepth: 0))
+        XCTAssertTrue(shown.dropFirst().allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
     }
 
-    func testStackPoseTipsBackAroundTheBottomEdge() {
+    func testDeckPosesPeekAboveAndSortAboveTheWallpaper() {
         let size = CGSize(width: 1000, height: 800)
-        for effect in [SnapshotStackEffect.in, .out] {
-            let pose = effect.tippedTransform(size: size)
-            XCTAssertFalse(CATransform3DIsIdentity(pose))
-            XCTAssertLessThan(pose.m34, 0, "uses perspective")
-            XCTAssertLessThan(pose.m42, 0, "sinks below its frame")
-        }
-        let out = SnapshotStackEffect.out.tippedTransform(size: size)
-        let lifted = SnapshotStackEffect.in.tippedTransform(size: size)
-        XCTAssertLessThan(out.m42, lifted.m42, "the outgoing card sinks further than the incoming one starts")
-        XCTAssertLessThan(out.m41, 0, "the outgoing card swings to the left")
-        XCTAssertGreaterThan(lifted.m41, 0, "the incoming card arrives from the right")
+        XCTAssertTrue(CATransform3DIsIdentity(stripPerspective(SnapshotStackEffect.pose(depth: 0, size: size))))
+        let behind = SnapshotStackEffect.pose(depth: 1, size: size)
+        XCTAssertGreaterThan(behind.m42, 0, "cards behind are raised so their top edge peeks out")
+        let raisedTop = behind.m42 + size.height * (1 - SnapshotStackEffect.depthScale)
+        XCTAssertGreaterThan(raisedTop, size.height)
+        XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: 0), SnapshotStackEffect.zPosition(depth: 1))
+        XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
+        XCTAssertGreaterThan(SnapshotStackEffect.swingZPosition, SnapshotStackEffect.zPosition(depth: 0))
+        XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
+        XCTAssertLessThan(SnapshotStackEffect.swingPose(size: size).m41, 0, "the top card swings to the left")
+    }
+
+    private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {
+        var transform = transform
+        transform.m34 = 0
+        return transform
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

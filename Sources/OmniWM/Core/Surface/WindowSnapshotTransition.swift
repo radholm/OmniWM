@@ -19,7 +19,7 @@ final class WindowSnapshotTransition {
         let to: CGRect
         /// Newly tiled windows pop in at their target frame instead of moving from their current frame.
         var appearing = false
-        /// Animates the window in place with a 3D stack effect instead of moving it between frames.
+        /// Animates the window within a 3D deck of cards instead of moving it between frames.
         var stackEffect: SnapshotStackEffect?
     }
 
