@@ -4,8 +4,8 @@
 import QuartzCore
 
 /// Moves a window snapshot within a 3D deck of cards. Depth 0 is the top card at the snapshot's frame; deeper
-/// cards sit zoomed out behind it. Paging rotates the deck: the top card zooms out and flies back under
-/// the next card while every other card moves up one place, the next card zooming in to full size.
+/// cards sit slightly zoomed out behind it. Paging rotates the deck: the top card moves down and slides back up
+/// under the next card; then every other card moves up one place, the next card zooming into view.
 struct SnapshotStackEffect: Equatable {
     let fromDepth: Int
     let toDepth: Int
@@ -15,7 +15,7 @@ struct SnapshotStackEffect: Equatable {
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1400
     /// Per depth level: how much smaller and how far leaned back a card is.
-    static let depthScale: CGFloat = 0.25
+    static let depthScale: CGFloat = 0.08
     static let depthLean: CGFloat = -.pi / 60
     /// Cards deeper than this are hidden.
     static let visibleDepth = 3
@@ -34,8 +34,13 @@ struct SnapshotStackEffect: Equatable {
 
     /// The leaving card stays above the deck only until it has dipped away, then it slides under the next card.
     static let tuckZPosition: CGFloat = 30000
-    /// The leaving card passes behind the next card once it has moved out to the side, so it visibly goes under.
-    static let orderSwapTime: NSNumber = 0.45
+    /// Phases of a page turn, as fractions of its duration: the leaving card moves down until `tuckDownTime`,
+    /// passes behind the next card and slides back up under it until `tuckedTime`. The other cards wait until
+    /// `advanceStartTime`, then move up one place, the next card zooming into view.
+    static let tuckDownTime: NSNumber = 0.35
+    static let tuckedTime: NSNumber = 0.6
+    static let advanceStartTime: NSNumber = 0.55
+    static let orderSwapTime: NSNumber = tuckDownTime
 
     static func opacity(depth: Int) -> Float {
         depth > visibleDepth ? 0 : 1
@@ -54,15 +59,15 @@ struct SnapshotStackEffect: Equatable {
     }
 
     /// How far the leaving card zooms out as it flies back under the next one.
-    static let tuckScale: CGFloat = 0.62
+    static let tuckScale: CGFloat = 0.92
 
-    /// Pose of the leaving card halfway through: zoomed out and moved down so the next card shows above it,
-    /// and tipped back a little. From here it slides back up in under the next card.
+    /// Pose of the leaving card once it has moved down, barely smaller, so the waiting next card shows above it;
+    /// tipped back a little. From here it slides back up in under the next card.
     static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
         transform = CATransform3DTranslate(
-            transform, 0, -size.height * 0.3, 0
+            transform, 0, -size.height * 0.28, 0
         )
         transform = CATransform3DRotate(transform, -.pi / 30, 1, 0, 0)
         return CATransform3DScale(transform, tuckScale, tuckScale, 1)
@@ -96,17 +101,18 @@ struct SnapshotStackEffect: Equatable {
         // Discrete keyframes take one more key time than values.
         zPosition.keyTimes = [0, Self.orderSwapTime, 1]
         if tucksUnder {
+            // Stays fully visible: moves down, then slides back up under the next card and stays there.
             let tuck = Self.tuckPose(size: frame.size)
-            transform.values = [start, tuck, end].map { NSValue(caTransform3D: $0) }
-            transform.keyTimes = [0, 0.45, 1]
-            transform.timingFunctions = [Self.timing, Self.timing]
-            // Stays fully visible: it moves down, then slides back up in under the next card.
-            opacity.values = [Self.opacity(depth: fromDepth), 1, endOpacity]
-            opacity.keyTimes = [0, 0.45, 1]
+            transform.values = [start, tuck, end, end].map { NSValue(caTransform3D: $0) }
+            transform.keyTimes = [0, Self.tuckDownTime, Self.tuckedTime, 1]
+            transform.timingFunctions = [Self.timing, Self.timing, Self.timing]
+            opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.tuckZPosition, endZ]
         } else {
-            transform.values = [start, end].map { NSValue(caTransform3D: $0) }
-            transform.timingFunctions = [Self.timing]
+            // Waits until the leaving card is tucked under, then moves up one place.
+            transform.values = [start, start, end].map { NSValue(caTransform3D: $0) }
+            transform.keyTimes = [0, Self.advanceStartTime, 1]
+            transform.timingFunctions = [Self.timing, Self.timing]
             opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
         }

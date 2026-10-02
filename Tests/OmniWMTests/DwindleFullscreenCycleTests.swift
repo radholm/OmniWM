@@ -121,7 +121,11 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
         XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
-        XCTAssertLessThan(SnapshotStackEffect.tuckScale, behindScale, "the leaving card zooms out past the deck")
+        XCTAssertGreaterThan(SnapshotStackEffect.tuckScale, 0.85, "the leaving card stays almost full size")
+        XCTAssertLessThan(
+            SnapshotStackEffect.tuckDownTime.doubleValue, SnapshotStackEffect.advanceStartTime.doubleValue,
+            "the next card waits until the leaving card is under it"
+        )
         XCTAssertLessThan(SnapshotStackEffect.tuckPose(size: size).m42, 0, "and moves down")
     }
 
