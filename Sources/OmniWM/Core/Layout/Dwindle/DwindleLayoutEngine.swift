@@ -11,9 +11,12 @@ final class DwindleLayoutEngine {
         let fullscreenArea: CGRect
         let excludedTokens: Set<WindowToken>
         let settings: DwindleSettings
+        /// While a window is fullscreen, every window is stacked at the fullscreen frame underneath it, so
+        /// paging to the next window (`cycleFullscreen`) only reveals what is already in place.
+        var stacksFullscreen = false
 
         func frame(for member: DwindleTileMember, in rect: CGRect) -> CGRect {
-            if member.isFullscreen {
+            if member.isFullscreen || stacksFullscreen {
                 return fullscreenArea
             }
             return DwindleGapCalculator.applyGaps(

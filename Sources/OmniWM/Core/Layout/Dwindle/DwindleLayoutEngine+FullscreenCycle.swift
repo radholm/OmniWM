@@ -45,4 +45,26 @@ extension DwindleLayoutEngine {
         setSelectedNode(nextLeaf, in: workspaceId)
         return FullscreenCycle(previous: currentMember.token, next: nextMember.token)
     }
+
+    /// Moves fullscreen to `token` when another window of its workspace is fullscreen, e.g. when the user
+    /// activates a window stacked underneath it. Returns the window that left fullscreen.
+    @discardableResult
+    func moveFullscreen(to token: WindowToken, in workspaceId: WorkspaceDescriptor.ID) -> WindowToken? {
+        assertSanctionedMutation()
+        guard let state = existingState(for: workspaceId),
+              let targetTile = state.leafByToken[token]?.tile,
+              visibleMember(in: targetTile, excluding: state.excludedTokens)?.token == token,
+              targetTile.member(for: token)?.isFullscreen == false,
+              let current = state.root.collectAllLeaves().lazy.compactMap({ leaf -> (DwindleTile, WindowToken)? in
+                  guard let tile = leaf.tile,
+                        let member = self.visibleMember(in: tile, excluding: state.excludedTokens),
+                        member.isFullscreen
+                  else { return nil }
+                  return (tile, member.token)
+              }).first
+        else { return nil }
+        current.0.setFullscreen(false, for: current.1)
+        targetTile.setFullscreen(true, for: token)
+        return current.1
+    }
 }

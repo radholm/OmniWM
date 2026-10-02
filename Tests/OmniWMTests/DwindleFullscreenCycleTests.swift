@@ -22,9 +22,8 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertEqual(cycle, .init(previous: order[0], next: order[1]))
         XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[1]])
         XCTAssertEqual(engine.selectedNode(in: workspace)?.tile?.activeToken, order[1])
-        let frames = layout(engine, in: workspace)
-        XCTAssertEqual(frames[order[1]], screen)
-        XCTAssertEqual(frames[order[0]], tiled[order[0]])
+        XCTAssertNotEqual(tiled[order[0]], screen)
+        XCTAssertEqual(Set(layout(engine, in: workspace).values), [screen], "windows stack under the fullscreen one")
 
         cycle = try XCTUnwrap(engine.cycleFullscreen(in: workspace))
         XCTAssertEqual(cycle, .init(previous: order[1], next: order[2]))
@@ -74,28 +73,42 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertEqual(cycle.next, order[2])
     }
 
-    func testSlideMovesPagingWindowsAcrossTheScreenAboveTheOthers() {
+    func testActivatingAStackedWindowMakesItFullscreen() throws {
+        let (engine, workspace) = makeEngine()
+        _ = sync(engine, [first, second, third], in: workspace)
+        let order = try layoutOrder(engine, in: workspace)
+        XCTAssertEqual(engine.toggleFullscreen(in: workspace), order[0])
+        XCTAssertEqual(engine.moveFullscreen(to: order[2], in: workspace), order[0])
+        XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[2]])
+        XCTAssertNil(engine.moveFullscreen(to: order[2], in: workspace))
+
+        let (tiledEngine, tiledWorkspace) = makeEngine()
+        _ = sync(tiledEngine, [first, second], in: tiledWorkspace)
+        XCTAssertNil(tiledEngine.moveFullscreen(to: second, in: tiledWorkspace))
+        XCTAssertTrue(tiledEngine.fullscreenTokens(in: tiledWorkspace).isEmpty)
+    }
+
+    func testSlideRevealsNextCardUnderneathTheOutgoingOne() {
         let fullscreen = CGRect(x: 0, y: 0, width: 1000, height: 800)
-        let tile = CGRect(x: 0, y: 0, width: 500, height: 800)
         let items: [WindowSnapshotTransition.Item] = [
-            .init(windowId: 2, from: tile, to: fullscreen),
-            .init(windowId: 3, from: tile, to: tile),
-            .init(windowId: 1, from: fullscreen, to: tile)
+            .init(windowId: 3, from: fullscreen, to: fullscreen),
+            .init(windowId: 2, from: fullscreen, to: fullscreen),
+            .init(windowId: 1, from: fullscreen, to: fullscreen)
         ]
         let slide = FullscreenSlide(
             workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2, forward: true, time: 0
         )
         let shown = slide.items(from: items)
-        XCTAssertEqual(shown.map(\.windowId), [3, 1, 2])
-        XCTAssertEqual(shown[1].from, fullscreen)
-        XCTAssertEqual(shown[1].to, fullscreen.offsetBy(dx: -1000, dy: 0))
-        XCTAssertEqual(shown[2].from, fullscreen.offsetBy(dx: 1000, dy: 0))
-        XCTAssertEqual(shown[2].to, fullscreen)
+        XCTAssertEqual(shown.map(\.windowId), [3, 2, 1])
+        XCTAssertEqual(shown[1].to, fullscreen)
+        XCTAssertEqual(shown[1].from, fullscreen.insetBy(dx: 20, dy: 16))
+        XCTAssertEqual(shown[2].from, fullscreen)
+        XCTAssertEqual(shown[2].to, fullscreen.offsetBy(dx: -1000, dy: 0))
 
         let backward = FullscreenSlide(
             workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2, forward: false, time: 0
         ).items(from: items)
-        XCTAssertEqual(backward[2].from, fullscreen.offsetBy(dx: -1000, dy: 0))
+        XCTAssertEqual(backward[2].to, fullscreen.offsetBy(dx: 1000, dy: 0))
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

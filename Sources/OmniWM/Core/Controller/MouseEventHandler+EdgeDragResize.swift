@@ -78,7 +78,8 @@ extension MouseEventHandler {
         let frames: [WindowToken: CGRect]
         let innerGap: CGFloat
         if isDwindle {
-            guard let engine = controller.dwindleEngine else { return false }
+            // Stacked fullscreen windows have no tile edges to drag.
+            guard let engine = controller.dwindleEngine, engine.fullscreenTokens(in: wsId).isEmpty else { return false }
             frames = engine.presentedFrames(in: wsId, at: controller.animationClock.now())
             innerGap = controller.resolvedDwindleSettings(for: monitor).innerGap
         } else {

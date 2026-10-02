@@ -81,8 +81,11 @@ extension DwindleLayoutHandler {
             return .missing
         }
 
+        var movedFullscreen = false
         let outcome = controller.workspaceManager.withEngineMutationScope {
-            engine.activateWindowOutcome(token, in: workspaceId)
+            let outcome = engine.activateWindowOutcome(token, in: workspaceId)
+            movedFullscreen = outcome != .missing && handOffFullscreen(to: token, engine: engine, in: workspaceId)
+            return outcome
         }
         guard outcome != .missing else { return .missing }
         _ = controller.workspaceManager.applySessionPatch(
@@ -94,7 +97,8 @@ extension DwindleLayoutHandler {
             )
         )
 
-        let requiresLayout = outcome == .activated || controller.workspaceManager.hiddenState(for: token) != nil
+        let requiresLayout = outcome == .activated || movedFullscreen
+            || controller.workspaceManager.hiddenState(for: token) != nil
         if requiresLayout, layoutRefresh {
             let postLayout: LayoutRefreshController.PostLayoutAction = { [weak self] in
                 self?.completeGroupSelectionAfterReveal(

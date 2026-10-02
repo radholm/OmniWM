@@ -29,12 +29,15 @@ extension DwindleLayoutEngine {
         let borderSafeFillArea = borderSafeFillScreen ?? fullscreenScreen ?? screen
         let fullscreenArea = fullscreenScreen ?? screen
 
-        let calculation = LayoutCalculation(
+        var calculation = LayoutCalculation(
             tilingArea: tilingArea,
             fullscreenArea: fullscreenArea,
             excludedTokens: excludedTokens,
             settings: calculationSettings
         )
+        calculation.stacksFullscreen = state.root.collectAllLeaves().contains { leaf in
+            leaf.tile.flatMap { visibleMember(in: $0, excluding: excludedTokens) }?.isFullscreen == true
+        }
         if state.root.projectedVisibleLeafCount == 1 {
             calculateSingleWindowLayout(
                 root: state.root,

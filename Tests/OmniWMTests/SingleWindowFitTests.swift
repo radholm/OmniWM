@@ -250,7 +250,8 @@ final class DwindleSingleWindowFitEngineTests: XCTestCase {
         )
 
         XCTAssertEqual(frames[second], fullscreenFrame)
-        XCTAssertNotEqual(frames[first], fullscreenFrame)
+        // The other windows stack underneath the fullscreen one so paging through them only reveals them.
+        XCTAssertEqual(frames[first], fullscreenFrame)
     }
 }
 
