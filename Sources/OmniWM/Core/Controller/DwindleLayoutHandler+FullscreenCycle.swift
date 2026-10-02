@@ -6,8 +6,8 @@ import Foundation
 import QuartzCore
 
 /// Pages through fullscreen windows like a deck of cards: every window is stacked at the fullscreen frame.
-/// During the page turn the deck shows: the top window swings away to the left and drops to the back while
-/// every window behind it moves up one place, the next one becoming the top card.
+/// During the page turn the deck shows: the top window slides down under the next window to the back while
+/// every window behind it moves up one place, the next one coming forward into view as the top card.
 struct FullscreenSlide: Equatable {
     let workspaceId: WorkspaceDescriptor.ID
     let previousWindowId: Int
@@ -32,7 +32,7 @@ struct FullscreenSlide: Equatable {
         let cards = deck.enumerated().reversed().map { index, windowId -> WindowSnapshotTransition.Item in
             let frame = byId[windowId]?.from ?? .zero
             let effect = windowId == previousWindowId
-                ? SnapshotStackEffect(fromDepth: 0, toDepth: index, swingsAway: true)
+                ? SnapshotStackEffect(fromDepth: 0, toDepth: index, tucksUnder: true)
                 : SnapshotStackEffect(fromDepth: index + 1, toDepth: index)
             return .init(windowId: windowId, from: frame, to: frame, stackEffect: effect)
         }

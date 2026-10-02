@@ -5,12 +5,13 @@ import QuartzCore
 
 /// Moves a window snapshot within a 3D deck of cards. Depth 0 is the top card at the snapshot's frame; deeper
 /// cards sit smaller, raised and dimmer behind it, so their top edges peek out above. Paging rotates the deck:
-/// the top card swings away to the left and drops to the back while every other card moves up one place.
+/// the top card dips down and slides under the next card to the back while every other card moves up one place,
+/// the next card coming forward into view.
 struct SnapshotStackEffect: Equatable {
     let fromDepth: Int
     let toDepth: Int
-    /// The card leaves the top by swinging to the left before it settles at the back of the deck.
-    var swingsAway = false
+    /// The card leaves the top by dipping down and sliding under the next card to the back of the deck.
+    var tucksUnder = false
 
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1400
@@ -28,12 +29,14 @@ struct SnapshotStackEffect: Equatable {
 
     /// Cards with a 3D transform are depth-sorted against their siblings, so cards leaning back (negative z)
     /// would vanish behind the overlay's flat wallpaper layer. Deck positions sit far above any tilt depth,
-    /// higher for cards nearer the top; the swinging card stays above them all until it drops to the back.
+    /// higher for cards nearer the top.
     static func zPosition(depth: Int) -> CGFloat {
         20000 - CGFloat(depth) * 2000
     }
 
-    static let swingZPosition: CGFloat = 30000
+    /// The leaving card stays above the deck only until it has dipped away, then it slides under the next card.
+    static let tuckZPosition: CGFloat = 30000
+    static let orderSwapTime: NSNumber = 0.3
 
     static func opacity(depth: Int) -> Float {
         depth > visibleDepth ? 0 : 1 - Float(depth) * 0.22
@@ -50,15 +53,15 @@ struct SnapshotStackEffect: Equatable {
         return CATransform3DScale(transform, scale, scale, 1)
     }
 
-    /// Halfway pose of the top card leaving: swung left, turned and tilted to the left, tipped back and lowered.
-    static func swingPose(size: CGSize) -> CATransform3D {
+    /// Pose of the leaving card as it slides under the next one: dipped down, nudged and tilted to the left,
+    /// tipped back and shrunk.
+    static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
-        transform = CATransform3DTranslate(transform, -size.width * 0.55, -size.height * 0.06, 0)
-        transform = CATransform3DRotate(transform, .pi / 22, 0, 0, 1)
-        transform = CATransform3DRotate(transform, -.pi / 9, 0, 1, 0)
-        transform = CATransform3DRotate(transform, -.pi / 12, 1, 0, 0)
-        return CATransform3DScale(transform, 0.9, 0.9, 1)
+        transform = CATransform3DTranslate(transform, -size.width * 0.1, -size.height * 0.22, 0)
+        transform = CATransform3DRotate(transform, .pi / 45, 0, 0, 1)
+        transform = CATransform3DRotate(transform, -.pi / 14, 1, 0, 0)
+        return CATransform3DScale(transform, 0.88, 0.88, 1)
     }
 
     /// Undoes a previous stack effect, so the layer can be placed by frame again.
@@ -86,22 +89,21 @@ struct SnapshotStackEffect: Equatable {
         let opacity = CAKeyframeAnimation(keyPath: "opacity")
         let zPosition = CAKeyframeAnimation(keyPath: "zPosition")
         zPosition.calculationMode = .discrete
-        if swingsAway {
-            let swing = Self.swingPose(size: frame.size)
-            transform.values = [start, swing, end].map { NSValue(caTransform3D: $0) }
-            transform.keyTimes = [0, 0.5, 1]
+        // Discrete keyframes take one more key time than values.
+        zPosition.keyTimes = [0, Self.orderSwapTime, 1]
+        if tucksUnder {
+            let tuck = Self.tuckPose(size: frame.size)
+            transform.values = [start, tuck, end].map { NSValue(caTransform3D: $0) }
+            transform.keyTimes = [0, 0.45, 1]
             transform.timingFunctions = [Self.timing, Self.timing]
-            opacity.values = [Self.opacity(depth: fromDepth), 0.95, endOpacity]
-            opacity.keyTimes = [0, 0.5, 1]
-            zPosition.values = [Self.swingZPosition, endZ]
-            // Discrete keyframes take one more key time than values.
-            zPosition.keyTimes = [0, 0.5, 1]
+            opacity.values = [Self.opacity(depth: fromDepth), 0.85, endOpacity]
+            opacity.keyTimes = [0, 0.45, 1]
+            zPosition.values = [Self.tuckZPosition, endZ]
         } else {
             transform.values = [start, end].map { NSValue(caTransform3D: $0) }
             transform.timingFunctions = [Self.timing]
             opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
-            zPosition.keyTimes = [0, 0.35, 1]
         }
         let group = CAAnimationGroup()
         group.animations = [transform, opacity, zPosition]

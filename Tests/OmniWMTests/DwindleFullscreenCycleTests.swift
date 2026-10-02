@@ -105,7 +105,7 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         let shown = slide.items(from: items)
         XCTAssertEqual(shown.map(\.windowId), [9, 1, 3, 2])
         XCTAssertNil(shown[0].stackEffect)
-        XCTAssertEqual(shown[1].stackEffect, SnapshotStackEffect(fromDepth: 0, toDepth: 2, swingsAway: true))
+        XCTAssertEqual(shown[1].stackEffect, SnapshotStackEffect(fromDepth: 0, toDepth: 2, tucksUnder: true))
         XCTAssertEqual(shown[2].stackEffect, SnapshotStackEffect(fromDepth: 2, toDepth: 1))
         XCTAssertEqual(shown[3].stackEffect, SnapshotStackEffect(fromDepth: 1, toDepth: 0))
         XCTAssertTrue(shown.dropFirst().allSatisfy { $0.from == fullscreen && $0.to == fullscreen })
@@ -120,9 +120,11 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(raisedTop, size.height)
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: 0), SnapshotStackEffect.zPosition(depth: 1))
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
-        XCTAssertGreaterThan(SnapshotStackEffect.swingZPosition, SnapshotStackEffect.zPosition(depth: 0))
+        XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
         XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
-        XCTAssertLessThan(SnapshotStackEffect.swingPose(size: size).m41, 0, "the top card swings to the left")
+        let tuck = SnapshotStackEffect.tuckPose(size: size)
+        XCTAssertLessThan(tuck.m42, 0, "the leaving card dips down to slide under the next one")
+        XCTAssertLessThan(tuck.m41, 0, "and leans to the left")
     }
 
     private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {
