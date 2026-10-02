@@ -20,12 +20,12 @@ struct SnapshotStackEffect: Equatable {
     /// Perspective distance; smaller values exaggerate the depth.
     static let perspective: CGFloat = 1600
     /// Size of the cards while the deck is shown, as a fraction of their full size.
-    static let deckScale: CGFloat = 0.62
+    static let deckScale: CGFloat = 0.74
     /// Offset from each card to the one behind it, as a fraction of the card's full size (right and down).
     static let deckStepX: CGFloat = 0.07
     static let deckStepY: CGFloat = 0.06
     /// Cards turn their left edge away a little, like a fanned deck seen from the right.
-    static let deckYaw: CGFloat = -.pi / 14
+    static let deckYaw: CGFloat = -.pi / 20
     /// Cards beyond this many are not drawn in the deck.
     static let maximumDeckSize = 7
 
