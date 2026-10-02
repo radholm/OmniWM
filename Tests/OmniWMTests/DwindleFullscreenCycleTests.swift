@@ -122,7 +122,7 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
         XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
         XCTAssertLessThan(SnapshotStackEffect.tuckScale, behindScale, "the leaving card zooms out past the deck")
-        XCTAssertLessThan(SnapshotStackEffect.tuckPose(size: size).m41, 0, "and leans to the left")
+        XCTAssertLessThan(SnapshotStackEffect.tuckPose(size: size).m42, 0, "and moves down")
     }
 
     private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {

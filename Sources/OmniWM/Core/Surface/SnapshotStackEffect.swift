@@ -56,13 +56,13 @@ struct SnapshotStackEffect: Equatable {
     /// How far the leaving card zooms out as it flies back under the next one.
     static let tuckScale: CGFloat = 0.62
 
-    /// Pose of the leaving card halfway through: zoomed out around its centre, moved out to the left so the
-    /// next card shows beside it, and tipped back a little. From here it slides back in under the next card.
+    /// Pose of the leaving card halfway through: zoomed out and moved down so the next card shows above it,
+    /// and tipped back a little. From here it slides back up in under the next card.
     static func tuckPose(size: CGSize) -> CATransform3D {
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
         transform = CATransform3DTranslate(
-            transform, -size.width * 0.32, size.height * (1 - tuckScale) / 2, 0
+            transform, 0, -size.height * 0.3, 0
         )
         transform = CATransform3DRotate(transform, -.pi / 30, 1, 0, 0)
         return CATransform3DScale(transform, tuckScale, tuckScale, 1)
@@ -100,7 +100,7 @@ struct SnapshotStackEffect: Equatable {
             transform.values = [start, tuck, end].map { NSValue(caTransform3D: $0) }
             transform.keyTimes = [0, 0.45, 1]
             transform.timingFunctions = [Self.timing, Self.timing]
-            // Stays fully visible: it moves out to the side, then slides back in under the next card.
+            // Stays fully visible: it moves down, then slides back up in under the next card.
             opacity.values = [Self.opacity(depth: fromDepth), 1, endOpacity]
             opacity.keyTimes = [0, 0.45, 1]
             zPosition.values = [Self.tuckZPosition, endZ]
