@@ -40,12 +40,12 @@ struct SnapshotStackEffect: Equatable {
     /// The leaving card stays above the deck only until it has dipped away, then it slides under the next card.
     static let tuckZPosition: CGFloat = 30000
     /// The leaving card moves along one continuous path for the whole page turn: down and back up under the
-    /// next card into its place in the deck. It starts fast and slows into place (ease-out), reaching its lowest
+    /// next card into its place in the deck. It starts gently and slows into place (ease-in-out), reaching its lowest
     /// point at `orderSwapTime`, where it passes behind the next card. The other cards wait until then and move
     /// up one place, the next card zooming into view.
     static let tuckDrop: CGFloat = 0.35
     static let tuckSamples = 24
-    static let orderSwapTime = NSNumber(value: 1 - (0.5 as Double).squareRoot())
+    static let orderSwapTime: NSNumber = 0.5
     static let advanceStartTime = orderSwapTime
 
     static func opacity(depth: Int) -> Float {
@@ -79,9 +79,9 @@ struct SnapshotStackEffect: Equatable {
         return CATransform3DScale(transform, scale, scale, 1)
     }
 
-    /// Ease-out progress for `time` (0...1): starts moving at once and slows into place.
+    /// Ease-in-out progress for `time` (0...1): starts gently, speeds up and slows into place.
     static func tuckProgress(_ time: CGFloat) -> CGFloat {
-        1 - (1 - time) * (1 - time)
+        (1 - cos(.pi * time)) / 2
     }
 
     /// Undoes a previous stack effect, so the layer can be placed by frame again.
