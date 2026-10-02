@@ -94,13 +94,14 @@ struct SnapshotStackEffect: Equatable {
             opacity.values = [Self.opacity(depth: fromDepth), 0.95, endOpacity]
             opacity.keyTimes = [0, 0.5, 1]
             zPosition.values = [Self.swingZPosition, endZ]
-            zPosition.keyTimes = [0, 0.5]
+            // Discrete keyframes take one more key time than values.
+            zPosition.keyTimes = [0, 0.5, 1]
         } else {
             transform.values = [start, end].map { NSValue(caTransform3D: $0) }
             transform.timingFunctions = [Self.timing]
             opacity.values = [Self.opacity(depth: fromDepth), endOpacity]
             zPosition.values = [Self.zPosition(depth: fromDepth), endZ]
-            zPosition.keyTimes = [0, 0.35]
+            zPosition.keyTimes = [0, 0.35, 1]
         }
         let group = CAAnimationGroup()
         group.animations = [transform, opacity, zPosition]
