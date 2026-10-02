@@ -101,14 +101,14 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         let shown = slide.items(from: items)
         XCTAssertEqual(shown.map(\.windowId), [3, 2, 1])
         XCTAssertEqual(shown[1].to, fullscreen)
-        XCTAssertEqual(shown[1].from, fullscreen.insetBy(dx: 20, dy: 16))
+        XCTAssertEqual(shown[1].from, fullscreen.insetBy(dx: 60, dy: 48))
         XCTAssertEqual(shown[2].from, fullscreen)
-        XCTAssertEqual(shown[2].to, fullscreen.offsetBy(dx: -1000, dy: 0))
+        XCTAssertEqual(shown[2].to, fullscreen.insetBy(dx: 60, dy: 48).offsetBy(dx: -1000, dy: 0))
 
         let backward = FullscreenSlide(
             workspaceId: WorkspaceDescriptor.ID(), previousWindowId: 1, nextWindowId: 2, forward: false, time: 0
         ).items(from: items)
-        XCTAssertEqual(backward[2].to, fullscreen.offsetBy(dx: 1000, dy: 0))
+        XCTAssertEqual(backward[2].to, fullscreen.insetBy(dx: 60, dy: 48).offsetBy(dx: 1000, dy: 0))
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

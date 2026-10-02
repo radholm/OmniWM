@@ -15,10 +15,12 @@ struct FullscreenSlide: Equatable {
     let time: TimeInterval
 
     /// How far the next card sits back in the stack before it settles forward, as a fraction of its size.
-    static let stackDepth: CGFloat = 0.04
+    static let stackDepth: CGFloat = 0.12
+    /// Paging is a deliberate, visible motion, so it runs longer than regular layout snapshot transitions.
+    static let duration: CFTimeInterval = 0.55
 
     /// Snapshot items for the slide, bottom to top. `items` holds the real targets: the previous window, on top,
-    /// slides off the screen instead, revealing the next window right underneath it.
+    /// shrinks back as it slides off the screen instead, revealing the next window right underneath it.
     func items(from items: [WindowSnapshotTransition.Item]) -> [WindowSnapshotTransition.Item] {
         guard let previous = items.first(where: { $0.windowId == previousWindowId }),
               let next = items.first(where: { $0.windowId == nextWindowId })
@@ -32,7 +34,7 @@ struct FullscreenSlide: Equatable {
         let others = items.filter { $0.windowId != previousWindowId && $0.windowId != nextWindowId }
         return others + [
             .init(windowId: nextWindowId, from: behind, to: fullscreen),
-            .init(windowId: previousWindowId, from: previous.from, to: previous.from.offsetBy(dx: -shift, dy: 0))
+            .init(windowId: previousWindowId, from: previous.from, to: behind.offsetBy(dx: -shift, dy: 0))
         ]
     }
 }

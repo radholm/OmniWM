@@ -85,7 +85,14 @@ final class WindowSnapshotTransition {
 
     /// Shows (or retargets) snapshots for `items`, ordered bottom to top, and moves them to their target
     /// frames. Returns `false` when the caller must fall back to regular frame updates.
-    func begin(items: [Item], monitor: Monitor, animated: Bool, prefetched: [Int: CGImage] = [:]) -> Bool {
+    /// `duration` overrides the (speed-scaled) default move duration, e.g. for the fullscreen stack slide.
+    func begin(
+        items: [Item],
+        monitor: Monitor,
+        animated: Bool,
+        prefetched: [Int: CGImage] = [:],
+        duration: CFTimeInterval? = nil
+    ) -> Bool {
         if let current = self.monitor, current.displayId != monitor.displayId || current.frame != monitor.frame {
             stop()
         }
@@ -111,7 +118,7 @@ final class WindowSnapshotTransition {
             images: images,
             in: root,
             origin: CGPoint(x: -frame.minX, y: -frame.minY),
-            animated: animated
+            duration: animated ? duration ?? scaledDuration : nil
         )
         if self.panel == nil {
             show(panel, monitor: monitor)
@@ -125,14 +132,16 @@ final class WindowSnapshotTransition {
         return !visible.isNull && visible.width >= 8 && visible.height >= 8
     }
 
+    /// Places snapshot layers for `items`, animating them over `duration`, or not at all when it is `nil`.
     private func placeLayers(
         _ items: [Item],
         images: [Int: CGImage],
         in root: CALayer,
         origin: CGPoint,
-        animated: Bool
+        duration: CFTimeInterval?
     ) {
-        let duration = scaledDuration
+        let animated = duration != nil
+        let duration = duration ?? 0
         let speed = speed
         CATransaction.begin()
         CATransaction.setDisableActions(true)
