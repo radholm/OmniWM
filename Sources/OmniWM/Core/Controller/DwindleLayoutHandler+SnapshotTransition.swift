@@ -54,7 +54,9 @@ extension DwindleLayoutHandler {
             targets: transition.newFrames,
             appearing: appearing
         )
-        guard snapshotTransition.begin(items: items, monitor: monitor, animated: true) else { return false }
+        let slide = consumeFullscreenSlideArm(for: snapshot.workspaceId)
+        let shownItems = slide.map { $0.items(from: items) } ?? items
+        guard snapshotTransition.begin(items: shownItems, monitor: monitor, animated: true) else { return false }
         snapshotTransition.finish(after: snapshotTransition.scaledDuration, settled: snapshotSettledCheck(items))
         return true
     }

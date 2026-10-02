@@ -33,6 +33,8 @@ import QuartzCore
     }()
 
     var snapshotTransitionArm: (workspaceId: WorkspaceDescriptor.ID, time: TimeInterval)?
+    /// The next snapshot transition of the workspace slides `previous` out and `next` in (fullscreen paging).
+    var fullscreenSlideArm: FullscreenSlide?
     var interactiveSnapshotWorkspaceId: WorkspaceDescriptor.ID?
     /// An interactive snapshot resize whose snapshots are still being captured.
     var pendingInteractiveSnapshot: (workspaceId: WorkspaceDescriptor.ID, request: UInt64)?

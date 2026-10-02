@@ -8,8 +8,19 @@ import OmniWMIPC
 extension WorkspaceNavigationHandler {
     func switchWorkspace(index: Int) {
         guard let rawWorkspaceID = WorkspaceIDPolicy.rawID(from: max(0, index) + 1) else { return }
+        if cycleFullscreenInCurrentWorkspace(rawWorkspaceID: rawWorkspaceID) { return }
         if animateSwitchWorkspace(rawWorkspaceID: rawWorkspaceID) { return }
         switchWorkspace(rawWorkspaceID: rawWorkspaceID)
+    }
+
+    /// Pressing the shortcut of the workspace already shown pages to its next window while one is fullscreen.
+    private func cycleFullscreenInCurrentWorkspace(rawWorkspaceID: String) -> Bool {
+        guard let controller,
+              let currentWorkspace = controller.activeWorkspace(),
+              currentWorkspace.name == rawWorkspaceID,
+              controller.settings.workspaces.layoutType(for: currentWorkspace.name) == .dwindle
+        else { return false }
+        return controller.dwindleLayoutHandler.cycleFullscreen()
     }
 
     /// Slides to the workspace with the swipe presentation; the switch commits when the animation ends.
