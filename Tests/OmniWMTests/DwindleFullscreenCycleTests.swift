@@ -121,12 +121,15 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(SnapshotStackEffect.zPosition(depth: SnapshotStackEffect.visibleDepth), size.width)
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
         XCTAssertEqual(SnapshotStackEffect.opacity(depth: SnapshotStackEffect.visibleDepth + 1), 0)
-        XCTAssertGreaterThan(SnapshotStackEffect.tuckScale, 0.85, "the leaving card stays almost full size")
-        XCTAssertLessThan(
-            SnapshotStackEffect.tuckDownTime.doubleValue, SnapshotStackEffect.advanceStartTime.doubleValue,
-            "the next card waits until the leaving card is under it"
+        let lowest = SnapshotStackEffect.tuckPose(progress: 0.5, toDepth: 1, size: size)
+        XCTAssertLessThan(lowest.m42, 0, "the leaving card moves down")
+        XCTAssertGreaterThan(lowest.m11, 0.85, "and stays almost full size")
+        let settled = SnapshotStackEffect.tuckPose(progress: 1, toDepth: 1, size: size)
+        XCTAssertEqual(settled.m42, behind.m42, accuracy: 0.001, "and ends in its place in the deck")
+        XCTAssertEqual(
+            SnapshotStackEffect.tuckProgress(CGFloat(SnapshotStackEffect.orderSwapTime.doubleValue)), 0.5,
+            accuracy: 0.0001, "it passes under the next card at its lowest point"
         )
-        XCTAssertLessThan(SnapshotStackEffect.tuckPose(size: size).m42, 0, "and moves down")
     }
 
     private func stripPerspective(_ transform: CATransform3D) -> CATransform3D {
