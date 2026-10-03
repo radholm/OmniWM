@@ -139,6 +139,19 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertTrue(CATransform3DIsIdentity(next.values[3]))
     }
 
+    func testDeckStaysNearFullSizeWithShallowTiltAndCompactSpacing() {
+        let size = CGSize(width: 1000, height: 800)
+        let middle = SnapshotStackEffect.deckPose(slot: 1, count: 3, size: size)
+        XCTAssertEqual(middle.m22, 0.94, accuracy: 0.0001)
+        XCTAssertEqual(middle.m11, 0.94 * cos(.pi / 144), accuracy: 0.0001)
+        XCTAssertEqual(abs(middle.m13), 0.94 * sin(.pi / 144), accuracy: 0.0001)
+
+        let front = SnapshotStackEffect.deckPose(slot: 0, count: 3, size: size)
+        let back = SnapshotStackEffect.deckPose(slot: 2, count: 3, size: size)
+        XCTAssertEqual(back.m41 - front.m41, 80, accuracy: 0.0001)
+        XCTAssertEqual(back.m42 - front.m42, -56, accuracy: 0.0001)
+    }
+
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {
         (DwindleLayoutEngine(), WorkspaceDescriptor.ID())
     }
