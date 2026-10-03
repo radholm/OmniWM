@@ -1,9 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
+    "" : {},
     "\n\n%@ is not currently in your PATH, so Terminal may not find `omniwmctl` until you add that directory." : {
       "localizations" : {
         "ar" : {
@@ -5580,9 +5578,7 @@
         }
       }
     },
-    "%@×" : {
-
-    },
+    "%@×" : {},
     "%lld app rules" : {
       "localizations" : {
         "ar" : {
@@ -9143,9 +9139,7 @@
         }
       }
     },
-    "1× is the default. Higher values make window and workspace transitions faster." : {
-
-    },
+    "1× is the default. Higher values make window and workspace transitions faster." : {},
     "@%@" : {
       "localizations" : {
         "ar" : {
@@ -10510,9 +10504,7 @@
         }
       }
     },
-    "A window cannot be summoned beside itself. Choose a different marked window." : {
-
-    },
+    "A window cannot be summoned beside itself. Choose a different marked window." : {},
     "AX Role" : {
       "localizations" : {
         "ar" : {
@@ -20198,9 +20190,7 @@
         }
       }
     },
-    "Bar Thickness" : {
-
-    },
+    "Bar Thickness" : {},
     "Basics" : {
       "localizations" : {
         "ar" : {
@@ -24919,18 +24909,10 @@
         }
       }
     },
-    "Choose a mark to remove from the selected window" : {
-
-    },
-    "Choose a mark to remove from the selected window (Control-Option-Shift-R)" : {
-
-    },
-    "Choose a mark to remove from the selected window." : {
-
-    },
-    "Choose a mark to remove from the selected window. Shortcut Control-Option-Shift-R." : {
-
-    },
+    "Choose a mark to remove from the selected window" : {},
+    "Choose a mark to remove from the selected window (Control-Option-Shift-R)" : {},
+    "Choose a mark to remove from the selected window." : {},
+    "Choose a mark to remove from the selected window. Shortcut Control-Option-Shift-R." : {},
     "Choose an App-Provided Icon" : {
       "localizations" : {
         "ar" : {
@@ -25427,9 +25409,7 @@
         }
       }
     },
-    "Choose which mark to remove from this window." : {
-
-    },
+    "Choose which mark to remove from this window." : {},
     "Choose…" : {
       "localizations" : {
         "ar" : {
@@ -32381,12 +32361,8 @@
         }
       }
     },
-    "Could not move this window into the empty workspace. Press Enter to focus it instead." : {
-
-    },
-    "Could not summon this window right now. Press Enter to focus it instead." : {
-
-    },
+    "Could not move this window into the empty workspace. Press Enter to focus it instead." : {},
+    "Could not summon this window right now. Press Enter to focus it instead." : {},
     "Could not update the login item: %@" : {
       "localizations" : {
         "ar" : {
@@ -42072,15 +42048,9 @@
         }
       }
     },
-    "Drag Tile Edges to Resize" : {
-
-    },
-    "Drag Title Bar to Swap" : {
-
-    },
-    "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them." : {
-
-    },
+    "Drag Tile Edges to Resize" : {},
+    "Drag Title Bar to Swap" : {},
+    "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them." : {},
     "Drag tiles, or use the arrow buttons below." : {
       "localizations" : {
         "ar" : {
@@ -42453,9 +42423,7 @@
         }
       }
     },
-    "Dwindle" : {
-
-    },
+    "Dwindle" : {},
     "Dwindle (BSP)" : {
       "localizations" : {
         "ar" : {
@@ -45308,9 +45276,7 @@
         }
       }
     },
-    "Enter a name you can search for in the Windows palette." : {
-
-    },
+    "Enter a name you can search for in the Windows palette." : {},
     "Enter a value from 5 through 100 percent." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -45560,9 +45526,7 @@
         }
       }
     },
-    "Enter jumps. %@" : {
-
-    },
+    "Enter jumps. %@" : {},
     "Enter jumps. Shift-Enter summons right." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -68768,9 +68732,7 @@
         }
       }
     },
-    "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier." : {
-
-    },
+    "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier." : {},
     "Left/Right-specific shortcuts need Input Monitoring permission to work" : {
       "localizations" : {
         "ar" : {
@@ -70879,33 +70841,15 @@
         }
       }
     },
-    "Mark names must be non-empty and contain no control characters. Try another name." : {
-
-    },
-    "Mark selected window" : {
-
-    },
-    "Mark selected window…" : {
-
-    },
-    "Mark the selected window" : {
-
-    },
-    "Mark the selected window (Control-Option-Shift-M)" : {
-
-    },
-    "Mark: %@" : {
-
-    },
-    "Marked the selected window as ‘%@’." : {
-
-    },
-    "Marks the selected window row." : {
-
-    },
-    "Marks the selected window row. Shortcut Control-Option-Shift-M." : {
-
-    },
+    "Mark names must be non-empty and contain no control characters. Try another name." : {},
+    "Mark selected window" : {},
+    "Mark selected window…" : {},
+    "Mark the selected window" : {},
+    "Mark the selected window (Control-Option-Shift-M)" : {},
+    "Mark: %@" : {},
+    "Marked the selected window as ‘%@’." : {},
+    "Marks the selected window row." : {},
+    "Marks the selected window row. Shortcut Control-Option-Shift-M." : {},
     "Match Your Real Desk" : {
       "localizations" : {
         "ar" : {
@@ -76866,9 +76810,7 @@
         }
       }
     },
-    "Move below the notch, split around it, or fill the area to its left, covering application menus. Without a notch, Fill Left covers the left half of the menu bar. Notch modes are ignored at Bottom, Left, and Right." : {
-
-    },
+    "Move below the notch, split around it, or fill the area to its left, covering application menus. Without a notch, Fill Left covers the left half of the menu bar. Notch modes are ignored at Bottom, Left, and Right." : {},
     "Move or close all windows in this workspace before deleting it" : {
       "localizations" : {
         "ar" : {
@@ -81458,9 +81400,7 @@
         }
       }
     },
-    "No mark was changed." : {
-
-    },
+    "No mark was changed." : {},
     "No matching hotkeys." : {
       "localizations" : {
         "ar" : {
@@ -83446,9 +83386,7 @@
         }
       }
     },
-    "No windows found. Check the mark name or try a title, app, or workspace." : {
-
-    },
+    "No windows found. Check the mark name or try a title, app, or workspace." : {},
     "No workspaces configured" : {
       "localizations" : {
         "ar" : {
@@ -103968,9 +103906,7 @@
         }
       }
     },
-    "Remove Mark" : {
-
-    },
+    "Remove Mark" : {},
     "Remove Workspace %@" : {
       "localizations" : {
         "ar" : {
@@ -104095,12 +104031,8 @@
         }
       }
     },
-    "Remove a window mark" : {
-
-    },
-    "Remove mark…" : {
-
-    },
+    "Remove a window mark" : {},
+    "Remove mark…" : {},
     "Remove or fix the keys in %@." : {
       "localizations" : {
         "ar" : {
@@ -104722,9 +104654,7 @@
         }
       }
     },
-    "Removed mark ‘%@’ from the selected window." : {
-
-    },
+    "Removed mark ‘%@’ from the selected window." : {},
     "Rename Workspace" : {
       "localizations" : {
         "ar" : {
@@ -106585,9 +106515,7 @@
         }
       }
     },
-    "Reserve tiled layout space at the selected edge using the configured bar thickness." : {
-
-    },
+    "Reserve tiled layout space at the selected edge using the configured bar thickness." : {},
     "Reserve tiled layout space using the configured workspace bar height." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -116907,12 +116835,8 @@
         }
       }
     },
-    "Select a current window result first." : {
-
-    },
-    "Select a current window row before changing its marks." : {
-
-    },
+    "Select a current window result first." : {},
+    "Select a current window row before changing its marks." : {},
     "Select a rule from the sidebar to edit it, or add a new rule to get started." : {
       "localizations" : {
         "ar" : {
@@ -117037,9 +116961,7 @@
         }
       }
     },
-    "Select a window row before changing its marks." : {
-
-    },
+    "Select a window row before changing its marks." : {},
     "Selected Border Matches Focus Border" : {
       "localizations" : {
         "ar" : {
@@ -117548,9 +117470,7 @@
         }
       }
     },
-    "Set Mark" : {
-
-    },
+    "Set Mark" : {},
     "Set Up…" : {
       "localizations" : {
         "ar" : {
@@ -118667,9 +118587,7 @@
         }
       }
     },
-    "Shared" : {
-
-    },
+    "Shared" : {},
     "Shared Gesture Controls" : {
       "localizations" : {
         "ar" : {
@@ -118918,18 +118836,10 @@
         }
       }
     },
-    "Shift-Enter moves here (empty workspace)." : {
-
-    },
-    "Shift-Enter summons right." : {
-
-    },
-    "Shift-Enter unavailable for this window." : {
-
-    },
-    "Shift-Enter unavailable without an anchor." : {
-
-    },
+    "Shift-Enter moves here (empty workspace)." : {},
+    "Shift-Enter summons right." : {},
+    "Shift-Enter unavailable for this window." : {},
+    "Shift-Enter unavailable without an anchor." : {},
     "Shortcut %@" : {
       "localizations" : {
         "ar" : {
@@ -127762,12 +127672,8 @@
         }
       }
     },
-    "Summon right is not supported by the current layout. Press Enter to focus this window instead." : {
-
-    },
-    "Summon right is unavailable. Focus a managed window in the active workspace first." : {
-
-    },
+    "Summon right is not supported by the current layout. Press Enter to focus this window instead." : {},
+    "Summon right is unavailable. Focus a managed window in the active workspace first." : {},
     "Summon to the Right" : {
       "localizations" : {
         "ar" : {
@@ -130628,9 +130534,7 @@
         }
       }
     },
-    "That mark changed while the chooser was open. Choose a current mark and try again." : {
-
-    },
+    "That mark changed while the chooser was open. Choose a current mark and try again." : {},
     "The Command Palette shortcut (Control+Option+Space) matches an enabled macOS system shortcut. macOS documents this chord for “Select next source in Input menu,” so both can fire together. Reassign this hotkey or clear the matching macOS shortcut in System Settings → Keyboard → Keyboard Shortcuts → Input Sources." : {
       "localizations" : {
         "ar" : {
@@ -132745,12 +132649,8 @@
         }
       }
     },
-    "The selected window has no marks to remove. Select a marked window." : {
-
-    },
-    "The selected window is already marked ‘%@’." : {
-
-    },
+    "The selected window has no marks to remove. Select a marked window." : {},
+    "The selected window is already marked ‘%@’." : {},
     "The target window is no longer available." : {
       "localizations" : {
         "ar" : {
@@ -133123,9 +133023,7 @@
         }
       }
     },
-    "The window is no longer eligible. Reopen the Palette and choose a current managed window." : {
-
-    },
+    "The window is no longer eligible. Reopen the Palette and choose a current managed window." : {},
     "Theme" : {
       "localizations" : {
         "ar" : {
@@ -133250,9 +133148,7 @@
         }
       }
     },
-    "This app is hidden. Press Enter to unhide and focus it; Shift-Enter cannot summon it." : {
-
-    },
+    "This app is hidden. Press Enter to unhide and focus it; Shift-Enter cannot summon it." : {},
     "This app may create its Dock icon only while running." : {
       "localizations" : {
         "ar" : {
@@ -134121,9 +134017,7 @@
         }
       }
     },
-    "This marked window is no longer available. Search again for a current result." : {
-
-    },
+    "This marked window is no longer available. Search again for a current result." : {},
     "This preview updates when you return from Display Settings." : {
       "localizations" : {
         "ar" : {
@@ -134372,9 +134266,7 @@
         }
       }
     },
-    "This rule matches windows but has no effect — set a layout, workspace, or minimum size." : {
-
-    },
+    "This rule matches windows but has no effect — set a layout, workspace, or minimum size." : {},
     "This setting is managed by your organization." : {
       "localizations" : {
         "ar" : {
@@ -134623,18 +134515,10 @@
         }
       }
     },
-    "This window cannot be summoned right now. Press Enter to focus it instead." : {
-
-    },
-    "This window is no longer in the current results. Search again before focusing it." : {
-
-    },
-    "This window or mark is no longer available. Search again for a current result." : {
-
-    },
-    "This workspace is not empty. Focus a managed window here before using Shift-Enter." : {
-
-    },
+    "This window cannot be summoned right now. Press Enter to focus it instead." : {},
+    "This window is no longer in the current results. Search again before focusing it." : {},
+    "This window or mark is no longer available. Search again for a current result." : {},
+    "This workspace is not empty. Focus a managed window here before using Shift-Enter." : {},
     "Tile" : {
       "localizations" : {
         "ar" : {
@@ -135007,12 +134891,8 @@
         }
       }
     },
-    "Tiling Animation Speed" : {
-
-    },
-    "Tiling layout (Dwindle)" : {
-
-    },
+    "Tiling Animation Speed" : {},
+    "Tiling layout (Dwindle)" : {},
     "Title" : {
       "localizations" : {
         "ar" : {
@@ -144349,15 +144229,9 @@
         }
       }
     },
-    "Window mark name" : {
-
-    },
-    "Window mark to remove" : {
-
-    },
-    "Window moved to the empty workspace." : {
-
-    },
+    "Window mark name" : {},
+    "Window mark to remove" : {},
+    "Window moved to the empty workspace." : {},
     "Window placement or sizing" : {
       "localizations" : {
         "ar" : {
@@ -144482,9 +144356,7 @@
         }
       }
     },
-    "Window summoned right." : {
-
-    },
+    "Window summoned right." : {},
     "Window tabs" : {
       "localizations" : {
         "ar" : {
@@ -145974,9 +145846,7 @@
         }
       }
     },
-    "Workspace IDs use positive numeric slots. Display Name stays editable. Workspaces 10+ start with unassigned direct hotkeys; add them here or through IPC/CLI." : {
-
-    },
+    "Workspace IDs use positive numeric slots. Display Name stays editable. Workspaces 10+ start with unassigned direct hotkeys; add them here or through IPC/CLI." : {},
     "Workspace home monitors" : {
       "localizations" : {
         "ar" : {
@@ -153250,9 +153120,7 @@
         }
       }
     },
-    "‘%@’ is already used by another window. Choose a different mark name." : {
-
-    },
+    "‘%@’ is already used by another window. Choose a different mark name." : {},
     "⇧ Shift" : {
       "localizations" : {
         "ar" : {
