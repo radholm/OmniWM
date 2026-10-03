@@ -49,6 +49,66 @@ final class WorkspaceSwipeMotionTests: XCTestCase {
         XCTAssertEqual(motion.progress(at: 12), 0, accuracy: 0.001)
     }
 
+    func testKeyboardSettlingCompletesWithin200MillisecondsAndScalesWithSpeed() {
+        for speed in [0.25, 1, 1.25, 2, 4] {
+            let motion = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 1)
+            XCTAssertTrue(motion.animate(
+                to: 1, animationTime: 10,
+                motion: MotionSnapshot(animationsEnabled: true, animationSpeed: speed)
+            ))
+            XCTAssertFalse(motion.isComplete(at: 10 + 0.15 / speed))
+            XCTAssertTrue(motion.isComplete(at: 10 + 0.20 / speed))
+            XCTAssertEqual(motion.progress(at: 10 + 0.20 / speed), 1)
+        }
+    }
+
+    func testRetargetKeepsKeyboardSettlingSpeed() {
+        let motion = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 1)
+        motion.animate(to: 1, animationTime: 10)
+        let position = motion.progress(at: 10.04)
+        let velocity = motion.velocity(at: 10.04)
+        XCTAssertTrue(motion.retarget(to: 0, animationTime: 10.04))
+        XCTAssertEqual(motion.progress(at: 10.04), position, accuracy: 0.000001)
+        XCTAssertEqual(motion.velocity(at: 10.04), velocity, accuracy: 0.000001)
+        XCTAssertTrue(motion.isComplete(at: 10.24))
+        XCTAssertEqual(motion.progress(at: 10.24), 0)
+    }
+
+    func testGestureReleaseAndRetargetPreserveOriginalSpring() {
+        let motion = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 1)
+        motion.update(cumulativeUnits: 120, timestamp: 1.1)
+        motion.release(timestamp: 1.2, allowFlick: false, animationTime: 10)
+        let config = SpringConfig(dampingRatio: 1, stiffness: 1000, epsilon: 0.0001)
+        let expected = SpringAnimation(from: 0.4, to: 0, startTime: 10, config: config)
+        for elapsed in [0.02, 0.10, 0.20, 0.30] {
+            XCTAssertEqual(motion.progress(at: 10 + elapsed), expected.value(at: 10 + elapsed), accuracy: 0.000001)
+            XCTAssertEqual(motion.isComplete(at: 10 + elapsed), expected.isComplete(at: 10 + elapsed))
+        }
+        let position = motion.progress(at: 10.05)
+        let velocity = motion.velocity(at: 10.05)
+        XCTAssertTrue(motion.retarget(to: 1, animationTime: 10.05))
+        let redirected = SpringAnimation(
+            from: position, to: 1, initialVelocity: velocity, startTime: 10.05, config: config
+        )
+        XCTAssertEqual(motion.progress(at: 10.15), redirected.value(at: 10.15), accuracy: 0.000001)
+        XCTAssertFalse(motion.isComplete(at: 10.25))
+    }
+
+    func testCatchingKeyboardMotionRestoresGestureSettling() {
+        let motion = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 1)
+        motion.animate(to: 1, animationTime: 10)
+        XCTAssertTrue(motion.catchMotion(cumulativeUnits: 0, timestamp: 1.1, animationTime: 10.05))
+        let position = motion.progress(at: 10.05)
+        XCTAssertTrue(motion.release(timestamp: 1.2, allowFlick: false, animationTime: 11))
+        let expected = SpringAnimation(
+            from: position, to: 0, startTime: 11,
+            config: SpringConfig(dampingRatio: 1, stiffness: 1000, epsilon: 0.0001)
+        )
+        XCTAssertEqual(motion.progress(at: 11.1), expected.value(at: 11.1), accuracy: 0.000001)
+        XCTAssertFalse(motion.isComplete(at: 11.2))
+        XCTAssertTrue(motion.isComplete(at: 11.3))
+    }
+
     func testSlowRecognitionUsesRecentMovementInsteadOfWholeContactDisplacement() {
         let motion = WorkspaceSwipeMotion(
             cumulativeUnits: 20, timestamp: 2,
