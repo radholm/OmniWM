@@ -31,3 +31,32 @@ final class OverviewPreviewFrame: @unchecked Sendable {
         self.pixelBuffer = pixelBuffer
     }
 }
+
+extension OverviewPreviewFrame {
+    /// Wraps a window-server snapshot in an IOSurface-backed frame, so it can stand in for a stream frame.
+    convenience init?(image: CGImage) {
+        let attributes: [CFString: Any] = [
+            kCVPixelBufferIOSurfacePropertiesKey: [:] as [CFString: Any],
+            kCVPixelBufferCGBitmapContextCompatibilityKey: true
+        ]
+        var buffer: CVPixelBuffer?
+        guard CVPixelBufferCreate(
+            kCFAllocatorDefault, image.width, image.height, kCVPixelFormatType_32BGRA,
+            attributes as CFDictionary, &buffer
+        ) == kCVReturnSuccess, let buffer else { return nil }
+        CVPixelBufferLockBaseAddress(buffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+        guard let context = CGContext(
+            data: CVPixelBufferGetBaseAddress(buffer),
+            width: image.width,
+            height: image.height,
+            bitsPerComponent: 8,
+            bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        ) else { return nil }
+        context.clear(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        self.init(pixelBuffer: buffer)
+    }
+}

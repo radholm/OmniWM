@@ -88,7 +88,7 @@ final class WorkspaceSwipePresentation {
     private let mediaTimeProvider: () -> TimeInterval
     var keyboardSwitchTask: Task<Void, Never>?
     var keyboardSwitchFallback: (() -> Void)?
-    static let keyboardPreviewWait: Duration = .milliseconds(250)
+    static let keyboardPreviewWait: Duration = .milliseconds(120)
 
     init(
         refreshController: LayoutRefreshController,
@@ -356,7 +356,8 @@ extension WorkspaceSwipePresentation {
             source: source.items,
             destination: destination.items,
             monitor: monitor,
-            workingFrame: preparation.frame
+            workingFrame: preparation.frame,
+            snapshotsSource: true
         )
         if beginKeyboardFlight(isNext: isNext, requireFresh: true) { return true }
         waitForKeyboardPreviews(isNext: isNext, fallback: fallback)

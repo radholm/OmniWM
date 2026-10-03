@@ -511,6 +511,63 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
         preview.stop()
     }
 
+    func testKeyboardPrepareSnapshotsSourceWindowsInsteadOfStreamingThem() async throws {
+        for snapshotSucceeds in [true, false] {
+            let driver = OverviewPreviewTestDriver()
+            let capture = driver.makeCapture()
+            let preview = WorkspaceSwipePreview(
+                ownedWindowRegistry: OwnedWindowRegistry(), previewCapture: capture,
+                backdrop: try makeBackdrop(), hasCaptureAccess: { true }
+            )
+            let image = try makeSnapshotImage()
+            preview.snapshotCapture = { { _ in snapshotSucceeds ? image : nil } }
+            let (controller, swipe, monitor, source) = try fixture(previewSurface: preview)
+            controller.niriLayoutHandler.enableNiriLayout()
+            let pid: pid_t = 764_961
+            let windowId = 764_962
+            let token = controller.workspaceManager.addWindow(
+                AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
+                pid: pid, windowId: windowId, to: source
+            )
+            controller.workspaceManager.setCachedConstraints(.unconstrained, for: token)
+            let engine = try XCTUnwrap(controller.niriEngine)
+            let node = engine.addWindow(token: token, to: source, afterSelection: nil)
+            controller.workspaceManager.withNiriViewportState(for: source) { $0.selectedNodeId = node.id }
+            controller.axManager.confirmFrameWrite(
+                for: windowId, frame: CGRect(x: 50, y: 50, width: 600, height: 500)
+            )
+            let preparation = try XCTUnwrap(swipe.makePreparation(monitorId: monitor.id))
+            let items = preparation.source.items
+            preview.prepare(
+                source: items, destination: [], monitor: monitor, workingFrame: preparation.frame,
+                snapshotsSource: true
+            )
+            if snapshotSucceeds {
+                for _ in 0 ..< 200 where !preview.hasFreshPreviews(
+                    source: items, destination: [], monitor: monitor, workingFrame: preparation.frame
+                ) {
+                    await Task.yield()
+                }
+                XCTAssertTrue(preview.hasFreshPreviews(
+                    source: items, destination: [], monitor: monitor, workingFrame: preparation.frame
+                ))
+                XCTAssertTrue(driver.streams.isEmpty, "source windows are snapshotted, not streamed")
+            } else {
+                await driver.waitForStarts(1)
+                XCTAssertEqual(driver.streams.count, 1, "falls back to a stream when the snapshot fails")
+            }
+            preview.stop()
+        }
+    }
+
+    private func makeSnapshotImage() throws -> CGImage {
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: 64, height: 48, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        return try XCTUnwrap(context.makeImage())
+    }
+
     private func makeSettings() -> SettingsStore {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         return SettingsStore(

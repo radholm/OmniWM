@@ -344,6 +344,10 @@ final class OverviewThumbnailCapture {
 }
 
 extension OverviewThumbnailCapture {
+    func inject(_ frame: OverviewPreviewFrame, for handle: WindowHandle) {
+        previewCache[handle] = CachedPreview(frame: frame, token: handle.token, lastRequestedUse: nextRequestedUse)
+    }
+
     func preview(for handle: WindowHandle) -> OverviewPreviewFrame? {
         guard let cached = previewCache[handle], cached.token == handle.token else { return nil }
         nextRequestedUse &+= 1
