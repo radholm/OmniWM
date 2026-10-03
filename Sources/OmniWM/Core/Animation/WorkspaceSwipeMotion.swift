@@ -9,15 +9,9 @@ final class WorkspaceSwipeMotion {
     private static let resistance = 0.55
     private static let stretch = 0.30
     private static let projectionDecay = 1000 * log(0.997)
-    private static let gestureSpringConfig = SpringConfig(
+    private static let springConfig = SpringConfig(
         dampingRatio: 1,
         stiffness: 1000,
-        epsilon: 0.0001,
-        velocityEpsilon: 0.01
-    )
-    private static let keyboardSpringConfig = SpringConfig(
-        dampingRatio: 1,
-        stiffness: 2400,
         epsilon: 0.0001,
         velocityEpsilon: 0.01
     )
@@ -28,7 +22,6 @@ final class WorkspaceSwipeMotion {
     private var trackedProgress = 0.0
     private var lastTimestamp: TimeInterval
     private var spring: SpringAnimation?
-    private var settlingConfig = gestureSpringConfig
     private(set) var target: Double?
 
     init(cumulativeUnits: Double, timestamp: TimeInterval, recognitionMovement: SwipeEvent? = nil) {
@@ -86,13 +79,12 @@ final class WorkspaceSwipeMotion {
         ))
         target = destination
         lastTimestamp = timestamp
-        settlingConfig = Self.gestureSpringConfig
         spring = SpringAnimation(
             from: trackedProgress,
             to: destination,
             initialVelocity: velocity,
             startTime: animationTime,
-            config: motion.scaled(settlingConfig)
+            config: motion.scaled(Self.springConfig)
         )
         return true
     }
@@ -102,13 +94,12 @@ final class WorkspaceSwipeMotion {
     func animate(to destination: Double, animationTime: TimeInterval, motion: MotionSnapshot = .enabled) -> Bool {
         guard spring == nil, destination.isFinite, animationTime.isFinite else { return false }
         target = destination
-        settlingConfig = Self.keyboardSpringConfig
         spring = SpringAnimation(
             from: trackedProgress,
             to: destination,
             initialVelocity: 0,
             startTime: animationTime,
-            config: motion.scaled(settlingConfig)
+            config: motion.scaled(Self.springConfig)
         )
         return true
     }
@@ -126,7 +117,7 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: currentVelocity,
             startTime: animationTime,
-            config: motion.scaled(settlingConfig)
+            config: motion.scaled(Self.springConfig)
         )
         return true
     }
@@ -140,7 +131,6 @@ final class WorkspaceSwipeMotion {
         originUnits = cumulativeUnits
         lastTimestamp = timestamp
         spring = nil
-        settlingConfig = Self.gestureSpringConfig
         target = nil
         tracker.reset()
         tracker.push(delta: 0, timestamp: timestamp)
