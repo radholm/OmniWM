@@ -21,7 +21,6 @@ struct WindowDecisionDebugSnapshot: Equatable, Sendable {
     let workspaceName: String?
     let minWidth: Double?
     let minHeight: Double?
-    let initialNiriContainerPrimarySpan: Double?
     let matchedRuleId: UUID?
     let heuristicReasons: [AXWindowHeuristicReason]
     let attributeFetchSucceeded: Bool
@@ -61,7 +60,6 @@ struct WindowDecisionDebugSnapshot: Equatable, Sendable {
             "workspaceName=\(workspaceName ?? "nil")",
             "minWidth=\(stringValue(minWidth))",
             "minHeight=\(stringValue(minHeight))",
-            "initialNiriContainerPrimarySpan=\(stringValue(initialNiriContainerPrimarySpan))",
             "matchedRuleId=\(matchedRuleId?.uuidString ?? "nil")",
             "heuristicReasons=\(heuristicReasons.map(\.rawValue).joined(separator: ","))",
             "attributeFetchSucceeded=\(attributeFetchSucceeded)"

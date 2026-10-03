@@ -25,7 +25,6 @@ struct TrackpadGestureConflict: Error, Equatable, LocalizedError {
 
     private static func name(for gesture: TrackpadGestureMode) -> String {
         switch gesture {
-        case .columnScroll: String(localized: "Niri column scrolling", comment: "Trackpad gesture name")
         case .workspaceSwitch: String(localized: "workspace switching", comment: "Trackpad gesture name")
         case .overview: String(localized: "Overview", comment: "Trackpad gesture name")
         case .windowMove: String(localized: "window moving", comment: "Trackpad gesture name")
@@ -35,26 +34,18 @@ struct TrackpadGestureConflict: Error, Equatable, LocalizedError {
 }
 
 enum GestureSettingsValidation {
-    static func validate(_ export: SettingsExport, monitorProvider: () -> [Monitor]) throws {
+    static func validate(_ export: SettingsExport) throws {
         guard export.gestures.overviewGestureEnabled == true || export.gestures.windowMoveEnabled == true
             || export.gestures.windowResizeEnabled == true else { return }
-        if let conflict = conflict(
-            gestures: export.gestures,
-            orientationOverrides: export.monitorOrientationSettings,
-            monitors: export.gestures.overviewGestureEnabled == true ? monitorProvider() : []
-        ) {
+        if let conflict = conflict(gestures: export.gestures) {
             throw conflict
         }
     }
 
     static func conflict(
-        gestures: SettingsExport.Gestures,
-        orientationOverrides: [MonitorOrientationSettings],
-        monitors: [Monitor]
+        gestures: SettingsExport.Gestures
     ) -> TrackpadGestureConflict? {
         let config = TrackpadGestureIntent.Config(
-            columnScrollEnabled: gestures.scrollEnabled,
-            columnScrollFingerCount: gestures.fingerCount.rawValue,
             workspaceSwipeEnabled: gestures.workspaceSwipeEnabled,
             workspaceSwipeFingerCount: gestures.workspaceSwipeFingerCount.rawValue,
             workspaceSwipeAxis: gestures.workspaceSwipeAxis,
@@ -74,26 +65,10 @@ enum GestureSettingsValidation {
             }
         }
         guard gestures.overviewGestureEnabled == true else { return nil }
-        if let other = TrackpadGestureIntent.overviewConflict(config, columnScrollAxis: nil) {
+        if let other = TrackpadGestureIntent.overviewConflict(config) {
             return TrackpadGestureConflict(
-                fingerCount: config.overviewFingerCount,
-                gesture: .overview(.open),
-                otherGesture: other
+                fingerCount: config.overviewFingerCount, gesture: .overview(.open), otherGesture: other
             )
-        }
-        for monitor in monitors {
-            let orientation = MonitorSettingsStore.get(for: monitor, in: orientationOverrides)?.orientation
-                ?? monitor.autoOrientation
-            if let other = TrackpadGestureIntent.overviewConflict(
-                config,
-                columnScrollAxis: orientation == .horizontal ? .horizontal : .vertical
-            ) {
-                return TrackpadGestureConflict(
-                    fingerCount: config.overviewFingerCount,
-                    gesture: .overview(.open),
-                    otherGesture: other
-                )
-            }
         }
         return nil
     }

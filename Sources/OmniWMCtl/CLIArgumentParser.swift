@@ -40,13 +40,6 @@ enum CLIArgumentParser {
         return value
     }
 
-    static func parseInitialContainerPrimarySpan(_ rawValue: String) throws -> Double {
-        guard let value = Double(rawValue), value.isFinite, (0.05 ... 1.0).contains(value) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return value
-    }
-
     static func parsePID(_ rawValue: String) throws -> Int32 {
         guard let value = Int32(rawValue), value > 0 else {
             throw CLIParseError.usage(CLIParser.usageText)
@@ -68,24 +61,6 @@ enum CLIArgumentParser {
         return layout
     }
 
-    static func parseSizeChange(_ rawValue: String) throws -> IPCSizeChange {
-        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-
-        let isProportion = trimmed.hasSuffix("%")
-        let numericText = isProportion ? String(trimmed.dropLast()) : trimmed
-        guard let value = Double(numericText), value.isFinite else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-
-        if trimmed.hasPrefix("+") || trimmed.hasPrefix("-") {
-            return isProportion ? .adjustProportion(value) : .adjustFixed(value)
-        }
-        return isProportion ? .setProportion(value) : .setFixed(value)
-    }
-
     static func parseCommandArgumentValue(
         _ pair: (IPCCommandArgumentDescriptor, String)
     ) throws -> IPCCommandArgumentValue {
@@ -94,9 +69,7 @@ enum CLIArgumentParser {
         switch descriptor.kind {
         case .direction:
             return .direction(try parseDirection(token))
-        case .workspaceNumber,
-             .columnIndex,
-             .windowIndex:
+        case .workspaceNumber:
             return .integer(try parsePositiveInteger(token))
         case .scratchpadIndex:
             return .integer(try parseScratchpadIndex(token))
@@ -106,8 +79,6 @@ enum CLIArgumentParser {
             return .resizeAxis(try parseResizeAxis(token))
         case .resizeOperation:
             return .resizeOperation(try parseResizeOperation(token))
-        case .sizeChange:
-            return .sizeChange(try parseSizeChange(token))
         }
     }
 }

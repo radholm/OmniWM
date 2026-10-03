@@ -179,7 +179,6 @@ final class IPCSessionEventPublicationTests: XCTestCase {
         let controller = WindowAdmissionTestSupport.controller(prefix: "IPCSessionEventPublicationTests")
         controller.layoutRefreshController.displayLinkActivationForTests = { _ in true }
         controller.settings.animationsEnabled = false
-        controller.enableNiriLayout()
         let frame = CGRect(x: 0, y: 0, width: 1600, height: 900)
         let monitor = Monitor(
             id: .init(displayId: 1),

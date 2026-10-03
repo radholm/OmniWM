@@ -20,8 +20,6 @@ enum PersistedRestorePlanner {
         let preferredMonitorId: Monitor.ID?
         let targetMode: TrackedWindowMode
         let floatingFrame: CGRect?
-        let niriPlacement: PersistedNiriPlacement?
-        let detachedNiriContainerSizingState: NiriContainerSizingState?
         let dwindlePlacement: PersistedDwindlePlacement?
         let consumedKey: PersistedWindowRestoreKey
         let consumedEntry: PersistedWindowRestoreConsumptionKey
@@ -63,8 +61,6 @@ enum PersistedRestorePlanner {
             preferredMonitorId: preferredMonitor?.id,
             targetMode: targetMode,
             floatingFrame: floatingFrame,
-            niriPlacement: persistedEntry.restoreIntent.niriPlacement,
-            detachedNiriContainerSizingState: persistedEntry.restoreIntent.detachedNiriContainerSizingState,
             dwindlePlacement: persistedEntry.restoreIntent.dwindlePlacement,
             consumedKey: persistedEntry.key,
             consumedEntry: PersistedWindowRestoreConsumptionKey(entry: persistedEntry)

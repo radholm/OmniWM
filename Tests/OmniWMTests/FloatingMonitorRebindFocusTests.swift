@@ -705,7 +705,7 @@ final class FloatingMonitorRebindFocusTests: XCTestCase {
         )
     }
 
-    private func makeFixture(sourceLayout: LayoutType = .niri) throws -> Fixture {
+    private func makeFixture(sourceLayout: LayoutType = .dwindle) throws -> Fixture {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("FloatingMonitorRebindFocusTests-\(UUID().uuidString)", isDirectory: true)
         let sourceFrame = CGRect(x: 0, y: 0, width: 1600, height: 900)
@@ -748,12 +748,12 @@ final class FloatingMonitorRebindFocusTests: XCTestCase {
             WorkspaceConfiguration(
                 name: "2",
                 monitorAssignment: .specificDisplay(OutputId(from: targetMonitor)),
-                layoutType: .niri
+                layoutType: .dwindle
             ),
             WorkspaceConfiguration(
                 name: "3",
                 monitorAssignment: .specificDisplay(OutputId(from: targetMonitor)),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         ]
 

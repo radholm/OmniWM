@@ -48,41 +48,8 @@ extension ActionCatalog {
         )
     }
 
-    static func appendTraversalFocusBindings(_ specs: inout [ActionSpec]) {
-        specs.append(contentsOf: [
-            action(
-                id: "focusDownOrLeft",
-                command: .focusNavigation(.downOrLeft),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "focusUpOrRight",
-                command: .focusNavigation(.upOrRight),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            )
-        ])
-    }
-
     static func appendWindowFocusBindings(_ specs: inout [ActionSpec]) {
         specs.append(contentsOf: [
-            action(
-                id: "focusWindowTop",
-                command: .focusNavigation(.windowTop),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "focusWindowBottom",
-                command: .focusNavigation(.windowBottom),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
             action(
                 id: "focusWindowDownOrTop",
                 command: .focusNavigation(.windowDownOrTop),
@@ -100,71 +67,5 @@ extension ActionCatalog {
                 keywords: ["wrap", "group", "tab", "cycle"]
             )
         ])
-    }
-
-    static func appendWorkspaceEdgeFocusBindings(_ specs: inout [ActionSpec]) {
-        specs.append(contentsOf: [
-            action(
-                id: "focusWindowOrWorkspaceDown",
-                command: .focusNavigation(.windowOrWorkspaceDown),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "focusWindowOrWorkspaceUp",
-                command: .focusNavigation(.windowOrWorkspaceUp),
-                category: .focus,
-                binding: .unassigned,
-                visibility: .advanced
-            )
-        ])
-    }
-
-    static func appendCenteringBindings(_ specs: inout [ActionSpec]) {
-        specs.append(contentsOf: [
-            action(
-                id: "centerColumn",
-                command: .focusNavigation(.centerColumn),
-                category: .layout,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "centerVisibleColumns",
-                command: .focusNavigation(.centerVisibleColumns),
-                category: .layout,
-                binding: .unassigned,
-                visibility: .advanced
-            )
-        ])
-    }
-
-    static func appendColumnIndexFocusBindings(_ specs: inout [ActionSpec]) {
-        for (idx, code) in digitCodes.enumerated() {
-            specs.append(
-                action(
-                    id: "focusColumn.\(idx)",
-                    command: .focusNavigation(.column(idx)),
-                    category: .focus,
-                    binding: KeyBinding(keyCode: code, modifiers: UInt32(optionKey | controlKey)),
-                    visibility: .advanced
-                )
-            )
-        }
-    }
-
-    static func appendWindowIndexFocusBindings(_ specs: inout [ActionSpec]) {
-        for idx in 1 ... 9 {
-            specs.append(
-                action(
-                    id: "focusWindowInColumn.\(idx)",
-                    command: .focusNavigation(.windowInColumn(idx)),
-                    category: .focus,
-                    binding: .unassigned,
-                    visibility: .advanced
-                )
-            )
-        }
     }
 }

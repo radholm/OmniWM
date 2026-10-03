@@ -20,9 +20,6 @@ extension WorkspaceNavigationHandler {
     ) {
         guard let controller else { return }
         guard let token = controller.workspaceManager.selectedManagedToken else { return }
-        guard let currentWsId = controller.workspaceManager.workspace(for: token) else { return }
-
-        saveNiriViewportState(for: currentWsId)
         guard case let .changed(mutation) = moveWindowToMonitor(
             handle: WindowHandle(id: token),
             direction: direction
@@ -46,40 +43,15 @@ extension WorkspaceNavigationHandler {
         else {
             return .unchanged
         }
-
-        let targetIsNiri = controller.workspaceManager.activeLayoutKind(for: targetWorkspace.id) == .niri
-        let anchorToken: WindowToken? = targetIsNiri ? Self.spatialNeighborToken(
-            from: controller.preferredKeyboardFocusFrame(for: handle.id),
-            candidates: controller.workspaceManager.tiledEntries(in: targetWorkspace.id)
-                .filter { !controller.isManagedWindowSuppressedByMacOS($0.token) }
-                .compactMap { entry in
-                    controller.preferredKeyboardFocusFrame(for: entry.token).map { (token: entry.token, frame: $0) }
-                },
-            direction: direction,
-            targetFrame: controller.insetWorkingFrame(for: targetMonitor)
-        ) : nil
-
         let outcome = moveWindow(handle: handle, toWorkspaceId: targetWorkspace.id)
         guard case let .changed(mutation) = outcome else { return outcome }
-
-        if targetIsNiri,
-           controller.niriEngine?.findNode(for: handle, in: targetWorkspace.id) != nil
-        {
-            controller.niriLayoutHandler.consumeTransferredWindow(
-                handle.id,
-                in: targetWorkspace.id,
-                enteringFrom: direction,
-                anchorToken: anchorToken
-            )
-        }
 
         return .changed(
             StructuralMutation(
                 sourceWorkspaceId: mutation.sourceWorkspaceId,
                 destinationWorkspaceId: mutation.destinationWorkspaceId,
                 selectedHandle: mutation.selectedHandle,
-                movedTokens: mutation.movedTokens,
-                scrollWorkspaceId: nil
+                movedTokens: mutation.movedTokens
             )
         )
     }
@@ -97,16 +69,12 @@ extension WorkspaceNavigationHandler {
 
         guard let targetWsId = controller.workspaceManager.activeWorkspace(on: targetMonitor.id)?.id
         else { return }
-
-        saveNiriViewportState(for: currentWsId)
         restoreRememberedSelection(in: targetWsId)
 
         guard controller.workspaceManager.swapWorkspaces(
             currentWsId, on: currentMonitorId,
             with: targetWsId, on: targetMonitor.id
         ) else { return }
-
-        controller.syncMonitorsToNiriEngine()
 
         let focusToken = controller.resolveAndSetWorkspaceFocusToken(for: targetWsId)
 

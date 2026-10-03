@@ -23,7 +23,6 @@ extension MouseEventHandler {
     }
 
     private enum FocusFollowsMouseTarget {
-        case niri(workspaceId: WorkspaceDescriptor.ID, window: NiriWindow)
         case dwindle(workspaceId: WorkspaceDescriptor.ID, token: WindowToken)
         case floating(token: WindowToken)
     }
@@ -59,15 +58,12 @@ extension MouseEventHandler {
         resetHoveredEdgesIfNeeded()
     }
 
-    private func shouldHandleFocusFollowsMouse(at location: CGPoint) -> Bool {
+    private func shouldHandleFocusFollowsMouse(at _: CGPoint) -> Bool {
         guard !state.isMoving, !state.isResizing, !isTrackpadSwipeSessionActive else { return false }
         guard let controller else { return false }
         // While a workspace slide is on screen the pointer is over previews, not the real windows.
         guard !controller.layoutRefreshController.workspaceSwipe.hasPresentation else { return false }
-        guard let workspaceId = workspaceIdForPointer(at: location) else {
-            return true
-        }
-        return !controller.niriLayoutHandler.hasScrollAnimation(for: workspaceId)
+        return true
     }
 
     func workspaceIdForPointer(at location: CGPoint) -> WorkspaceDescriptor.ID? {
@@ -76,16 +72,6 @@ extension MouseEventHandler {
             return controller.activeWorkspace()?.id
         }
         return controller.workspaceManager.activeWorkspaceOrFirst(on: monitor.id)?.id
-    }
-
-    func resolvedNiriOrientation(
-        engine: NiriLayoutEngine,
-        workspaceId: WorkspaceDescriptor.ID,
-        monitor: Monitor
-    ) -> Monitor.Orientation {
-        controller?.settings.monitors.effectiveOrientation(for: monitor)
-            ?? engine.monitorForWorkspace(workspaceId)?.orientation
-            ?? monitor.autoOrientation
     }
 
     func shouldBlockOwnWindowInput(at location: CGPoint) -> Bool {
@@ -172,16 +158,8 @@ extension MouseEventHandler {
         }
 
         switch controller.settings.workspaces.layoutType(for: workspace.name) {
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            guard let engine = controller.niriEngine,
-                  let window = engine.hitTestFocusableWindow(point: location, in: workspaceId)
-            else {
-                return nil
-            }
-            return .niri(workspaceId: workspaceId, window: window)
-
-        case .dwindle:
             guard let engine = controller.dwindleEngine else { return nil }
             let presentationTime = controller.animationClock.now()
             guard let token = engine.hitTestFocusableWindow(
@@ -215,20 +193,8 @@ extension MouseEventHandler {
 
         case .tiling:
             switch controller.settings.workspaces.layoutType(for: workspace.name) {
-            case .niri,
+            case .dwindle,
                  .defaultLayout:
-                guard let window = controller.niriEngine?.findNode(
-                    for: entry.token,
-                    in: entry.workspaceId
-                ), controller.niriEngine?.isProjectedFocusableWindow(
-                    window,
-                    in: entry.workspaceId
-                ) == true else {
-                    return nil
-                }
-                return .niri(workspaceId: entry.workspaceId, window: window)
-
-            case .dwindle:
                 guard controller.dwindleEngine?.findNode(
                     for: entry.token,
                     in: entry.workspaceId
@@ -242,8 +208,6 @@ extension MouseEventHandler {
 
     private func focusFollowsMouseToken(for target: FocusFollowsMouseTarget) -> WindowToken {
         switch target {
-        case let .niri(_, window):
-            window.token
         case let .dwindle(_, token):
             token
         case let .floating(token):
@@ -282,11 +246,6 @@ extension MouseEventHandler {
         guard let controller else { return }
 
         switch target {
-        case let .niri(workspaceId, window):
-            controller.niriLayoutHandler.activatePointerHoveredWindow(
-                window,
-                in: workspaceId
-            )
         case let .dwindle(workspaceId, token):
             controller.dwindleLayoutHandler.activateWindow(
                 token,

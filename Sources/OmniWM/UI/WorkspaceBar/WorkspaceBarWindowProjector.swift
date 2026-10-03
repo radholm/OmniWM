@@ -36,14 +36,12 @@ struct WorkspaceBarWindowProjector {
     func items(
         entries: [WindowState],
         deduplicate: Bool,
-        useLayoutOrder: Bool,
         focusedToken: WindowToken?,
         hiddenAppPIDs: Set<pid_t>
     ) -> [WorkspaceBarWindowItem] {
         if deduplicate {
             return createDedupedWindowItems(
                 entries: entries,
-                useLayoutOrder: useLayoutOrder,
                 focusedToken: focusedToken,
                 hiddenAppPIDs: hiddenAppPIDs
             )
@@ -58,7 +56,6 @@ struct WorkspaceBarWindowProjector {
 
     private func createDedupedWindowItems(
         entries: [WindowState],
-        useLayoutOrder: Bool,
         focusedToken: WindowToken?,
         hiddenAppPIDs: Set<pid_t>
     ) -> [WorkspaceBarWindowItem] {
@@ -87,10 +84,6 @@ struct WorkspaceBarWindowProjector {
                 return nil
             }
             return (index, item)
-        }
-
-        if useLayoutOrder {
-            return indexedItems.map(\.1)
         }
 
         return indexedItems.sorted {

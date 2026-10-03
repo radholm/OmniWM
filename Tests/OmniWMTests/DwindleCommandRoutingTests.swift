@@ -267,7 +267,7 @@ final class DwindleCommandRoutingTests: XCTestCase {
         defer { unblockLayoutRefresh(fixture.controller, blocker: blocker) }
 
         XCTAssertEqual(
-            fixture.controller.commandHandler.performCommand(.moveColumn(.right)),
+            fixture.controller.commandHandler.performCommand(.dwindle(.moveGroup(.right))),
             .executed
         )
 
@@ -289,8 +289,8 @@ final class DwindleCommandRoutingTests: XCTestCase {
         fixture.controller.layoutRefreshController.layoutState.pendingRefresh = nil
 
         XCTAssertEqual(
-            fixture.controller.commandHandler.performCommand(.moveColumn(.down)),
-            .executed
+            fixture.controller.commandHandler.performCommand(.dwindle(.moveGroup(.down))),
+            .noChange
         )
 
         XCTAssertEqual(
@@ -379,20 +379,6 @@ final class DwindleCommandRoutingTests: XCTestCase {
 
         XCTAssertEqual(router.handle(.dwindle(.resize(axis: .horizontal, operation: .shrink))), .executed)
         XCTAssertEqual(root.splitRatio ?? 0, 1.0, accuracy: 0.000_001)
-    }
-
-    func testExplicitConsumeOrExpelCommandsRejectDwindleLayout() throws {
-        let fixture = try makeFixture(groupedSource: false, includeTargetCandidate: false)
-
-        for command in [
-            HotkeyCommand.windowMovement(.consumeOrExpelLeft),
-            .windowMovement(.consumeOrExpelRight)
-        ] {
-            XCTAssertEqual(
-                fixture.controller.commandHandler.performCommand(command),
-                .ignoredLayoutMismatch
-            )
-        }
     }
 
     func testIPCRootPromotionReportsNoChangeForGroupedRootChild() throws {

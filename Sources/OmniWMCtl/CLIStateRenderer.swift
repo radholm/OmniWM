@@ -185,7 +185,6 @@ enum CLIStateRenderer {
                 rule.bundleId.isEmpty ? "—" : rule.bundleId,
                 rule.layout.rawValue,
                 rule.assignToWorkspace ?? "-",
-                percentageDescription(rule.initialContainerPrimarySpan),
                 rule.titleRegex ?? "-",
                 String(rule.specificity),
                 ruleValidityDescription(rule)
@@ -199,7 +198,6 @@ enum CLIStateRenderer {
                 "BUNDLE ID",
                 "LAYOUT",
                 "WORKSPACE",
-                "INITIAL PRIMARY SPAN",
                 "TITLE REGEX",
                 "SPECIFICITY",
                 "VALID"
@@ -207,22 +205,6 @@ enum CLIStateRenderer {
             rows: rows,
             format: format
         )
-    }
-
-    private static func percentageDescription(_ proportion: Double?) -> String {
-        guard let proportion else { return "-" }
-        var percentage = String(
-            format: "%.2f",
-            locale: Locale(identifier: "en_US_POSIX"),
-            proportion * 100
-        )
-        while percentage.last == "0" {
-            percentage.removeLast()
-        }
-        if percentage.last == "." {
-            percentage.removeLast()
-        }
-        return percentage + "%"
     }
 
     private static func ruleValidityDescription(_ rule: IPCRuleSnapshot) -> String {

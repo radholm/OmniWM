@@ -12,7 +12,7 @@ import XCTest
 @MainActor
 final class OverviewStructuralCommandTests: XCTestCase {
     func testEmptiedDynamicWorkspaceSurvivesOverviewUntilClose() async throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let controller = fixture.controller
         let manager = controller.workspaceManager
         let configuredId = fixture.workspaceIds[0]
@@ -38,7 +38,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testEmptiedDynamicWorkspaceIsCollectedWhenOverviewClosesWithoutRefresh() async throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let controller = fixture.controller
         let manager = controller.workspaceManager
         let configuredId = fixture.workspaceIds[0]
@@ -63,12 +63,10 @@ final class OverviewStructuralCommandTests: XCTestCase {
 
     func testOverviewGuardExemptsOnlyToggleOverview() {
         XCTAssertFalse(CommandHandler.shouldIgnoreCommand(.presentation(.overview), isOverviewOpen: true))
-        XCTAssertTrue(CommandHandler.shouldIgnoreCommand(.column(.moveToFirst), isOverviewOpen: true))
-        XCTAssertFalse(CommandHandler.shouldIgnoreCommand(.column(.moveToFirst), isOverviewOpen: false))
     }
 
     func testNativeFullscreenWindowsGetCardsButRefuseDragAndStructuralMutation() throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let workspaceId = fixture.workspaceIds[0]
         let fullscreen = try addManagedWindow(pid: 461_040, windowId: 40, to: workspaceId, fixture: fixture)
         _ = try addManagedWindow(pid: 461_040, windowId: 41, to: workspaceId, fixture: fixture)
@@ -105,7 +103,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testNativeFullscreenSnapshotIncludesCardWithFullScreenCaption() throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let fullscreen = try addManagedWindow(
             pid: 461_041, windowId: 42, to: fixture.workspaceIds[0], fixture: fixture
         )
@@ -132,7 +130,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testOverviewActivationUsesNativeFullscreenOwner() async throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let fullscreen = try addManagedWindow(
             pid: 461_042, windowId: 43, to: fixture.workspaceIds[0], fixture: fixture
         )
@@ -157,7 +155,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testPerformCommandToggleOverviewClosesOpenOverview() throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         _ = try addManagedWindow(pid: 461_030, windowId: 30, to: fixture.workspaceIds[0], fixture: fixture)
         fixture.controller.toggleOverview()
         defer {
@@ -166,15 +164,12 @@ final class OverviewStructuralCommandTests: XCTestCase {
             }
         }
         XCTAssertTrue(fixture.controller.isOverviewOpen())
-
-        XCTAssertEqual(fixture.controller.commandHandler.performCommand(.column(.moveToFirst)), .ignoredOverview)
         XCTAssertEqual(fixture.controller.commandHandler.performCommand(.presentation(.overview)), .executed)
         XCTAssertFalse(fixture.controller.isOverviewOpen())
 
         let router = IPCCommandRouter(controller: fixture.controller, sessionToken: "test")
         XCTAssertEqual(router.handle(IPCCommandRequest.presentation(.overview)), .executed)
         XCTAssertTrue(fixture.controller.isOverviewOpen())
-        XCTAssertEqual(router.handle(IPCCommandRequest.column(.moveToFirst)), .ignoredOverview)
         XCTAssertEqual(router.handle(IPCCommandRequest.presentation(.overview)), .executed)
         XCTAssertFalse(fixture.controller.isOverviewOpen())
     }
@@ -197,231 +192,8 @@ final class OverviewStructuralCommandTests: XCTestCase {
         let focusRecorder: FocusRecorder
     }
 
-    func testUnassignableConsumeOrExpelCommandsHaveNoOverviewRouting() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let selected = try addManagedWindow(
-            pid: 461_020,
-            windowId: 22,
-            to: fixture.workspaceIds[0],
-            fixture: fixture
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let cases = [
-            ("consumeOrExpelWindowLeft", HotkeyCommand.windowMovement(.consumeOrExpelLeft)),
-            ("consumeOrExpelWindowRight", .windowMovement(.consumeOrExpelRight))
-        ]
-
-        for (id, command) in cases {
-            XCTAssertNil(HotkeyBindingRegistry.command(for: id))
-            XCTAssertNil(
-                overview.performStructuralHotkey(command, selectedHandle: selected)
-            )
-        }
-    }
-
-    func testSelectedOverviewHandleMovesInsteadOfLiveFocusedHandle() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let selected = try addManagedWindow(pid: 461_001, windowId: 1, to: workspaceId, fixture: fixture)
-        let liveFocused = try addManagedWindow(pid: 461_001, windowId: 2, to: workspaceId, fixture: fixture)
-        let trailing = try addManagedWindow(pid: 461_001, windowId: 3, to: workspaceId, fixture: fixture)
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        XCTAssertTrue(fixture.controller.workspaceManager.setManagedFocus(liveFocused.id, in: workspaceId))
-
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(.column(.moveToLast), selectedHandle: selected)
-        let mutation = try XCTUnwrap(outcome?.mutation)
-
-        XCTAssertEqual(
-            engine.columns(in: workspaceId).flatMap { $0.windowNodes.map(\.token) },
-            [liveFocused.id, trailing.id, selected.id]
-        )
-        XCTAssertEqual(mutation.selectedHandle, selected)
-        XCTAssertEqual(mutation.movedTokens, [selected.id])
-        XCTAssertEqual(fixture.controller.workspaceManager.selectedManagedToken, liveFocused.id)
-        XCTAssertEqual(fixture.controller.workspaceManager.lastFocusedToken(in: workspaceId), selected.id)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testSelectedOverviewHandleMovesToActiveAdjacentMonitorWorkspaceWithoutAXFocus() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let targetFrame = CGRect(x: 1600, y: 0, width: 1600, height: 900)
-        let targetMonitor = Monitor(
-            id: .init(displayId: 46_101),
-            displayId: 46_101,
-            frame: targetFrame,
-            visibleFrame: targetFrame,
-            hasNotch: false,
-            name: "Overview Structural Target"
-        )
-        fixture.controller.settings.workspaces.configurations.append(contentsOf: [
-            WorkspaceConfiguration(
-                name: "2",
-                monitorAssignment: .specificDisplay(OutputId(from: targetMonitor)),
-                layoutType: .niri
-            ),
-            WorkspaceConfiguration(
-                name: "3",
-                monitorAssignment: .specificDisplay(OutputId(from: targetMonitor)),
-                layoutType: .niri
-            )
-        ])
-        fixture.controller.workspaceManager.applyMonitorConfigurationChange([fixture.monitor, targetMonitor])
-        fixture.controller.workspaceManager.applySettings()
-        fixture.controller.syncMonitorsToNiriEngine()
-        let inactiveTargetWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "2")
-        )
-        let activeTargetWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "3")
-        )
-        XCTAssertTrue(
-            fixture.controller.workspaceManager.setActiveWorkspace(
-                inactiveTargetWorkspaceId,
-                on: targetMonitor.id,
-                updateInteractionMonitor: false
-            )
-        )
-        XCTAssertTrue(
-            fixture.controller.workspaceManager.setActiveWorkspace(
-                activeTargetWorkspaceId,
-                on: targetMonitor.id,
-                updateInteractionMonitor: false
-            )
-        )
-        XCTAssertTrue(
-            fixture.controller.workspaceManager.setActiveWorkspace(sourceWorkspaceId, on: fixture.monitor.id)
-        )
-
-        let selected = try addManagedWindow(
-            pid: 461_017,
-            windowId: 20,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        let liveFocused = try addManagedWindow(
-            pid: 461_017,
-            windowId: 21,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        XCTAssertTrue(
-            fixture.controller.workspaceManager.setManagedFocus(
-                liveFocused.id,
-                in: sourceWorkspaceId,
-                onMonitor: fixture.monitor.id
-            )
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-
-        let outcome = withBlockedLayoutRefreshes(fixture) {
-            overview.executeStructuralHotkey(
-                .workspace(.moveToMonitor(.right)),
-                selectedHandle: selected
-            )
-        }
-        let mutation = try XCTUnwrap(outcome?.mutation)
-
-        XCTAssertEqual(mutation.sourceWorkspaceId, sourceWorkspaceId)
-        XCTAssertEqual(mutation.destinationWorkspaceId, activeTargetWorkspaceId)
-        XCTAssertEqual(mutation.selectedHandle, selected)
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.workspace(for: selected.id),
-            activeTargetWorkspaceId
-        )
-        XCTAssertNotEqual(
-            fixture.controller.workspaceManager.workspace(for: selected.id),
-            inactiveTargetWorkspaceId
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.workspace(for: liveFocused.id),
-            sourceWorkspaceId
-        )
-        XCTAssertEqual(fixture.controller.workspaceManager.interactionMonitorId, targetMonitor.id)
-        XCTAssertEqual(overview.selectedWindowHandle, selected)
-        XCTAssertEqual(fixture.controller.workspaceManager.selectedManagedToken, liveFocused.id)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testPhysicalStructuralRoutingBlocksTriggerlessAndUnsupportedCommands() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let selected = try addManagedWindow(pid: 461_016, windowId: 18, to: workspaceId, fixture: fixture)
-        let trailing = try addManagedWindow(pid: 461_016, windowId: 19, to: workspaceId, fixture: fixture)
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        XCTAssertTrue(fixture.controller.workspaceManager.setManagedFocus(selected.id, in: workspaceId))
-
-        fixture.controller.toggleOverview()
-        defer {
-            if fixture.controller.isOverviewOpen() {
-                fixture.controller.toggleOverview()
-            }
-        }
-        XCTAssertTrue(fixture.controller.isOverviewOpen())
-
-        XCTAssertEqual(
-            fixture.controller.commandHandler.handleHotkeyInvocation(
-                HotkeyInvocation(
-                    command: .column(.moveToLast),
-                    trigger: PhysicalHotkeyTrigger(keyCode: 46, modifiers: 0, isRepeat: false)
-                )
-            ),
-            .executed
-        )
-        XCTAssertEqual(
-            engine.columns(in: workspaceId).flatMap { $0.windowNodes.map(\.token) },
-            [trailing.id, selected.id]
-        )
-
-        XCTAssertEqual(
-            fixture.controller.commandHandler.performCommand(.column(.moveToFirst)),
-            .ignoredOverview
-        )
-        XCTAssertEqual(
-            fixture.controller.commandHandler.performCommand(.column(.moveToFirst)),
-            .ignoredOverview
-        )
-        XCTAssertEqual(
-            fixture.controller.commandHandler.handleHotkeyInvocation(
-                HotkeyInvocation(
-                    command: .fullscreen(.managed),
-                    trigger: PhysicalHotkeyTrigger(keyCode: 46, modifiers: 0, isRepeat: false)
-                )
-            ),
-            .ignoredOverview
-        )
-        XCTAssertEqual(
-            fixture.controller.commandHandler.handleHotkeyInvocation(
-                HotkeyInvocation(
-                    command: .workspace(.moveToMonitor(.right)),
-                    trigger: PhysicalHotkeyTrigger(keyCode: 46, modifiers: 0, isRepeat: false)
-                )
-            ),
-            .executed
-        )
-        XCTAssertEqual(
-            fixture.controller.commandHandler.handleHotkeyInvocation(
-                HotkeyInvocation(
-                    command: .workspace(.moveWorkspaceToMonitor(.right)),
-                    trigger: PhysicalHotkeyTrigger(keyCode: 46, modifiers: 0, isRepeat: false)
-                )
-            ),
-            .ignoredOverview
-        )
-    }
-
     func testCoalescedStructuralActionsRefreshUnionOfAffectedWorkspacesOnce() async throws {
-        let fixture = try makeFixture(layouts: [.niri, .niri])
+        let fixture = try makeFixture(layouts: [.dwindle, .dwindle])
         let firstWorkspaceId = fixture.workspaceIds[0]
         let secondWorkspaceId = fixture.workspaceIds[1]
         let firstSelected = try addManagedWindow(
@@ -461,18 +233,12 @@ final class OverviewStructuralCommandTests: XCTestCase {
         overview.prepareOpenState()
         overview.onAnimationComplete(state: .open)
 
-        XCTAssertTrue(
-            overview.executeStructuralHotkey(
-                .column(.moveToLast),
-                selectedHandle: firstSelected
-            )?.didMutate == true
-        )
-        XCTAssertTrue(
-            overview.executeStructuralHotkey(
-                .column(.moveToLast),
-                selectedHandle: secondSelected
-            )?.didMutate == true
-        )
+        XCTAssertTrue(overview.executeStructuralHotkey(
+            .workspace(.moveTo(1)), selectedHandle: firstSelected
+        )?.didMutate == true)
+        XCTAssertTrue(overview.executeStructuralHotkey(
+            .workspace(.moveTo(0)), selectedHandle: secondSelected
+        )?.didMutate == true)
 
         for _ in 0 ..< 100
             where fixture.controller.layoutRefreshController.layoutState.activeRefreshTask != nil
@@ -486,7 +252,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testCompletedWorkspaceTransferActivatesDestinationWithoutAXFocus() throws {
-        let fixture = try makeFixture(layouts: [.niri, .niri])
+        let fixture = try makeFixture(layouts: [.dwindle, .dwindle])
         let sourceWorkspaceId = fixture.workspaceIds[0]
         let destinationWorkspaceId = fixture.workspaceIds[1]
         let selected = try addManagedWindow(
@@ -542,251 +308,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
         XCTAssertEqual(fixture.focusRecorder.callCount, 0)
     }
 
-    func testFloatingWindowTransfersAcrossNiriWorkspaces() throws {
-        let fixture = try makeFixture(layouts: [.niri, .niri])
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let destinationWorkspaceId = fixture.workspaceIds[1]
-        let pid = pid_t(461_010)
-        let windowId = 10
-        let token = fixture.controller.workspaceManager.addWindow(
-            AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
-            pid: pid,
-            windowId: windowId,
-            to: sourceWorkspaceId,
-            mode: .floating
-        )
-        let selected = try XCTUnwrap(fixture.controller.workspaceManager.handle(for: token))
-        XCTAssertNil(fixture.controller.niriEngine?.findNode(for: token, in: sourceWorkspaceId))
-
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(.workspace(.moveTo(1)), selectedHandle: selected)
-        let mutation = try XCTUnwrap(outcome?.mutation)
-
-        XCTAssertEqual(mutation.sourceWorkspaceId, sourceWorkspaceId)
-        XCTAssertEqual(mutation.destinationWorkspaceId, destinationWorkspaceId)
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: token), destinationWorkspaceId)
-        XCTAssertEqual(fixture.controller.workspaceManager.windowMode(for: token), .floating)
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.lastFloatingFocusedToken(in: destinationWorkspaceId),
-            token
-        )
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testNiriStructuralNoOpPreservesOrderingAndRememberedFocus() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let first = try addManagedWindow(pid: 461_004, windowId: 1, to: workspaceId, fixture: fixture)
-        let second = try addManagedWindow(pid: 461_004, windowId: 2, to: workspaceId, fixture: fixture)
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        XCTAssertTrue(fixture.controller.workspaceManager.setManagedFocus(second.id, in: workspaceId))
-        let originalOrder = engine.columns(in: workspaceId).flatMap { $0.windowNodes.map(\.token) }
-
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(.column(.moveToFirst), selectedHandle: first)
-
-        XCTAssertEqual(outcome, StructuralMutationOutcome.unchanged)
-        XCTAssertEqual(engine.columns(in: workspaceId).flatMap { $0.windowNodes.map(\.token) }, originalOrder)
-        XCTAssertEqual(fixture.controller.workspaceManager.lastFocusedToken(in: workspaceId), second.id)
-        XCTAssertEqual(fixture.controller.workspaceManager.selectedManagedToken, second.id)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testHiddenWindowCannotExecuteOverviewStructuralHotkey() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        _ = try addManagedWindow(pid: 461_030, windowId: 40, to: workspaceId, fixture: fixture)
-        let selected = try addManagedWindow(
-            pid: 461_031,
-            windowId: 41,
-            to: workspaceId,
-            fixture: fixture
-        )
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        let originalColumns = engine.columns(in: workspaceId).map { $0.windowNodes.map(\.token) }
-        fixture.controller.workspaceManager.setAppHidden(
-            true,
-            pid: selected.pid,
-            source: .service
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-
-        let outcome = overview.performStructuralHotkey(
-            .column(.moveToFirst),
-            selectedHandle: selected
-        )
-
-        XCTAssertEqual(outcome, .unchanged)
-        XCTAssertEqual(
-            engine.columns(in: workspaceId).map { $0.windowNodes.map(\.token) },
-            originalColumns
-        )
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testCombinedVerticalMoveCreatesAdjacentWorkspaceAtEdge() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let selected = try addManagedWindow(
-            pid: 461_009,
-            windowId: 1,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        XCTAssertNil(fixture.controller.workspaceManager.workspaceId(named: "2"))
-
-        XCTAssertEqual(
-            fixture.controller.niriLayoutHandler.moveWindow(handle: selected, direction: .down),
-            .atWorkspaceEdge
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(
-            .windowMovement(.downOrToWorkspaceDown),
-            selectedHandle: selected
-        )
-        let createdWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "2")
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.monitorId(for: createdWorkspaceId),
-            fixture.monitor.id
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.activeLayoutKind(for: createdWorkspaceId),
-            .niri
-        )
-        let mutation = try XCTUnwrap(outcome?.mutation)
-        let destinationWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "2")
-        )
-
-        XCTAssertEqual(mutation.sourceWorkspaceId, sourceWorkspaceId)
-        XCTAssertEqual(mutation.destinationWorkspaceId, destinationWorkspaceId)
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: selected.id), destinationWorkspaceId)
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.monitorId(for: destinationWorkspaceId),
-            fixture.monitor.id
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.lastFocusedToken(in: destinationWorkspaceId),
-            selected.id
-        )
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testWholeColumnTransferPreservesSelectedMemberAndMovedTokens() throws {
-        let fixture = try makeFixture(layouts: [.niri, .niri])
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let destinationWorkspaceId = fixture.workspaceIds[1]
-        let selected = try addManagedWindow(
-            pid: 461_005,
-            windowId: 1,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        let stacked = try addManagedWindow(
-            pid: 461_005,
-            windowId: 2,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        let sourceRemainder = try addManagedWindow(
-            pid: 461_005,
-            windowId: 3,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        _ = try addManagedWindow(
-            pid: 461_006,
-            windowId: 1,
-            to: destinationWorkspaceId,
-            fixture: fixture
-        )
-        XCTAssertTrue(
-            fixture.controller.niriLayoutHandler.consumeOrExpelWindow(
-                handle: stacked,
-                direction: .left
-            ).didMutate
-        )
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        let sourceSelectedNode = try XCTUnwrap(engine.findNode(for: selected, in: sourceWorkspaceId))
-        let sourceColumn = try XCTUnwrap(
-            engine.findColumn(containing: sourceSelectedNode, in: sourceWorkspaceId)
-        )
-        XCTAssertEqual(Set(sourceColumn.windowNodes.map(\.token)), [selected.id, stacked.id])
-
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(
-            .column(.moveToWorkspace(1)),
-            selectedHandle: selected
-        )
-        let mutation = try XCTUnwrap(outcome?.mutation)
-
-        XCTAssertEqual(mutation.selectedHandle, selected)
-        XCTAssertEqual(Set(mutation.movedTokens), [selected.id, stacked.id])
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: selected.id), destinationWorkspaceId)
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: stacked.id), destinationWorkspaceId)
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: sourceRemainder.id), sourceWorkspaceId)
-        XCTAssertNil(engine.findNode(for: selected, in: sourceWorkspaceId))
-        XCTAssertNil(engine.findNode(for: stacked, in: sourceWorkspaceId))
-        let destinationSelectedNode = try XCTUnwrap(engine.findNode(for: selected, in: destinationWorkspaceId))
-        let destinationColumn = try XCTUnwrap(
-            engine.findColumn(containing: destinationSelectedNode, in: destinationWorkspaceId)
-        )
-        XCTAssertEqual(Set(destinationColumn.windowNodes.map(\.token)), [selected.id, stacked.id])
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.niriViewportState(for: destinationWorkspaceId).selectedNodeId,
-            destinationSelectedNode.id
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.lastFocusedToken(in: destinationWorkspaceId),
-            selected.id
-        )
-    }
-
-    func testDwindleSourceRejectsWholeColumnTransfer() throws {
-        let fixture = try makeFixture(layouts: [.dwindle, .niri])
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let destinationWorkspaceId = fixture.workspaceIds[1]
-        let selected = try addManagedWindow(
-            pid: 461_007,
-            windowId: 1,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        let dwindleEngine = try XCTUnwrap(fixture.controller.dwindleEngine)
-
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-        let outcome = overview.performStructuralHotkey(
-            .column(.moveToWorkspace(1)),
-            selectedHandle: selected
-        )
-
-        XCTAssertEqual(outcome, StructuralMutationOutcome.unchanged)
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: selected.id), sourceWorkspaceId)
-        XCTAssertNotNil(dwindleEngine.findNode(for: selected.id, in: sourceWorkspaceId))
-        XCTAssertNil(dwindleEngine.findNode(for: selected.id, in: destinationWorkspaceId))
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
     func testDwindleOverviewRejectsMoveAndMoveContainerInEveryDirection() throws {
         let fixture = try makeFixture(layouts: [.dwindle])
         let workspaceId = fixture.workspaceIds[0]
@@ -822,7 +343,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
             )
             assertUnchanged()
             XCTAssertEqual(
-                overview.performStructuralHotkey(.moveColumn(direction), selectedHandle: second),
+                overview.performStructuralHotkey(.dwindle(.moveGroup(direction)), selectedHandle: second),
                 .unchanged,
                 direction.rawValue
             )
@@ -832,113 +353,8 @@ final class OverviewStructuralCommandTests: XCTestCase {
         XCTAssertEqual(fixture.focusRecorder.callCount, 0)
     }
 
-    func testFloatingColumnMoveNoOpDoesNotCreateAdjacentWorkspace() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let pid = pid_t(461_011)
-        let windowId = 11
-        let token = fixture.controller.workspaceManager.addWindow(
-            AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
-            pid: pid,
-            windowId: windowId,
-            to: workspaceId,
-            mode: .floating
-        )
-        let selected = try XCTUnwrap(fixture.controller.workspaceManager.handle(for: token))
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-
-        let outcome = overview.performStructuralHotkey(
-            .column(.moveToWorkspaceDown),
-            selectedHandle: selected
-        )
-
-        XCTAssertEqual(outcome, .unchanged)
-        XCTAssertNil(fixture.controller.workspaceManager.workspaceId(named: "2"))
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: token), workspaceId)
-    }
-
-    func testColumnMoveDoesNotCreateIncompatibleDynamicWorkspace() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        fixture.controller.settings.workspaces.defaultLayoutType = .dwindle
-        let workspaceId = fixture.workspaceIds[0]
-        let selected = try addManagedWindow(
-            pid: 461_012,
-            windowId: 12,
-            to: workspaceId,
-            fixture: fixture
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-
-        let outcome = overview.performStructuralHotkey(
-            .column(.moveToWorkspaceDown),
-            selectedHandle: selected
-        )
-
-        XCTAssertEqual(outcome, .unchanged)
-        XCTAssertNil(fixture.controller.workspaceManager.workspaceId(named: "2"))
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: selected.id), workspaceId)
-    }
-
-    func testAdjacentCreationSkipsNumericWorkspaceOnAnotherMonitor() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let secondary = Monitor(
-            id: .init(displayId: 46_101),
-            displayId: 46_101,
-            frame: CGRect(x: 1600, y: 0, width: 1600, height: 900),
-            visibleFrame: CGRect(x: 1600, y: 0, width: 1600, height: 900),
-            hasNotch: false,
-            name: "Overview Structural Secondary"
-        )
-        fixture.controller.settings.workspaces.configurations.append(
-            WorkspaceConfiguration(name: "2", monitorAssignment: .secondary, layoutType: .niri)
-        )
-        fixture.controller.workspaceManager.applyMonitorConfigurationChange([fixture.monitor, secondary])
-        fixture.controller.workspaceManager.applySettings()
-        fixture.controller.syncMonitorsToNiriEngine()
-        let secondaryWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "2")
-        )
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.monitorId(for: secondaryWorkspaceId),
-            secondary.id
-        )
-        let sourceWorkspaceId = fixture.workspaceIds[0]
-        let selected = try addManagedWindow(
-            pid: 461_013,
-            windowId: 13,
-            to: sourceWorkspaceId,
-            fixture: fixture
-        )
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy
-        )
-
-        let outcome = overview.performStructuralHotkey(
-            .windowMovement(.downOrToWorkspaceDown),
-            selectedHandle: selected
-        )
-        let mutation = try XCTUnwrap(outcome?.mutation)
-        let destinationWorkspaceId = try XCTUnwrap(
-            fixture.controller.workspaceManager.workspaceId(named: "3")
-        )
-
-        XCTAssertEqual(mutation.destinationWorkspaceId, destinationWorkspaceId)
-        XCTAssertEqual(
-            fixture.controller.workspaceManager.monitorId(for: destinationWorkspaceId),
-            fixture.monitor.id
-        )
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: selected.id), destinationWorkspaceId)
-    }
-
     func testRemovalCallbackObservesAuthoritativeWindowRemoval() throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let workspaceId = fixture.workspaceIds[0]
         let handle = try addManagedWindow(pid: 461_008, windowId: 1, to: workspaceId, fixture: fixture)
         let manager = fixture.controller.workspaceManager
@@ -963,7 +379,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
     }
 
     func testHiddenWindowCannotBeginOverviewDrag() throws {
-        let fixture = try makeFixture(layouts: [.niri])
+        let fixture = try makeFixture(layouts: [.dwindle])
         let workspaceId = fixture.workspaceIds[0]
         let handle = try addManagedWindow(
             pid: 461_032,
@@ -985,139 +401,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
         )
 
         XCTAssertFalse(prepared.overview.hasActiveDragSession)
-    }
-
-    func testDragDoesNotMutateAfterDraggedApplicationBecomesHidden() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let target = try addManagedWindow(
-            pid: 461_033,
-            windowId: 43,
-            to: workspaceId,
-            fixture: fixture
-        )
-        let dragged = try addManagedWindow(
-            pid: 461_034,
-            windowId: 44,
-            to: workspaceId,
-            fixture: fixture
-        )
-        let prepared = try prepareDragOverview(fixture)
-        let targetFrame = try XCTUnwrap(prepared.layout.window(for: target)?.overviewFrame)
-        let dropPoint = CGPoint(
-            x: targetFrame.midX,
-            y: targetFrame.maxY - targetFrame.height * 0.1
-        )
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        let originalColumns = engine.columns(in: workspaceId).map { $0.windowNodes.map(\.token) }
-
-        prepared.overview.drag.beginDrag(on: fixture.monitor.id, handle: dragged, startPoint: .zero)
-        prepared.overview.drag.updateDrag(on: fixture.monitor.id, at: dropPoint)
-        XCTAssertTrue(prepared.overview.hasActiveDragSession)
-        fixture.controller.workspaceManager.setAppHidden(
-            true,
-            pid: dragged.pid,
-            source: .service
-        )
-        prepared.overview.drag.endDrag(on: fixture.monitor.id, at: dropPoint)
-
-        XCTAssertFalse(prepared.overview.hasActiveDragSession)
-        XCTAssertEqual(
-            engine.columns(in: workspaceId).map { $0.windowNodes.map(\.token) },
-            originalColumns
-        )
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: dragged.id), workspaceId)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testMouseDragInsertsNiriCardBeforeTarget() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let target = try addManagedWindow(pid: 461_020, windowId: 20, to: workspaceId, fixture: fixture)
-        _ = try addManagedWindow(pid: 461_020, windowId: 21, to: workspaceId, fixture: fixture)
-        let dragged = try addManagedWindow(pid: 461_020, windowId: 22, to: workspaceId, fixture: fixture)
-        let prepared = try prepareDragOverview(fixture)
-        let targetFrame = try XCTUnwrap(prepared.layout.window(for: target)?.overviewFrame)
-        let dropPoint = CGPoint(
-            x: targetFrame.midX,
-            y: targetFrame.maxY - targetFrame.height * 0.1
-        )
-
-        withBlockedLayoutRefreshes(fixture) {
-            prepared.overview.drag.beginDrag(on: fixture.monitor.id, handle: dragged, startPoint: .zero)
-            prepared.overview.drag.updateDrag(on: fixture.monitor.id, at: dropPoint)
-            prepared.overview.drag.endDrag(on: fixture.monitor.id, at: dropPoint)
-        }
-
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        let targetNode = try XCTUnwrap(engine.findNode(for: target, in: workspaceId))
-        let targetColumn = try XCTUnwrap(engine.findColumn(containing: targetNode, in: workspaceId))
-        XCTAssertEqual(
-            targetColumn.windowNodes.map(\.token),
-            [target.id, dragged.id]
-        )
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: dragged.id), workspaceId)
-        XCTAssertEqual(prepared.overview.selectedWindowHandle, dragged)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testMouseDragInsertsNiriCardAfterTarget() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let target = try addManagedWindow(pid: 461_021, windowId: 23, to: workspaceId, fixture: fixture)
-        _ = try addManagedWindow(pid: 461_021, windowId: 24, to: workspaceId, fixture: fixture)
-        let dragged = try addManagedWindow(pid: 461_021, windowId: 25, to: workspaceId, fixture: fixture)
-        let prepared = try prepareDragOverview(fixture)
-        let targetFrame = try XCTUnwrap(prepared.layout.window(for: target)?.overviewFrame)
-        let dropPoint = CGPoint(
-            x: targetFrame.midX,
-            y: targetFrame.minY + targetFrame.height * 0.1
-        )
-
-        withBlockedLayoutRefreshes(fixture) {
-            prepared.overview.drag.beginDrag(on: fixture.monitor.id, handle: dragged, startPoint: .zero)
-            prepared.overview.drag.updateDrag(on: fixture.monitor.id, at: dropPoint)
-            prepared.overview.drag.endDrag(on: fixture.monitor.id, at: dropPoint)
-        }
-
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        let targetNode = try XCTUnwrap(engine.findNode(for: target, in: workspaceId))
-        let targetColumn = try XCTUnwrap(engine.findColumn(containing: targetNode, in: workspaceId))
-        XCTAssertEqual(
-            targetColumn.windowNodes.map(\.token),
-            [dragged.id, target.id]
-        )
-        XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: dragged.id), workspaceId)
-        XCTAssertEqual(prepared.overview.selectedWindowHandle, dragged)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
-    }
-
-    func testMouseDragInsertsNiriWindowAtExactColumnGap() throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let workspaceId = fixture.workspaceIds[0]
-        let first = try addManagedWindow(pid: 461_022, windowId: 26, to: workspaceId, fixture: fixture)
-        let second = try addManagedWindow(pid: 461_022, windowId: 27, to: workspaceId, fixture: fixture)
-        let dragged = try addManagedWindow(pid: 461_022, windowId: 28, to: workspaceId, fixture: fixture)
-        let prepared = try prepareDragOverview(fixture)
-        let gap = try XCTUnwrap(
-            prepared.layout.niriColumnDropZonesByWorkspace[workspaceId]?
-                .first(where: { $0.insertIndex == 1 })
-        )
-        let dropPoint = CGPoint(x: gap.frame.midX, y: gap.frame.midY)
-
-        withBlockedLayoutRefreshes(fixture) {
-            prepared.overview.drag.beginDrag(on: fixture.monitor.id, handle: dragged, startPoint: .zero)
-            prepared.overview.drag.updateDrag(on: fixture.monitor.id, at: dropPoint)
-            prepared.overview.drag.endDrag(on: fixture.monitor.id, at: dropPoint)
-        }
-
-        let engine = try XCTUnwrap(fixture.controller.niriEngine)
-        XCTAssertEqual(
-            engine.columns(in: workspaceId).map { $0.windowNodes.map(\.token) },
-            [[first.id], [dragged.id], [second.id]]
-        )
-        XCTAssertEqual(prepared.overview.selectedWindowHandle, dragged)
-        XCTAssertEqual(fixture.focusRecorder.callCount, 0)
     }
 
     func testMouseDragOntoDwindleCardUsesWorkspaceOnlyPlacement() async throws {
@@ -1160,47 +443,9 @@ final class OverviewStructuralCommandTests: XCTestCase {
         XCTAssertEqual(fixture.focusRecorder.callCount, 0)
     }
 
-    func testDeferredColumnInsertIndexPreservesOriginalGap() {
-        XCTAssertEqual(
-            OverviewStructuralActions.deferredColumnInsertIndex(
-                requestedIndex: 0,
-                admittedColumnIndex: 2
-            ),
-            0
-        )
-        XCTAssertEqual(
-            OverviewStructuralActions.deferredColumnInsertIndex(
-                requestedIndex: 1,
-                admittedColumnIndex: 0
-            ),
-            2
-        )
-        XCTAssertEqual(
-            OverviewStructuralActions.deferredColumnInsertIndex(
-                requestedIndex: 1,
-                admittedColumnIndex: 1
-            ),
-            1
-        )
-        XCTAssertEqual(
-            OverviewStructuralActions.deferredColumnInsertIndex(
-                requestedIndex: 3,
-                admittedColumnIndex: 0
-            ),
-            4
-        )
-        XCTAssertEqual(
-            OverviewStructuralActions.deferredColumnInsertIndex(
-                requestedIndex: 3,
-                admittedColumnIndex: nil
-            ),
-            3
-        )
-    }
-
-    func testOverviewSelectionSettlesOffViewportDestinationBeforeRelayout() async throws {
-        for targetLayout in [LayoutType.niri, .dwindle] {
-            let fixture = try makeFixture(layouts: [.niri, targetLayout])
+    func testOverviewSelectionSettlesDestinationBeforeRelayout() async throws {
+        for targetLayout in [LayoutType.dwindle] {
+            let fixture = try makeFixture(layouts: [.dwindle, targetLayout])
             let controller = fixture.controller
             let manager = controller.workspaceManager
             let source = fixture.workspaceIds[0]
@@ -1235,9 +480,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
             overview.onAnimationComplete(state: .open)
             let view = try XCTUnwrap(overview.windowSession.primaryOverviewWindow()?.contentView?.subviews
                 .compactMap { $0 as? OverviewView }.first)
-            if targetLayout == .niri {
-                XCTAssertEqual(view.layout.window(for: target)?.originalFrame, parked)
-            }
             let watermark = controller.intentLedger.newestFocusIntentId()
 
             overview.input.selectAndActivateWindow(target)
@@ -1250,18 +492,14 @@ final class OverviewStructuralCommandTests: XCTestCase {
             let restFrame = try XCTUnwrap(view.layout.window(for: target)?.interpolatedFrame(progress: 0))
             XCTAssertTrue(fixture.monitor.frame.intersects(restFrame))
             XCTAssertEqual(view.layout.anchorWorkspaceId, destination)
-            XCTAssertFalse(manager.niriViewportState(for: destination).hasPendingOffsetAnimation)
-            XCTAssertFalse(manager.animationDriver.hasMotion(in: destination))
             XCTAssertEqual(fixture.focusRecorder.callCount, 0)
 
             while let task = refresh.layoutState.activeRefreshTask { await task.value }
 
-            let frames = targetLayout == .niri
-                ? controller.niriEngine?.captureWindowFrames(in: destination)
-                : controller.dwindleEngine?.calculateLayout(
-                    for: destination,
-                    screen: controller.insetWorkingFrame(for: fixture.monitor)
-                )
+            let frames = controller.dwindleEngine?.calculateLayout(
+                for: destination,
+                screen: controller.insetWorkingFrame(for: fixture.monitor)
+            )
             XCTAssertEqual(restFrame, frames?[target.id])
             XCTAssertEqual(view.layout.window(for: target)?.interpolatedFrame(progress: 0), restFrame)
             XCTAssertEqual(controller.intentLedger.newestFocusIntentId(), watermark)
@@ -1270,161 +508,11 @@ final class OverviewStructuralCommandTests: XCTestCase {
         }
     }
 
-    func testOverviewSelectionSettlesExistingReorderAndViewportMotion() async throws {
-        let fixture = try makeFixture(layouts: [.niri])
-        let controller = fixture.controller
-        let workspaceId = fixture.workspaceIds[0]
-        var handles: [WindowHandle] = []
-        for index in 0 ..< 4 {
-            handles.append(try addManagedWindow(pid: 461_060, windowId: 60 + index, to: workspaceId, fixture: fixture))
-        }
-        let refresh = controller.layoutRefreshController
-        refresh.requestImmediateRelayout(reason: .overviewMutation, affectedWorkspaceIds: [workspaceId])
-        while let task = refresh.layoutState.activeRefreshTask { await task.value }
-        let target = try XCTUnwrap(handles.last)
-        let prepared = try prepareDragOverview(fixture)
-        let overview = prepared.overview
-        controller.motionPolicy.animationsEnabled = true
-        let engine = try XCTUnwrap(controller.niriEngine)
-        overview.onPrepareActivation = controller.windowActionHandler.prepareOverviewSelection
-        refresh.displayLinkActivationForTests = { _ in true }
-
-        XCTAssertTrue(overview.executeStructuralHotkey(.column(.moveToFirst), selectedHandle: target)?
-            .didMutate == true)
-        XCTAssertTrue(engine.hasAnyColumnAnimationsRunning(in: workspaceId))
-        let state = controller.workspaceManager.niriViewportState(for: workspaceId)
-        var previous = state
-        previous.viewOffset -= 200
-        var spring = state
-        spring.springOffset(to: state.viewOffset)
-        controller.workspaceManager.animationDriver.reconcileViewportCommit(
-            workspaceId: workspaceId, previous: previous, next: state, transition: spring.offsetTransition
-        )
-        XCTAssertTrue(controller.workspaceManager.animationDriver.hasMotion(in: workspaceId))
-
-        overview.dismiss(reason: .selection, targetWindow: target, animated: false)
-
-        XCTAssertFalse(engine.hasAnyColumnAnimationsRunning(in: workspaceId))
-        XCTAssertFalse(engine.hasAnyWindowAnimationsRunning(in: workspaceId))
-        XCTAssertFalse(controller.workspaceManager.animationDriver.hasMotion(in: workspaceId))
-        XCTAssertFalse(controller.workspaceManager.niriViewportState(for: workspaceId).hasPendingOffsetAnimation)
-        let settled = try XCTUnwrap(controller.niriLayoutHandler.settledFrames(in: workspaceId)?[target.id])
-        while let task = refresh.layoutState.activeRefreshTask { await task.value }
-        XCTAssertEqual(engine.captureWindowFrames(in: workspaceId)[target.id], settled)
-    }
-
-    func testConsumeAndExpelPreserveOverviewViewportInBothOrientations() async throws {
-        for orientation in [Monitor.Orientation.horizontal, .vertical] {
-            let fixture = try makeFixture(layouts: [.niri, .niri, .niri])
-            let controller = fixture.controller
-            let workspaceId = fixture.workspaceIds[1]
-            controller.settings.monitors.updateOrientationSettings(
-                MonitorOrientationSettings(monitorName: fixture.monitor.name, orientation: orientation),
-                for: fixture.monitor
-            )
-            controller.syncMonitorsToNiriEngine()
-            var handles: [WindowHandle] = []
-            for index in 0 ..< 8 {
-                handles.append(try addManagedWindow(
-                    pid: 461_080, windowId: 80 + index, to: workspaceId, fixture: fixture
-                ))
-            }
-            let destination = fixture.workspaceIds[2]
-            for index in 0 ..< 2 {
-                _ = try addManagedWindow(pid: 461_081, windowId: 90 + index, to: destination, fixture: fixture)
-            }
-            let selected = handles[1]
-            let stationary = handles[0]
-            XCTAssertTrue(controller.workspaceManager.setActiveWorkspace(workspaceId, on: fixture.monitor.id))
-            XCTAssertTrue(controller.workspaceManager.setManagedFocus(selected.id, in: workspaceId))
-            let refresh = controller.layoutRefreshController
-            refresh.requestImmediateRelayout(reason: .overviewMutation, affectedWorkspaceIds: [workspaceId])
-            while let task = refresh.layoutState.activeRefreshTask { await task.value }
-            let overview = try prepareDragOverview(fixture).overview
-            overview.windowSession.createWindows(controller: overview, monitors: [fixture.monitor], palette: .default)
-            overview.windowSession.updateWindowDisplays(state: .open)
-            defer { overview.windowSession.closeWindows() }
-            let view = try XCTUnwrap(overview.windowSession.primaryOverviewWindow()?.contentView?.subviews
-                .compactMap { $0 as? OverviewView }.first)
-            overview.input.selectTab(selected, on: fixture.monitor.id)
-            overview.input.adjustScrollOffset(by: -80, on: fixture.monitor.id)
-            let ribbon = try XCTUnwrap(view.layout.workspaceSections.first { $0.workspaceId == workspaceId })
-            overview.input.panStrip(
-                at: CGPoint(x: ribbon.ribbonFrame.midX, y: ribbon.ribbonFrame.midY - view.layout.scrollOffset),
-                by: 30,
-                on: fixture.monitor.id
-            )
-            let axis = OverviewRibbonAxis(orientation)
-            for command in [
-                HotkeyCommand.windowMovement(.consumeIntoColumn),
-                .windowMovement(.expelFromColumn),
-                .column(.moveToLast)
-            ] {
-                let before = view.layout
-                let beforeFrame = try XCTUnwrap(before.window(for: stationary)?.overviewFrame)
-                XCTAssertTrue(overview.executeStructuralHotkey(command, selectedHandle: selected)?.didMutate == true)
-                while let task = refresh.layoutState.activeRefreshTask { await task.value }
-                let afterFrame = try XCTUnwrap(view.layout.window(for: stationary)?.overviewFrame)
-
-                XCTAssertEqual(
-                    view.layout.scrollOffset,
-                    before.scrollOffset,
-                    accuracy: 0.001,
-                    "\(orientation), \(command)"
-                )
-                XCTAssertEqual(
-                    axis.minimum(afterFrame),
-                    axis.minimum(beforeFrame),
-                    accuracy: 0.001,
-                    "\(orientation), \(command)"
-                )
-                XCTAssertEqual(
-                    view.layout.workspaceSections.map(\.ribbonFrame),
-                    before.workspaceSections.map(\.ribbonFrame)
-                )
-                XCTAssertEqual(overview.selectedWindowHandle, selected)
-                let snapshot = try XCTUnwrap(controller.niriLayoutHandler.overviewSnapshot(for: workspaceId)?.strip)
-                let viewportOrigin = snapshot.viewportPosition - (view.layout.stripPanByWorkspace[workspaceId] ?? 0)
-                overview.refreshCachedOverviewProjection(affectedWorkspaceIds: [workspaceId], revealingSelection: false)
-                XCTAssertEqual(
-                    snapshot.viewportPosition - (view.layout.stripPanByWorkspace[workspaceId] ?? 0),
-                    viewportOrigin,
-                    accuracy: 0.001
-                )
-            }
-            XCTAssertNotEqual(view.layout.stripPanRevealing(selected), 0)
-            overview.input.selectTab(selected, on: fixture.monitor.id)
-            XCTAssertEqual(view.layout.stripPanRevealing(selected), 0, accuracy: 0.001)
-            let sourceScrollOffset = view.layout.scrollOffset
-
-            XCTAssertTrue(overview.executeStructuralHotkey(.workspace(.moveTo(2)), selectedHandle: selected)?
-                .didMutate == true)
-            XCTAssertTrue(overview.executeStructuralHotkey(.column(.moveToFirst), selectedHandle: selected)?
-                .didMutate == true)
-            while let task = refresh.layoutState.activeRefreshTask { await task.value }
-
-            let movedFrame = try XCTUnwrap(view.layout.window(for: selected)?.overviewFrame)
-            XCTAssertEqual(view.layout.window(for: selected)?.workspaceId, destination)
-            XCTAssertNotEqual(view.layout.scrollOffset, sourceScrollOffset)
-            XCTAssertEqual(
-                view.layout.scrollOffset,
-                OverviewLayoutCalculator.scrollOffsetRevealing(
-                    targetFrame: movedFrame,
-                    currentOffset: view.layout.scrollOffset,
-                    layout: view.layout,
-                    screenFrame: OverviewLayoutCalculator.viewportFrame(for: fixture.monitor.frame)
-                ),
-                accuracy: 0.001
-            )
-        }
-    }
-
     private func emptyDynamicWorkspaceInOverview(_ fixture: Fixture) async throws -> WorkspaceDescriptor.ID {
         let controller = fixture.controller
         let manager = controller.workspaceManager
         let configuredId = fixture.workspaceIds[0]
         let dynamic = try XCTUnwrap(manager.createDynamicWorkspace(named: "2", on: fixture.monitor.id))
-        controller.syncMonitorsToNiriEngine()
         let moved = try addManagedWindow(pid: 461_050, windowId: 50, to: dynamic.id, fixture: fixture)
         XCTAssertTrue(manager.setActiveWorkspace(dynamic.id, on: fixture.monitor.id))
         XCTAssertTrue(manager.setManagedFocus(moved.id, in: dynamic.id, onMonitor: fixture.monitor.id))
@@ -1494,11 +582,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
         controller.workspaceManager.applyMonitorConfigurationChange([monitor])
         controller.workspaceManager.applySettings()
 
-        let niriEngine = NiriLayoutEngine()
-        niriEngine.animationClock = controller.animationClock
-        controller.niriEngine = niriEngine
-        controller.niriLayoutHandler.syncMonitorsToNiriEngine()
-
         let dwindleEngine = DwindleLayoutEngine()
         dwindleEngine.animationClock = controller.animationClock
         controller.dwindleEngine = dwindleEngine
@@ -1566,13 +649,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
         )
         overview.prepareOpenState()
         overview.onAnimationComplete(state: .open)
-
-        var niriSnapshots: [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot] = [:]
-        for workspaceId in fixture.workspaceIds
-            where workspaceManager.activeLayoutKind(for: workspaceId) == .niri
-        {
-            niriSnapshots[workspaceId] = fixture.controller.niriLayoutHandler.overviewSnapshot(for: workspaceId)
-        }
         let layout = OverviewLayoutCalculator(
             screenFrame: OverviewLayoutCalculator.viewportFrame(for: fixture.monitor.frame),
             scale: OverviewLayoutCalculator.clampedScale(
@@ -1581,7 +657,6 @@ final class OverviewStructuralCommandTests: XCTestCase {
         ).calculateLayout(
             workspaces: workspaces,
             windows: windowData,
-            niriSnapshotsByWorkspace: niriSnapshots,
             searchQuery: ""
         )
         return (overview, layout)
@@ -1614,16 +689,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
             to: workspaceId
         )
         controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
-            switch controller.workspaceManager.activeLayoutKind(for: workspaceId) {
-            case .niri:
-                _ = controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
-            case .dwindle:
-                _ = controller.dwindleEngine?.addWindow(
-                    token: token,
-                    to: workspaceId,
-                    activeWindowFrame: nil
-                )
-            }
+            _ = controller.dwindleEngine?.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
         }
         return try XCTUnwrap(controller.workspaceManager.handle(for: token))
     }

@@ -35,67 +35,6 @@ final class OverviewLayoutCalculatorTests: XCTestCase {
         XCTAssertEqual(section.windows.first?.originalFrame, CGRect(x: -640.25, y: 25.5, width: 300, height: 200))
     }
 
-    func testNiriColumnsKeepRealStripGeometryAndDropZoneCoordinates() throws {
-        let (layout, handles) = makeMixedLayout()
-        let section = try XCTUnwrap(layout.workspaceSections.first { $0.name == "Niri" })
-        let columns = try XCTUnwrap(layout.niriColumnsByWorkspace[section.workspaceId])
-        let dropZones = try XCTUnwrap(layout.niriColumnDropZonesByWorkspace[section.workspaceId])
-
-        XCTAssertFalse(section.isActive)
-        assertFrame(section.labelFrame, CGRect(x: -170, y: 60, width: 940, height: 40))
-        assertFrame(section.visibleFrame, CGRect(x: 40.625, y: -375, width: 518.75, height: 415))
-        assertFrame(section.sectionFrame, CGRect(x: -200, y: -375, width: 1000, height: 455))
-        XCTAssertEqual(columns.map(\.columnIndex), [3, 8])
-        assertFrames(columns.map(\.frame), [
-            CGRect(x: 40.625, y: -375, width: 103.75, height: 415),
-            CGRect(x: 152.675, y: -375, width: 103.75, height: 415)
-        ])
-        XCTAssertEqual(columns.map(\.windowHandles), [[handles[2], handles[3]], [handles[4]]])
-        assertFrames(section.windows.map(\.overviewFrame), [
-            CGRect(x: 40.625, y: -9.28125, width: 103.75, height: 49.28125),
-            CGRect(x: 40.625, y: -66.8625, width: 103.75, height: 49.28125),
-            CGRect(x: 152.675, y: -11.875, width: 103.75, height: 51.875)
-        ])
-        XCTAssertEqual(dropZones.map(\.insertIndex), [3, 8, 9])
-        assertFrames(dropZones.map(\.frame), [
-            CGRect(x: 20.625, y: -375, width: 20, height: 415),
-            CGRect(x: 144.375, y: -375, width: 8.3, height: 415),
-            CGRect(x: 256.425, y: -375, width: 20, height: 415)
-        ])
-        XCTAssertEqual(section.hiddenColumnsBefore, 0)
-        XCTAssertEqual(section.hiddenColumnsAfter, 0)
-    }
-
-    func testNiriStripFramesProjectAtTheirRealPositions() throws {
-        let workspaceId = WorkspaceDescriptor.ID()
-        let handles = (1 ... 2).map { WindowHandle(id: WindowToken(pid: 9, windowId: $0)) }
-        let layout = makeStripLayout(
-            workspaceId: workspaceId, handles: handles,
-            frames: [
-                CGRect(x: -380, y: 40, width: 400, height: 700),
-                CGRect(x: 40, y: 40, width: 600, height: 700)
-            ],
-            workingFrame: CGRect(x: 20, y: 40, width: 960, height: 700)
-        )
-        let section = try XCTUnwrap(layout.workspaceSections.first)
-        let columns = try XCTUnwrap(layout.niriColumnsByWorkspace[workspaceId])
-
-        XCTAssertEqual(section.visibleFrame.width, 425)
-        assertFrame(columns[0].frame, CGRect(
-            x: section.visibleFrame.minX - 380 * 0.425,
-            y: section.visibleFrame.minY + 40 * 0.425,
-            width: 400 * 0.425,
-            height: 700 * 0.425
-        ))
-        assertFrame(columns[1].frame, CGRect(
-            x: section.visibleFrame.minX + 40 * 0.425,
-            y: section.visibleFrame.minY + 40 * 0.425,
-            width: 600 * 0.425,
-            height: 700 * 0.425
-        ))
-        XCTAssertEqual(section.windows.map(\.overviewFrame), columns.map(\.frame))
-    }
-
     func testEmptyWorkspacesKeepFullHeightRibbonsThatAcceptDrops() throws {
         let (layout, _) = makeMixedLayout()
         let section = try XCTUnwrap(layout.workspaceSections.first { $0.name == "Empty" })
@@ -112,38 +51,6 @@ final class OverviewLayoutCalculatorTests: XCTestCase {
             .workspaceMove(workspaceId: section.workspaceId)
         )
         XCTAssertNotNil(OverviewRenderGeometry.restAnchor(for: section))
-    }
-
-    func testStripPanIsClampedToRibbonAndCountsOverflowColumns() throws {
-        let workspaceId = WorkspaceDescriptor.ID()
-        let handles = (1 ... 6).map { WindowHandle(id: WindowToken(pid: 11, windowId: $0)) }
-        let frames = handles.indices.map {
-            CGRect(x: CGFloat($0) * 820 - 1_640, y: 0, width: 800, height: 700)
-        }
-        var layout = makeStripLayout(workspaceId: workspaceId, handles: handles, frames: frames)
-        var section = try XCTUnwrap(layout.workspaceSections.first)
-        XCTAssertEqual(section.hiddenColumnsBefore, 1)
-        XCTAssertEqual(section.hiddenColumnsAfter, 2)
-        XCTAssertEqual(layout.overflowPills(for: section).map(\.edge), [.leading, .trailing])
-        XCTAssertEqual(layout.overflowPills(for: section).map(\.count), [1, 2])
-        XCTAssertNil(layout.windowHit(at: CGPoint(x: section.ribbonFrame.minX - 200, y: section.ribbonFrame.midY)))
-
-        let range = layout.stripPanRange(for: workspaceId)
-        XCTAssertEqual(range, -697 ... 433.5)
-        XCTAssertTrue(layout.panStrip(workspaceId, by: 10_000))
-        XCTAssertEqual(layout.stripPanByWorkspace[workspaceId], 1020)
-        section = try XCTUnwrap(layout.workspaceSections.first)
-        XCTAssertEqual(section.hiddenColumnsBefore, 0)
-        XCTAssertEqual(section.windows.first?.overviewFrame.minX, section.ribbonFrame.minX)
-        XCTAssertFalse(layout.panStrip(workspaceId, by: 1))
-
-        let rebuilt = makeStripLayout(
-            workspaceId: workspaceId, handles: handles, frames: frames,
-            stripPans: layout.stripPanByWorkspace
-        )
-        XCTAssertEqual(rebuilt.workspaceSections.first?.windows.first?.overviewFrame.minX, section.ribbonFrame.minX)
-        XCTAssertEqual(rebuilt.stripPanRevealing(handles[0]), 0)
-        XCTAssertLessThan(rebuilt.stripPanRevealing(handles[5]), 0)
     }
 
     func testDragAutoScrollVelocityOnlyInsideEdgeBands() {
@@ -172,9 +79,10 @@ final class OverviewLayoutCalculatorTests: XCTestCase {
         XCTAssertEqual(layout.workspaceSections.count, 3)
         XCTAssertEqual(layout.scale, 1.25)
         XCTAssertEqual(layout.totalContentHeight, 1515, accuracy: 1e-10)
-        XCTAssertEqual(layout.allWindows.map(\.matchesSearch), [false, true, true, false, false])
-        for (window, handle) in zip(layout.allWindows, handles) {
-            XCTAssertTrue(window.handle === handle)
+        XCTAssertEqual(layout.allWindows.map(\.matchesSearch), [false, true, false, true, false])
+        XCTAssertEqual(Set(layout.allWindows.map(\.handle.id)), Set(handles.map(\.id)))
+        for window in layout.allWindows {
+            XCTAssertTrue(handles.contains { window.handle === $0 })
         }
         let bounds = OverviewLayoutCalculator.scrollOffsetBounds(
             layout: layout,
@@ -194,33 +102,6 @@ final class OverviewLayoutCalculatorTests: XCTestCase {
                 OverviewRenderGeometry.restFrame(for: window.overviewFrame, anchor: anchor),
                 window.originalFrame
             )
-        }
-    }
-
-    func testNiriRestAnchorPreservesRealFramesAndProjectsOtherSections() throws {
-        var (layout, _) = makeMixedLayout()
-        let section = try XCTUnwrap(layout.workspaceSections.first { $0.name == "Niri" })
-        let anchor = try XCTUnwrap(OverviewRenderGeometry.restAnchor(for: section))
-
-        layout.settleRestFrames(anchorWorkspaceId: section.workspaceId)
-
-        XCTAssertEqual(layout.anchorWorkspaceId, section.workspaceId)
-        for window in layout.allWindows {
-            let expected = window.workspaceId == section.workspaceId
-                ? window.originalFrame
-                : OverviewRenderGeometry.restFrame(for: window.overviewFrame, anchor: anchor)
-            assertFrame(window.interpolatedFrame(progress: 0), expected)
-            assertFrame(window.interpolatedFrame(progress: 1), window.overviewFrame)
-            XCTAssertEqual(
-                window.interpolatedFrame(progress: 0.5).midY,
-                (expected.midY + window.overviewFrame.midY) / 2,
-                accuracy: 0.001
-            )
-            if window.workspaceId == section.workspaceId {
-                XCTAssertNil(window.restFrame)
-            } else {
-                XCTAssertNotEqual(window.restFrame, window.originalFrame)
-            }
         }
     }
 
@@ -286,46 +167,9 @@ extension OverviewLayoutCalculatorTests {
         }
     }
 
-    private func makeStripLayout(
-        workspaceId: WorkspaceDescriptor.ID,
-        handles: [WindowHandle],
-        frames: [CGRect],
-        workingFrame: CGRect = CGRect(x: 0, y: 0, width: 1000, height: 700),
-        stripPans: [WorkspaceDescriptor.ID: CGFloat] = [:]
-    ) -> OverviewLayout {
-        let windows = Dictionary(uniqueKeysWithValues: handles.map { handle in
-            (handle, OverviewWindowLayoutData(
-                token: handle.id, workspaceId: workspaceId, title: "Window", appName: "App", appIcon: nil,
-                frame: CGRect(x: 0, y: 0, width: 100, height: 100)
-            ))
-        })
-        let snapshot = NiriOverviewWorkspaceSnapshot(
-            workspaceId: workspaceId,
-            columns: zip(handles, frames).enumerated().map { index, member in
-                let (handle, frame) = member
-                return NiriOverviewColumnSnapshot(
-                    index: index, widthWeight: 1, preferredWidth: frame.width,
-                    tiles: [NiriOverviewTileSnapshot(
-                        token: handle.id,
-                        preferredHeight: frame.height,
-                        stripFrame: frame
-                    )],
-                    stripFrame: frame
-                )
-            },
-            strip: NiriOverviewStripGeometry(workingFrame: workingFrame, secondaryGap: 20)
-        )
-        return OverviewLayoutCalculator(screenFrame: CGRect(x: 0, y: 0, width: 1000, height: 800), scale: 1)
-            .calculateLayout(
-                workspaces: [OverviewWorkspaceLayoutItem(id: workspaceId, name: "Strip", isActive: true)],
-                windows: windows, niriSnapshotsByWorkspace: [workspaceId: snapshot],
-                searchQuery: "", stripPans: stripPans
-            )
-    }
-
     private func makeMixedLayout() -> (OverviewLayout, [WindowHandle]) {
         let generic = WorkspaceDescriptor.ID()
-        let niri = WorkspaceDescriptor.ID()
+        let dwindleWorkspace = WorkspaceDescriptor.ID()
         let handles = (1 ... 5).map { WindowHandle(id: WindowToken(pid: 7, windowId: $0)) }
         let frames = [
             CGRect(x: -640.25, y: 25.5, width: 300, height: 200),
@@ -337,12 +181,9 @@ extension OverviewLayoutCalculatorTests {
         var windows: [WindowHandle: OverviewWindowLayoutData] = [:]
         for (index, handle) in handles.enumerated() {
             windows[handle] = OverviewWindowLayoutData(
-                token: handle.id,
-                workspaceId: index < 2 ? generic : niri,
+                token: handle.id, workspaceId: index < 2 ? generic : dwindleWorkspace,
                 title: index == 1 ? "TERMINAL" : "Window \(index)",
-                appName: index == 2 ? "Terminal" : "Editor",
-                appIcon: nil,
-                frame: frames[index]
+                appName: index == 2 ? "Terminal" : "Editor", appIcon: nil, frame: frames[index]
             )
         }
         let layout = OverviewLayoutCalculator(
@@ -351,43 +192,12 @@ extension OverviewLayoutCalculatorTests {
         ).calculateLayout(
             workspaces: [
                 OverviewWorkspaceLayoutItem(id: generic, name: "Generic", isActive: true),
-                OverviewWorkspaceLayoutItem(id: niri, name: "Niri", isActive: false),
+                OverviewWorkspaceLayoutItem(id: dwindleWorkspace, name: "Dwindle", isActive: false),
                 OverviewWorkspaceLayoutItem(id: WorkspaceDescriptor.ID(), name: "Empty", isActive: false)
             ],
             windows: windows,
-            niriSnapshotsByWorkspace: [
-                generic: NiriOverviewWorkspaceSnapshot(workspaceId: generic, columns: []),
-                niri: makeMixedNiriSnapshot(workspaceId: niri, handles: handles)
-            ],
             searchQuery: "terminal"
         )
         return (layout, handles)
-    }
-
-    private func makeMixedNiriSnapshot(
-        workspaceId: WorkspaceDescriptor.ID,
-        handles: [WindowHandle]
-    ) -> NiriOverviewWorkspaceSnapshot {
-        NiriOverviewWorkspaceSnapshot(workspaceId: workspaceId, columns: [
-            NiriOverviewColumnSnapshot(index: 3, widthWeight: 4, preferredWidth: 200, tiles: [
-                NiriOverviewTileSnapshot(
-                    token: handles[2].id,
-                    preferredHeight: 95,
-                    stripFrame: CGRect(x: 0, y: 705, width: 200, height: 95)
-                ),
-                NiriOverviewTileSnapshot(
-                    token: handles[3].id,
-                    preferredHeight: 95,
-                    stripFrame: CGRect(x: 0, y: 594, width: 200, height: 95)
-                )
-            ], stripFrame: CGRect(x: 0, y: 0, width: 200, height: 800)),
-            NiriOverviewColumnSnapshot(index: 8, widthWeight: 1, preferredWidth: nil, tiles: [
-                NiriOverviewTileSnapshot(
-                    token: handles[4].id,
-                    preferredHeight: 100,
-                    stripFrame: CGRect(x: 216, y: 700, width: 200, height: 100)
-                )
-            ], stripFrame: CGRect(x: 216, y: 0, width: 200, height: 800))
-        ])
     }
 }

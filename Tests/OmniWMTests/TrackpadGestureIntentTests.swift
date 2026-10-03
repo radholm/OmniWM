@@ -21,40 +21,26 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testOverviewSwipeRejectsOverlappingUpwardBindings() {
-        var config = makeConfig(columnFingers: 4, workspaceFingers: 3)
+        var config = makeConfig(workspaceFingers: 3)
         config.overviewAction = .open
         XCTAssertEqual(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24),
-            columnScrollAxis: .horizontal, columnContextAvailable: true
+            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24)
         ), .overview(.open))
         XCTAssertNil(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: -24),
-            columnScrollAxis: .horizontal, columnContextAvailable: true
+            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: -24)
         ))
-        XCTAssertNil(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24),
-            columnScrollAxis: .vertical, columnContextAvailable: true
-        ))
-
-        XCTAssertEqual(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: -24),
-            columnScrollAxis: .vertical, columnContextAvailable: true
-        ), .columnScroll)
-
         config.workspaceSwipeFingerCount = 4
         XCTAssertNil(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24),
-            columnScrollAxis: .horizontal, columnContextAvailable: true
+            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24)
         ))
         config.workspaceSwipeAxis = .horizontal
         XCTAssertEqual(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24),
-            columnScrollAxis: .horizontal, columnContextAvailable: false
+            config, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: 24)
         ), .overview(.open))
     }
 
-    func testOverviewOnlyConfigurationStartsWithoutColumnContext() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+    func testOverviewOnlyConfigurationStartsWithConfiguredFingers() {
+        var config = makeConfig(workspaceEnabled: false)
         for action in [OverviewGestureAction.open, .close] {
             config.overviewAction = action
             for fingers in [3, 4] {
@@ -62,8 +48,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
                 XCTAssertTrue(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: fingers))
                 XCTAssertTrue(TrackpadGestureIntent.hasCandidateMode(
                     config,
-                    fingerCount: fingers,
-                    columnContextAvailable: false
+                    fingerCount: fingers
                 ))
                 XCTAssertFalse(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 7 - fingers))
             }
@@ -71,7 +56,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testOverviewCloseOnlyResolvesDownwardWithConfiguredFingers() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        var config = makeConfig(workspaceEnabled: false)
         config.overviewAction = .close
         for fingers in [3, 4] {
             config.overviewFingerCount = fingers
@@ -84,16 +69,14 @@ final class TrackpadGestureIntentTests: XCTestCase {
                 XCTAssertEqual(TrackpadGestureIntent.resolveMode(
                     config,
                     fingerCount: candidateFingers,
-                    cumulativeTranslation: translation,
-                    columnScrollAxis: .horizontal,
-                    columnContextAvailable: false
+                    cumulativeTranslation: translation
                 ), expected)
             }
         }
     }
 
     func testResumeActionResolvesEitherVerticalDirection() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        var config = makeConfig(workspaceEnabled: false)
         config.overviewAction = .resume
         for fingers in [3, 4] {
             config.overviewFingerCount = fingers
@@ -106,19 +89,16 @@ final class TrackpadGestureIntentTests: XCTestCase {
                 XCTAssertEqual(TrackpadGestureIntent.resolveMode(
                     config,
                     fingerCount: candidateFingers,
-                    cumulativeTranslation: translation,
-                    columnScrollAxis: .horizontal,
-                    columnContextAvailable: false
+                    cumulativeTranslation: translation
                 ), expected)
             }
         }
 
-        var shared = makeConfig(columnFingers: 4, workspaceFingers: 4)
+        var shared = makeConfig(workspaceFingers: 4)
         shared.overviewAction = .resume
         shared.overviewFingerCount = 4
         XCTAssertEqual(TrackpadGestureIntent.resolveMode(
-            shared, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: -24),
-            columnScrollAxis: .vertical, columnContextAvailable: true
+            shared, fingerCount: 4, cumulativeTranslation: CGVector(dx: 0, dy: -24)
         ), .overview(.resume))
         XCTAssertFalse(TrackpadGestureIntent.overviewTriggered(action: .resume, translation: CGPoint(x: 0, y: 100)))
     }
@@ -131,15 +111,11 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     private func makeConfig(
-        columnEnabled: Bool = true,
-        columnFingers: Int = 3,
         workspaceEnabled: Bool = true,
         workspaceFingers: Int = 3,
         workspaceAxis: WorkspaceSwipeAxis = .vertical
     ) -> TrackpadGestureIntent.Config {
         TrackpadGestureIntent.Config(
-            columnScrollEnabled: columnEnabled,
-            columnScrollFingerCount: columnFingers,
             workspaceSwipeEnabled: workspaceEnabled,
             workspaceSwipeFingerCount: workspaceFingers,
             workspaceSwipeAxis: workspaceAxis
@@ -147,118 +123,62 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testGestureStartAllowedForEitherEnabledFingerCount() {
-        let config = makeConfig(columnFingers: 3, workspaceFingers: 4)
+        var config = makeConfig(workspaceFingers: 4)
+        config.overviewAction = .open
+        config.overviewFingerCount = 3
         XCTAssertTrue(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 3))
         XCTAssertTrue(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 4))
         XCTAssertFalse(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 2))
     }
 
     func testGestureStartRejectedWhenBothGesturesDisabled() {
-        let config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        let config = makeConfig(workspaceEnabled: false)
         XCTAssertFalse(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 3))
     }
 
     func testGestureStartRespectsPerGestureEnablement() {
-        let config = makeConfig(columnEnabled: false, columnFingers: 3, workspaceEnabled: true, workspaceFingers: 4)
+        let config = makeConfig(workspaceEnabled: true, workspaceFingers: 4)
         XCTAssertFalse(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 3))
         XCTAssertTrue(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 4))
     }
 
-    func testCandidateModeRejectsColumnOnlyCountOverDwindleContext() {
-        let config = makeConfig(workspaceEnabled: false)
-        XCTAssertFalse(TrackpadGestureIntent.hasCandidateMode(config, fingerCount: 3, columnContextAvailable: false))
-        XCTAssertTrue(TrackpadGestureIntent.hasCandidateMode(config, fingerCount: 3, columnContextAvailable: true))
+    func testCandidateModeAcceptsConfiguredWorkspaceFingers() {
+        let config = makeConfig()
+        XCTAssertTrue(TrackpadGestureIntent.hasCandidateMode(config, fingerCount: 3))
     }
 
-    func testCandidateModeAcceptsWorkspaceCountWithoutColumnContext() {
-        let config = makeConfig(columnEnabled: false)
-        XCTAssertTrue(TrackpadGestureIntent.hasCandidateMode(config, fingerCount: 3, columnContextAvailable: false))
-    }
-
-    func testResolveModePrefersColumnScrollForSharedCountHorizontalSwipe() {
+    func testResolveModeResolvesVerticalWorkspaceSwitch() {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(),
             fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
-        )
-        XCTAssertEqual(mode, .columnScroll)
-    }
-
-    func testResolveModeResolvesWorkspaceSwitchForSharedCountVerticalSwipe() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 10, dy: 50),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 10, dy: 50)
         )
         XCTAssertEqual(mode, .workspaceSwitch(axis: .vertical))
-    }
-
-    func testResolveModeForcesVerticalForSharedCountEvenWithHorizontalAxis() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(workspaceAxis: .horizontal),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 10, dy: 50),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
-        )
-        XCTAssertEqual(mode, .workspaceSwitch(axis: .vertical))
-    }
-
-    func testResolveModeReturnsNilForColumnCountVerticalSwipeWithDistinctCounts() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(workspaceFingers: 4),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 10, dy: 50),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
-        )
-        XCTAssertNil(mode)
     }
 
     func testResolveModeReturnsNilForWorkspaceCountOffAxisSwipe() {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(workspaceFingers: 4, workspaceAxis: .vertical),
             fingerCount: 4,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 50, dy: 10)
         )
         XCTAssertNil(mode)
     }
 
-    func testResolveModeResolvesWorkspaceSwitchWithoutColumnContext() {
+    func testResolveModeResolvesWorkspaceSwitchWithConfiguredFingers() {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(),
             fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 10, dy: 50),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: false
+            cumulativeTranslation: CGVector(dx: 10, dy: 50)
         )
         XCTAssertEqual(mode, .workspaceSwitch(axis: .vertical))
     }
 
-    func testResolveModeReturnsNilForColumnSwipeWithoutColumnContext() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(workspaceEnabled: false),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: false
-        )
-        XCTAssertNil(mode)
-    }
-
-    func testResolveModeHonorsHorizontalAxisWhenCountsDiffer() {
+    func testResolveModeHonorsConfiguredHorizontalAxis() {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(workspaceFingers: 4, workspaceAxis: .horizontal),
             fingerCount: 4,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 50, dy: 10)
         )
         XCTAssertEqual(mode, .workspaceSwitch(axis: .horizontal))
     }
@@ -267,53 +187,25 @@ final class TrackpadGestureIntentTests: XCTestCase {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(),
             fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 30, dy: 30),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 30, dy: 30)
         )
         XCTAssertEqual(mode, .workspaceSwitch(axis: .vertical))
     }
 
     func testResolveModeReturnsNilWithNoCandidates() {
         let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(columnEnabled: false, workspaceEnabled: false),
+            makeConfig(workspaceEnabled: false),
             fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 50, dy: 10)
         )
         XCTAssertNil(mode)
     }
 
-    func testResolveModePrefersColumnScrollForSharedCountVerticalSwipeOnVerticalAxis() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 10, dy: 50),
-            columnScrollAxis: .vertical,
-            columnContextAvailable: true
-        )
-        XCTAssertEqual(mode, .columnScroll)
-    }
-
-    func testResolveModeResolvesHorizontalWorkspaceSwitchForSharedCountOnVerticalAxis() {
-        let mode = TrackpadGestureIntent.resolveMode(
-            makeConfig(),
-            fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .vertical,
-            columnContextAvailable: true
-        )
-        XCTAssertEqual(mode, .workspaceSwitch(axis: .horizontal))
-    }
-
-    func testResolveModeReturnsNilForColumnCountHorizontalSwipeWithDistinctCountsOnVerticalAxis() {
+    func testWorkspaceModeRejectsUnconfiguredFingerCountOffAxis() {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(workspaceFingers: 4),
             fingerCount: 3,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .vertical,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 50, dy: 10)
         )
         XCTAssertNil(mode)
     }
@@ -322,9 +214,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
         let mode = TrackpadGestureIntent.resolveMode(
             makeConfig(workspaceFingers: 4, workspaceAxis: .horizontal),
             fingerCount: 4,
-            cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .vertical,
-            columnContextAvailable: true
+            cumulativeTranslation: CGVector(dx: 50, dy: 10)
         )
         XCTAssertEqual(mode, .workspaceSwitch(axis: .horizontal))
     }
@@ -412,7 +302,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testDisabledWindowGesturesNeverClaimTheirFingerCount() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        var config = makeConfig(workspaceEnabled: false)
         config.windowMoveFingerCount = 4
         config.windowResizeFingerCount = 3
         XCTAssertNil(TrackpadGestureIntent.windowGestureMode(config, fingerCount: 4))
@@ -421,7 +311,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testWindowGestureAllowsStartAndRequiresWindowContext() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        var config = makeConfig(workspaceEnabled: false)
         config.windowMoveEnabled = true
         config.windowMoveFingerCount = 4
         XCTAssertTrue(TrackpadGestureIntent.allowsGestureStart(config, fingerCount: 4))
@@ -429,7 +319,6 @@ final class TrackpadGestureIntentTests: XCTestCase {
             TrackpadGestureIntent.hasCandidateMode(
                 config,
                 fingerCount: 4,
-                columnContextAvailable: true,
                 windowContextAvailable: false
             )
         )
@@ -437,25 +326,22 @@ final class TrackpadGestureIntentTests: XCTestCase {
             TrackpadGestureIntent.hasCandidateMode(
                 config,
                 fingerCount: 4,
-                columnContextAvailable: false,
                 windowContextAvailable: true
             )
         )
     }
 
     func testWindowGestureLeavesOtherFingerCountsToExistingGestures() {
-        var config = makeConfig(columnFingers: 3, workspaceFingers: 3)
+        var config = makeConfig(workspaceFingers: 3)
         config.windowMoveEnabled = true
         config.windowMoveFingerCount = 4
         let mode = TrackpadGestureIntent.resolveMode(
             config,
             fingerCount: 3,
             cumulativeTranslation: CGVector(dx: 50, dy: 10),
-            columnScrollAxis: .horizontal,
-            columnContextAvailable: true,
             windowContextAvailable: true
         )
-        XCTAssertEqual(mode, .columnScroll)
+        XCTAssertNil(mode)
     }
 
     func testWindowGestureLocationScalesTrackpadTravelToMonitorAndClamps() {
@@ -508,7 +394,6 @@ final class TrackpadGestureIntentTests: XCTestCase {
         XCTAssertEqual(TrackpadGestureMode.overview(.open).fingerCountGrace, 0)
         XCTAssertEqual(TrackpadGestureMode.overview(.close).fingerCountGrace, 0)
         XCTAssertEqual(TrackpadGestureMode.overview(.resume).fingerCountGrace, 0)
-        XCTAssertEqual(TrackpadGestureMode.columnScroll.fingerCountGrace, 0)
         XCTAssertEqual(TrackpadGestureMode.workspaceSwitch(axis: .horizontal).fingerCountGrace, 0)
     }
 
@@ -516,7 +401,6 @@ final class TrackpadGestureIntentTests: XCTestCase {
         XCTAssertTrue(TrackpadGestureMode.windowMove.isWindowInteraction)
         XCTAssertTrue(TrackpadGestureMode.windowResize.isWindowInteraction)
         XCTAssertFalse(TrackpadGestureMode.overview(.open).isWindowInteraction)
-        XCTAssertFalse(TrackpadGestureMode.columnScroll.isWindowInteraction)
         XCTAssertFalse(TrackpadGestureMode.workspaceSwitch(axis: .vertical).isWindowInteraction)
     }
 
@@ -543,7 +427,7 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testDistinctWindowGestureCountsResolveInEitherDirection() {
-        var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+        var config = makeConfig(workspaceEnabled: false)
         config.windowMoveEnabled = true
         config.windowResizeEnabled = true
         for (fingers, expected) in [(4, TrackpadGestureMode.windowMove), (3, .windowResize)] {
@@ -554,8 +438,6 @@ final class TrackpadGestureIntentTests: XCTestCase {
                         config,
                         fingerCount: fingers,
                         cumulativeTranslation: translation,
-                        columnScrollAxis: .horizontal,
-                        columnContextAvailable: false,
                         windowContextAvailable: context
                     ), context ? expected : nil)
                 }
@@ -567,9 +449,9 @@ final class TrackpadGestureIntentTests: XCTestCase {
     func testEveryWindowGestureCollisionFailsClosed() {
         for mode in [TrackpadGestureMode.windowMove, .windowResize] {
             let other: TrackpadGestureMode = mode == .windowMove ? .windowResize : .windowMove
-            for conflict in [other, .columnScroll, .workspaceSwitch(axis: .vertical), .overview(.open)] {
+            for conflict in [other, .workspaceSwitch(axis: .vertical), .overview(.open)] {
                 for fingers in [2, 3, 4] {
-                    var config = makeConfig(columnEnabled: false, workspaceEnabled: false)
+                    var config = makeConfig(workspaceEnabled: false)
                     enable(mode, fingers: fingers, in: &config)
                     enable(conflict, fingers: fingers, in: &config)
                     XCTAssertEqual(TrackpadGestureIntent.windowGestureConflict(config, mode: mode), conflict)
@@ -582,28 +464,21 @@ final class TrackpadGestureIntentTests: XCTestCase {
     }
 
     func testDisabledWindowAssignmentDoesNotBlockOtherGestures() {
-        let config = makeConfig(columnFingers: 3, workspaceFingers: 3)
+        let config = makeConfig(workspaceFingers: 3)
         XCTAssertNil(TrackpadGestureIntent.windowGestureConflict(config, mode: .windowResize))
-        XCTAssertEqual(TrackpadGestureIntent.resolveMode(
-            config, fingerCount: 3, cumulativeTranslation: CGVector(dx: 40, dy: 0),
-            columnScrollAxis: .horizontal, columnContextAvailable: true, windowContextAvailable: true
-        ), .columnScroll)
     }
 
     private func assertNoCandidate(_ config: TrackpadGestureIntent.Config, fingers: Int) {
-        for columnContext in [false, true] {
-            for windowContext in [false, true] {
-                XCTAssertFalse(TrackpadGestureIntent.hasCandidateMode(
-                    config, fingerCount: fingers, columnContextAvailable: columnContext,
+        for windowContext in [false, true] {
+            XCTAssertFalse(TrackpadGestureIntent.hasCandidateMode(
+                config, fingerCount: fingers,
+                windowContextAvailable: windowContext
+            ))
+            for translation in [CGVector(dx: 40, dy: 0), CGVector(dx: 0, dy: 40)] {
+                XCTAssertNil(TrackpadGestureIntent.resolveMode(
+                    config, fingerCount: fingers, cumulativeTranslation: translation,
                     windowContextAvailable: windowContext
                 ))
-                for translation in [CGVector(dx: 40, dy: 0), CGVector(dx: 0, dy: 40)] {
-                    XCTAssertNil(TrackpadGestureIntent.resolveMode(
-                        config, fingerCount: fingers, cumulativeTranslation: translation,
-                        columnScrollAxis: .horizontal, columnContextAvailable: columnContext,
-                        windowContextAvailable: windowContext
-                    ))
-                }
             }
         }
     }
@@ -616,9 +491,6 @@ final class TrackpadGestureIntentTests: XCTestCase {
         case .windowResize:
             config.windowResizeEnabled = true
             config.windowResizeFingerCount = fingers
-        case .columnScroll:
-            config.columnScrollEnabled = true
-            config.columnScrollFingerCount = fingers
         case let .workspaceSwitch(axis):
             config.workspaceSwipeEnabled = true
             config.workspaceSwipeFingerCount = fingers

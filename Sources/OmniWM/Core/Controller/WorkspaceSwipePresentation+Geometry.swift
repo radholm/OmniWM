@@ -68,9 +68,6 @@ extension WorkspaceSwipePresentation {
         }
         guard entries.allSatisfy({ $0.layoutReason == .standard }) else { return nil }
         let frames: [WindowToken: CGRect] = controller.workspaceManager.withEngineMutationScope {
-            if controller.workspaceManager.activeLayoutKind(for: id) == .niri {
-                return refreshController.niriHandler.settledFrames(in: id, visibleOnly: true) ?? [:]
-            }
             guard let engine = controller.dwindleEngine,
                   let snapshot = refreshController.dwindleHandler.makeWorkspaceSnapshot(
                       workspaceId: id, monitor: monitor, resolveConstraints: false, isActiveWorkspace: active

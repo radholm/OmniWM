@@ -9,37 +9,6 @@ import XCTest
 
 @MainActor
 final class WorkspaceDeletionEngineCleanupTests: XCTestCase {
-    func testDeletingEmptiedWorkspaceRemovesNiriEngineState() throws {
-        let controller = makeController()
-        controller.niriLayoutHandler.enableNiriLayout()
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let workspaceId = try makeTransientWorkspace(named: "97", controller: controller)
-        let token = WindowToken(pid: 900, windowId: 1)
-        let frame = CGRect(x: 0, y: 0, width: 1600, height: 900)
-        let monitor = Monitor(
-            id: Monitor.ID(displayId: 900),
-            displayId: 900,
-            frame: frame,
-            visibleFrame: frame,
-            hasNotch: false,
-            name: "Cleanup"
-        )
-        controller.workspaceManager.withEngineMutationScope {
-            _ = engine.addWindow(token: token, to: workspaceId, afterSelection: nil)
-            engine.syncWorkspaceAssignments([(workspaceId: workspaceId, monitor: monitor)])
-        }
-        let niriMonitor = try XCTUnwrap(engine.monitor(for: monitor.id))
-        XCTAssertNotNil(engine.root(for: workspaceId))
-        XCTAssertTrue(niriMonitor.containsWorkspace(workspaceId))
-
-        removeTransientWorkspace(named: "97", controller: controller)
-
-        XCTAssertNil(controller.workspaceManager.workspaceId(named: "97"))
-        XCTAssertNil(engine.root(for: workspaceId))
-        XCTAssertNil(engine.findNode(for: token, in: workspaceId))
-        XCTAssertFalse(niriMonitor.containsWorkspace(workspaceId))
-    }
-
     func testDeletingEmptiedWorkspaceRemovesDwindleEngineState() throws {
         let controller = makeController()
         controller.dwindleLayoutHandler.enableDwindleLayout()
@@ -351,65 +320,6 @@ final class WorkspaceDeletionEngineCleanupTests: XCTestCase {
 
         XCTAssertTrue(engine.isWindowFullscreen(token, in: workspaceA))
         XCTAssertFalse(engine.isWindowFullscreen(token, in: workspaceB))
-    }
-
-    func testNiriFullscreenQueryIsScopedToWorkspaceTree() {
-        let engine = NiriLayoutEngine()
-        let workspaceA = WorkspaceDescriptor.ID()
-        let workspaceB = WorkspaceDescriptor.ID()
-        let token = WindowToken(pid: 906, windowId: 1)
-        let tokenB = WindowToken(pid: 906, windowId: 2)
-        let node = engine.addWindow(token: token, to: workspaceA, afterSelection: nil)
-        _ = engine.addWindow(token: tokenB, to: workspaceB, afterSelection: nil)
-        node.sizingMode = .fullscreen
-
-        XCTAssertTrue(engine.isWindowFullscreen(token, in: workspaceA))
-        XCTAssertFalse(engine.isWindowFullscreen(token, in: workspaceB))
-    }
-
-    func testWorldViewFullscreenQueryIgnoresDormantEngineState() throws {
-        let controller = makeController()
-        controller.niriLayoutHandler.enableNiriLayout()
-        controller.dwindleLayoutHandler.enableDwindleLayout()
-        let niriEngine = try XCTUnwrap(controller.niriEngine)
-        let dwindleEngine = try XCTUnwrap(controller.dwindleEngine)
-        let niriWorkspaceId = try makeTransientWorkspace(named: "95", layoutType: .niri, controller: controller)
-        let dwindleWorkspaceId = try makeTransientWorkspace(named: "96", layoutType: .dwindle, controller: controller)
-        let quietDwindleWorkspaceId = try makeTransientWorkspace(
-            named: "94",
-            layoutType: .dwindle,
-            controller: controller
-        )
-        let niriToken = addManagedWindow(pid: 911, windowId: 1, to: niriWorkspaceId, controller: controller)
-        let dwindleToken = addManagedWindow(pid: 912, windowId: 2, to: dwindleWorkspaceId, controller: controller)
-        let quietToken = addManagedWindow(pid: 917, windowId: 3, to: quietDwindleWorkspaceId, controller: controller)
-
-        controller.workspaceManager.withEngineMutationScope {
-            _ = niriEngine.addWindow(token: niriToken, to: niriWorkspaceId, afterSelection: nil)
-            dwindleEngine.addWindow(token: niriToken, to: niriWorkspaceId, activeWindowFrame: nil)
-            _ = dwindleEngine.toggleFullscreen(in: niriWorkspaceId)
-            dwindleEngine.addWindow(token: dwindleToken, to: dwindleWorkspaceId, activeWindowFrame: nil)
-            _ = dwindleEngine.toggleFullscreen(in: dwindleWorkspaceId)
-            _ = niriEngine.addWindow(token: dwindleToken, to: dwindleWorkspaceId, afterSelection: nil)
-            dwindleEngine.addWindow(token: quietToken, to: quietDwindleWorkspaceId, activeWindowFrame: nil)
-            let staleNiriNode = niriEngine.addWindow(
-                token: quietToken,
-                to: quietDwindleWorkspaceId,
-                afterSelection: nil
-            )
-            staleNiriNode.sizingMode = .fullscreen
-        }
-
-        let world = WorldView(controller: controller)
-        XCTAssertTrue(dwindleEngine.isWindowFullscreen(niriToken, in: niriWorkspaceId))
-        XCTAssertFalse(niriEngine.isWindowFullscreen(niriToken, in: niriWorkspaceId))
-        XCTAssertFalse(world.isWindowFullscreenInLayout(niriToken))
-        XCTAssertTrue(dwindleEngine.isWindowFullscreen(dwindleToken, in: dwindleWorkspaceId))
-        XCTAssertFalse(niriEngine.isWindowFullscreen(dwindleToken, in: dwindleWorkspaceId))
-        XCTAssertTrue(world.isWindowFullscreenInLayout(dwindleToken))
-        XCTAssertTrue(niriEngine.isWindowFullscreen(quietToken, in: quietDwindleWorkspaceId))
-        XCTAssertFalse(dwindleEngine.isWindowFullscreen(quietToken, in: quietDwindleWorkspaceId))
-        XCTAssertFalse(world.isWindowFullscreenInLayout(quietToken))
     }
 
     func testDwindleFailedScopedRekeyIsRepairedByNextSync() {

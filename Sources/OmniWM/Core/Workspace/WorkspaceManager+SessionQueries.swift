@@ -44,7 +44,7 @@ extension WorkspaceManager {
         return candidates.filter { seen.insert($0).inserted }
     }
 
-    func mostRecentlyFocusedTiledToken(excluding token: WindowToken) -> WindowToken? {
+    func mostRecentlyFocusedTiledToken(excluding token: WindowToken?) -> WindowToken? {
         focusSessionSnapshot.tiledFocusHistory.first { candidate in
             candidate != token && (windowMode(for: candidate) ?? .tiling) == .tiling && entry(for: candidate) != nil
         }

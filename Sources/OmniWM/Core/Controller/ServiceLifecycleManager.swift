@@ -108,7 +108,6 @@ final class ServiceLifecycleManager {
         if monitorConfiguration
             .refreshForServiceStart(currentMonitors: monitorConfiguration.currentMonitorsProvider())
         {
-            controller.syncMonitorsToNiriEngine()
         }
         controller.hasStartedServices = true
         controller.reconcileEnabledAndHotkeysState()

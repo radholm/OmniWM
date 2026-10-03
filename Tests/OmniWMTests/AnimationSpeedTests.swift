@@ -47,45 +47,6 @@ final class AnimationSpeedTests: XCTestCase {
         XCTAssertTrue(retarget.isComplete(at: 1))
     }
 
-    func testViewportFocusAndRestoreScaleSuppliedConfigOnce() {
-        let motion = MotionSnapshot(animationsEnabled: true, animationSpeed: 2)
-        var state = ViewportState()
-        state.animateToOffset(300, motion: motion, config: .niriWindowMovement)
-        XCTAssertEqual(state.offsetTransition.kind, .spring(motion.scaled(.niriWindowMovement)))
-        state.animateViewOffsetRestore(100, motion: motion)
-        XCTAssertEqual(state.offsetTransition.kind, .spring(motion.scaled(.niriHorizontalViewMovement)))
-        state.animateToOffset(0, motion: MotionSnapshot(animationsEnabled: false, animationSpeed: 4))
-        XCTAssertEqual(state.offsetTransition.kind, .jump)
-    }
-
-    func testNiriWindowMovementAndColumnResizeUseSpeed() throws {
-        let engine = NiriLayoutEngine()
-        let workspace = WorkspaceDescriptor.ID()
-        let token = WindowToken(pid: 1, windowId: 1)
-        let window = engine.addWindow(token: token, to: workspace, afterSelection: nil)
-        let column = try XCTUnwrap(engine.columns(in: workspace).first)
-        let motion = MotionSnapshot(animationsEnabled: true, animationSpeed: 2)
-        let oldFrame = CGRect(x: 100, y: 100, width: 500, height: 600)
-        XCTAssertTrue(engine.triggerMoveAnimations(
-            in: workspace, oldFrames: [token: oldFrame], newFrames: [token: oldFrame.offsetBy(dx: 100, dy: 100)],
-            motion: motion
-        ))
-        XCTAssertEqual(window.moveXAnimation?.animation.config, motion.scaled(engine.windowMovementAnimationConfig))
-        XCTAssertEqual(window.moveYAnimation?.animation.config, motion.scaled(engine.windowMovementAnimationConfig))
-
-        column.cachedWidth = 500
-        var state = ViewportState()
-        engine.setContainerPrimarySpan(
-            column, change: .setFixed(700),
-            context: .init(
-                workspaceId: workspace, motion: motion,
-                workingFrame: CGRect(x: 0, y: 0, width: 1200, height: 800), gaps: 12, orientation: .horizontal
-            ), state: &state
-        )
-        XCTAssertEqual(column.widthAnimation?.config, motion.scaled(engine.windowMovementAnimationConfig))
-        XCTAssertEqual(column.targetWidth, 700)
-    }
-
     func testDwindleMovementAndResizeRunAtScaledDuration() throws {
         let oldFrame = CGRect(x: 100, y: 100, width: 500, height: 600)
         let newFrame = CGRect(x: 200, y: 200, width: 700, height: 400)

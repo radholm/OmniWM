@@ -173,7 +173,7 @@ final class ScratchpadMembershipTests: XCTestCase {
             WorkspaceConfiguration(
                 name: "1",
                 monitorAssignment: .specificDisplay(OutputId(from: left)),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         ]
         let manager = WorkspaceManager(settings: settings)

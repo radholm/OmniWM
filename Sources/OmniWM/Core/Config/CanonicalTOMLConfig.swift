@@ -11,7 +11,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
     var routing: SettingsExport.Routing
     var monitors: Monitors?
     var gaps: SettingsExport.Gaps
-    var niri: SettingsExport.Niri
     var dwindle: SettingsExport.Dwindle
     var borders: SettingsExport.Borders
     var overview: SettingsExport.Overview
@@ -28,7 +27,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
     var appRules: [AppRule]
     var monitorBarOverrides: [MonitorBarSettings]
     var monitorOrientationOverrides: [MonitorOrientationSettings]
-    var monitorNiriOverrides: [MonitorNiriSettings]
     var monitorDwindleOverrides: [MonitorDwindleSettings]
     var monitorGapOverrides: [MonitorGapSettings]
 
@@ -75,8 +73,6 @@ extension CanonicalTOMLConfig {
         routing = try container.decode(SettingsExport.Routing.self, forKey: .routing)
         monitors = try container.decodeIfPresent(Monitors.self, forKey: .monitors)
         gaps = try container.decode(SettingsExport.Gaps.self, forKey: .gaps)
-        niri = try container.decode(SettingsExport.Niri.self, forKey: .niri)
-        niri.edgeGaps = niri.edgeGaps ?? true
         dwindle = try container.decode(SettingsExport.Dwindle.self, forKey: .dwindle)
         borders = try container.decode(SettingsExport.Borders.self, forKey: .borders)
         overview = try container.decode(SettingsExport.Overview.self, forKey: .overview)
@@ -97,7 +93,6 @@ extension CanonicalTOMLConfig {
             [MonitorOrientationSettings].self,
             forKey: .monitorOrientationOverrides
         )
-        monitorNiriOverrides = try container.decode([MonitorNiriSettings].self, forKey: .monitorNiriOverrides)
         monitorDwindleOverrides = try container.decode([MonitorDwindleSettings].self, forKey: .monitorDwindleOverrides)
         monitorGapOverrides = try container.decode([MonitorGapSettings].self, forKey: .monitorGapOverrides)
     }
@@ -123,7 +118,6 @@ extension CanonicalTOMLConfig {
         routing = export.routing
         monitors = export.monitorRanking.isEmpty ? nil : Monitors(ranking: export.monitorRanking)
         gaps = export.gaps
-        niri = export.niri
         dwindle = export.dwindle
         borders = export.borders
         overview = export.overview
@@ -140,7 +134,6 @@ extension CanonicalTOMLConfig {
         appRules = export.appRules
         monitorBarOverrides = export.monitorBarSettings
         monitorOrientationOverrides = export.monitorOrientationSettings
-        monitorNiriOverrides = export.monitorNiriSettings
         monitorDwindleOverrides = export.monitorDwindleSettings
         monitorGapOverrides = export.monitorGapSettings
     }
@@ -159,7 +152,6 @@ extension CanonicalTOMLConfig {
             routing: routing,
             monitorRanking: monitors?.ranking ?? [],
             gaps: gaps,
-            niri: niri,
             workspaceConfigurations: workspaces,
             defaultLayoutType: general.defaultLayoutType,
             borders: borders,
@@ -172,7 +164,6 @@ extension CanonicalTOMLConfig {
             monitorBarSettings: monitorBarOverrides,
             appRules: appRules,
             monitorOrientationSettings: monitorOrientationOverrides,
-            monitorNiriSettings: monitorNiriOverrides,
             dwindle: dwindle.normalized(),
             monitorDwindleSettings: monitorDwindleOverrides,
             monitorGapSettings: monitorGapOverrides,

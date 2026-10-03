@@ -66,8 +66,6 @@ extension LayoutRefreshController {
                    mode: trackedMode,
                    facts: evaluation.facts
                ),
-               admissionHints: evaluation.decision
-                   .admissionHints,
                sizeConstraints: candidate.enumeratedWindow
                    .decisionEvidence.sizeConstraints
            )

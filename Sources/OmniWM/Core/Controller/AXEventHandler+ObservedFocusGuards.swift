@@ -8,8 +8,6 @@ extension AXEventHandler {
     private func isTiledInActiveLayout(_ entry: WindowState) -> Bool {
         guard let controller, entry.mode == .tiling else { return false }
         switch controller.workspaceManager.activeLayoutKind(for: entry.workspaceId) {
-        case .niri:
-            return controller.niriEngine?.findNode(for: entry.token, in: entry.workspaceId) != nil
         case .dwindle:
             return controller.dwindleEngine?.containsWindow(entry.token, in: entry.workspaceId) == true
         }
@@ -55,23 +53,7 @@ extension AXEventHandler {
         observationGeneration: UInt64
     ) -> Bool {
         if hasRecentMouseFocusIntent(for: observedEntry.token) {
-            clearManagedReplacementFocusTransaction(
-                for: managedReplacementFocusKey(
-                    pid: observedEntry.pid,
-                    workspaceId: observedEntry.workspaceId
-                ),
-                reason: "mouse_focus_intent"
-            )
             return false
-        }
-
-        if shouldSuppressObservedActivationDuringManagedReplacementFocusTransaction(
-            entry: observedEntry,
-            requestDisposition: requestDisposition,
-            source: source,
-            origin: origin
-        ) {
-            return true
         }
 
         if shouldDeferSameAppActivationForCloseProbe(
@@ -93,53 +75,7 @@ extension AXEventHandler {
         return false
     }
 
-    private func shouldSuppressObservedActivationDuringManagedReplacementFocusTransaction(
-        entry observedEntry: WindowState,
-        requestDisposition: ActivationRequestDisposition,
-        source: ActivationEventSource,
-        origin: ActivationCallOrigin
-    ) -> Bool {
-        let key = managedReplacementFocusKey(pid: observedEntry.pid, workspaceId: observedEntry.workspaceId)
-        guard let transaction = managedReplacementFocusTransaction(
-            for: observedEntry.token,
-            workspaceId: observedEntry.workspaceId
-        ) else { return false }
-
-        guard case .unrelatedNoRequest = requestDisposition else {
-            if !transaction.protects(observedEntry.token) {
-                clearManagedReplacementFocusTransaction(for: key, reason: "managed_focus_request")
-            }
-            return false
-        }
-
-        guard source == .focusedWindowChanged else {
-            clearManagedReplacementFocusTransaction(for: key, reason: "app_activation")
-            return false
-        }
-
-        guard transaction.suppressesUnrelatedActivation(
-            token: observedEntry.token,
-            workspaceId: observedEntry.workspaceId
-        ) else {
-            return false
-        }
-
-        cancelSameAppCloseProbe(
-            matchingFocusedToken: transaction.anchorToken,
-            reason: "managed_replacement_focus_transaction"
-        )
-        return true
-    }
-
     func finishMouseFocusIntent(_ token: WindowToken) {
-        if let controller,
-           let entry = controller.workspaceManager.entry(for: token)
-        {
-            clearManagedReplacementFocusTransaction(
-                for: managedReplacementFocusKey(pid: token.pid, workspaceId: entry.workspaceId),
-                reason: "mouse_focus_intent"
-            )
-        }
         if let open = controller?.intentLedger.openSameAppCloseProbe(),
            open.payload.observedToken == token
         {

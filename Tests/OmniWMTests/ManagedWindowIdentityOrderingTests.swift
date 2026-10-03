@@ -41,12 +41,10 @@ final class ManagedWindowIdentityOrderingTests: XCTestCase {
         let successor: WindowToken
         let refs: [WindowToken: AXWindowRef]
         let handle: WindowHandle
-        let node: NiriWindow
-        let column: NiriContainer
-        let viewport: ViewportState
         let spaceId: UInt64
         let frame: CGRect
         let metadata: ManagedReplacementMetadata
+        let nodeId: DwindleNodeId
 
         var handler: AXEventHandler {
             controller.axEventHandler
@@ -418,19 +416,18 @@ final class ManagedWindowIdentityOrderingTests: XCTestCase {
         let controller = WindowAdmissionTestSupport.controller(prefix: "ManagedIdentityOrdering")
         let manager = controller.workspaceManager
         let monitorId = UInt32(471_000 + suffix * 100)
+        let frame = CGRect(x: 120, y: 80, width: 720, height: 520)
         let monitor = Monitor(
-            id: .init(displayId: monitorId),
-            displayId: monitorId,
+            id: .init(displayId: monitorId), displayId: monitorId,
             frame: CGRect(x: 0, y: 0, width: 1440, height: 900),
             visibleFrame: CGRect(x: 0, y: 0, width: 1440, height: 860),
-            hasNotch: false,
-            name: "Identity Ordering"
+            hasNotch: false, name: "Identity Ordering"
         )
         manager.applyMonitorConfigurationChange([monitor])
         let workspaceId = try XCTUnwrap(manager.workspaceId(for: "1", createIfMissing: true))
         _ = manager.focusWorkspace(id: workspaceId)
         controller.motionPolicy.animationsEnabled = false
-        controller.niriLayoutHandler.enableNiriLayout()
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
         controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = true
         controller.axEventHandler.windowSubscriptionProvider = { _ in true }
@@ -445,52 +442,36 @@ final class ManagedWindowIdentityOrderingTests: XCTestCase {
                     AXWindowRef(element: AXUIElementCreateApplication(pid + pid_t(index)), windowId: token.windowId)
                 )
             })
-        let frame = CGRect(x: 120, y: 80, width: 720, height: 520)
         let metadata = ManagedReplacementMetadata(
-            bundleId: "com.mitchellh.ghostty",
-            workspaceId: workspaceId,
-            mode: .tiling,
-            role: kAXWindowRole as String,
-            subrole: kAXStandardWindowSubrole as String,
-            title: "replacement",
-            windowLevel: 0,
-            parentWindowId: nil,
-            frame: frame
+            bundleId: "com.mitchellh.ghostty", workspaceId: workspaceId, mode: .tiling,
+            role: kAXWindowRole as String, subrole: kAXStandardWindowSubrole as String,
+            title: "replacement", windowLevel: 0, parentWindowId: nil, frame: frame
         )
         _ = manager.addWindow(
-            try XCTUnwrap(refs[original]),
-            pid: pid,
-            windowId: original.windowId,
-            to: workspaceId,
-            lifetimeAuthority: .directLifecycle,
-            managedReplacementMetadata: metadata
+            try XCTUnwrap(refs[original]), pid: pid, windowId: original.windowId, to: workspaceId,
+            lifetimeAuthority: .directLifecycle, managedReplacementMetadata: metadata
         )
-        let engine = try XCTUnwrap(controller.niriEngine)
+        let engine = try XCTUnwrap(controller.dwindleEngine)
         let node = manager.withEngineMutationScope(in: workspaceId, label: "identity_ordering_fixture") {
-            engine.addWindow(token: original, to: workspaceId, afterSelection: nil)
+            engine.addWindow(token: original, to: workspaceId, activeWindowFrame: nil)
         }
-        let column = try XCTUnwrap(engine.column(of: node))
         let handle = try XCTUnwrap(manager.handle(for: original))
         XCTAssertTrue(manager.confirmManagedFocus(original, in: workspaceId, activateWorkspaceOnMonitor: false))
-        var viewport = manager.niriViewportState(for: workspaceId)
-        viewport.selectedNodeId = node.id
-        viewport.activeColumnIndex = try XCTUnwrap(engine.columnIndex(of: column, in: workspaceId))
-        manager.updateNiriViewportState(viewport, for: workspaceId)
+        manager.withEngineMutationScope(in: workspaceId) {
+            _ = engine.activateWindowOutcome(original, in: workspaceId)
+        }
         let spaceId = UInt64(monitorId + 10)
         manager.commitSpaceTopology(SpaceTopology(
             displays: [.init(displayIdentifier: "identity-ordering", spaceIds: [spaceId], currentSpaceId: spaceId)],
-            activeSpaceId: spaceId,
-            fullscreenSpaceIds: [],
-            windowSpace: [original.windowId: spaceId]
+            activeSpaceId: spaceId, fullscreenSpaceIds: [], windowSpace: [original.windowId: spaceId]
         ))
         controller.hasStartedServices = true
         controller.axEventHandler.managedWindowIdentityRebindTargetIsAliveProvider = { $0 == pid }
         controller.axEventHandler.managedWindowIdentityRebindFinalizationProvider = { _, _ in true }
         return Fixture(
             controller: controller, workspaceId: workspaceId, original: original, predecessor: predecessor,
-            successor: successor, refs: refs,
-            handle: handle, node: node, column: column, viewport: viewport, spaceId: spaceId,
-            frame: frame, metadata: metadata
+            successor: successor, refs: refs, handle: handle, spaceId: spaceId, frame: frame,
+            metadata: metadata, nodeId: node.id
         )
     }
 
@@ -550,14 +531,11 @@ final class ManagedWindowIdentityOrderingTests: XCTestCase {
         XCTAssertEqual(fixture.manager.entries(forPid: fixture.original.pid).map(\.token), [token])
         XCTAssertTrue(fixture.manager.handle(for: token) === fixture.handle)
         XCTAssertEqual(fixture.manager.entry(for: token)?.workspaceId, fixture.workspaceId)
-        XCTAssertTrue(fixture.controller.niriEngine?.findNode(for: token, in: fixture.workspaceId) === fixture.node)
-        XCTAssertTrue(fixture.controller.niriEngine?.column(of: fixture.node) === fixture.column)
-        XCTAssertEqual(fixture.controller.niriEngine?.columns(in: fixture.workspaceId).count, 1)
         XCTAssertEqual(fixture.manager.selectedManagedToken, token)
-        let viewport = fixture.manager.niriViewportState(for: fixture.workspaceId)
-        XCTAssertEqual(viewport.selectedNodeId, fixture.viewport.selectedNodeId)
-        XCTAssertEqual(viewport.activeColumnIndex, fixture.viewport.activeColumnIndex)
-        XCTAssertEqual(viewport.viewOffset, fixture.viewport.viewOffset)
+        XCTAssertEqual(
+            fixture.controller.dwindleEngine?.findNode(for: token, in: fixture.workspaceId)?.id,
+            fixture.nodeId
+        )
         XCTAssertEqual(fixture.manager.spaceTopology.spaceForWindow(token.windowId), fixture.spaceId)
     }
 

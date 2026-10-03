@@ -27,7 +27,6 @@ These guides follow current `main`. Features newer than the latest [GitHub relea
 4. Optionally grant **Screen Recording** for capture-derived visuals such as Overview thumbnails.
 5. Return to OmniWM’s permissions window and click **Start OmniWM** or **Continue Without Screen Recording**. If a required permission still appears missing, click **Check Again**.
 
-Your windows now tile automatically in orientation-aware Niri containers: monitors using horizontal orientation show columns that scroll left and right, while vertical orientation shows rows that scroll up and down.
 
 :::note[One Space per display]
 Keep one macOS Space per display and navigate with OmniWM workspaces instead. Extra native Spaces are tolerated — their windows are left to macOS, not tiled.

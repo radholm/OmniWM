@@ -7,45 +7,9 @@ import Foundation
 import XCTest
 
 final class TabRailTests: XCTestCase {
-    func testPartialMetadataStillProducesOneIndicatorPerTab() {
-        let workspaceId = WorkspaceDescriptor.ID()
-        let info = TabRailInfo(
-            workspaceId: workspaceId,
-            owner: .niriColumn(NodeId()),
-            plannedSeq: 1,
-            tileFrame: CGRect(x: 0, y: 0, width: 400, height: 500),
-            tabCount: 2,
-            activeVisualIndex: 1,
-            activeWindowId: 42,
-            tabs: [
-                TabRailTabInfo(
-                    visualIndex: 1,
-                    token: nil,
-                    windowId: 42,
-                    appName: "Example",
-                    title: "Document",
-                    isActive: true
-                )
-            ]
-        )
-
-        XCTAssertEqual(info.tabCount, 2)
-        XCTAssertEqual(info.normalizedTabs.map(\.visualIndex), [0, 1])
-        XCTAssertEqual(info.normalizedTabs[1].title, "Document")
-    }
-
     func testKeyIncludesLayoutOwnerAndWorkspace() {
         let workspaceId = WorkspaceDescriptor.ID()
         let frame = CGRect(x: 20, y: 30, width: 400, height: 300)
-        let niriInfo = TabRailInfo(
-            workspaceId: workspaceId,
-            owner: .niriColumn(NodeId()),
-            plannedSeq: 1,
-            tileFrame: frame,
-            tabCount: 2,
-            activeVisualIndex: 0,
-            activeWindowId: nil
-        )
         let dwindleInfo = TabRailInfo(
             workspaceId: workspaceId,
             owner: .dwindleTile(UUID()),
@@ -55,9 +19,6 @@ final class TabRailTests: XCTestCase {
             activeVisualIndex: 0,
             activeWindowId: nil
         )
-
-        XCTAssertNotEqual(niriInfo.key, dwindleInfo.key)
-        XCTAssertEqual(niriInfo.key.workspaceId, workspaceId)
         XCTAssertEqual(dwindleInfo.key.workspaceId, workspaceId)
     }
 
@@ -308,59 +269,6 @@ final class TabRailTests: XCTestCase {
         XCTAssertEqual(manager.existingWindow(for: key)?.windowNumber, windowNumber)
         XCTAssertNotNil(surfaceAfter.frame)
         XCTAssertTrue(windowBefore.isVisible)
-        XCTAssertTrue(SurfaceCoordinator.shared.contains(windowNumber: windowNumber))
-    }
-
-    @MainActor
-    func testAnimationGeometryCreatesCachedOffscreenRailWhenItEntersViewport() throws {
-        let manager = TabRailManager()
-        defer { manager.removeAll() }
-        let workspaceId = WorkspaceDescriptor.ID()
-        let owner = TabRailOwner.niriColumn(NodeId())
-        let key = TabRailKey(workspaceId: workspaceId, owner: owner)
-        let tileFrame = CGRect(x: -500, y: 100, width: 400, height: 300)
-        let info = TabRailInfo(
-            workspaceId: workspaceId,
-            owner: owner,
-            plannedSeq: 9,
-            tileFrame: tileFrame,
-            visibleTileFrame: .null,
-            tabCount: 2,
-            activeVisualIndex: 0,
-            activeWindowId: nil
-        )
-
-        manager.updateRails([info])
-        XCTAssertNil(manager.existingWindow(for: key))
-
-        let enteredFrame = CGRect(x: 100, y: 120, width: 400, height: 300)
-        manager.applyAnimationGeometry([
-            TabRailGeometryCommand(
-                key: key,
-                tileFrame: enteredFrame,
-                visibleTileFrame: enteredFrame
-            )
-        ])
-
-        let window = try XCTUnwrap(manager.existingWindow(for: key))
-        let windowNumber = window.windowNumber
-        XCTAssertTrue(window.isVisible)
-        XCTAssertTrue(SurfaceCoordinator.shared.contains(windowNumber: windowNumber))
-
-        manager.applyAnimationGeometry([
-            TabRailGeometryCommand(key: key, tileFrame: enteredFrame, visibleTileFrame: .null)
-        ])
-        manager.applyAnimationGeometry([
-            TabRailGeometryCommand(
-                key: key,
-                tileFrame: enteredFrame.offsetBy(dx: 40, dy: 0),
-                visibleTileFrame: enteredFrame.offsetBy(dx: 40, dy: 0)
-            )
-        ])
-
-        XCTAssertTrue(manager.existingWindow(for: key) === window)
-        XCTAssertEqual(manager.existingWindow(for: key)?.windowNumber, windowNumber)
-        XCTAssertTrue(window.isVisible)
         XCTAssertTrue(SurfaceCoordinator.shared.contains(windowNumber: windowNumber))
     }
 

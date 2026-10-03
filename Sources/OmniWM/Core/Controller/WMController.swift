@@ -167,9 +167,6 @@ final class WMController {
     private(set) lazy var workspaceNavigationHandler = WorkspaceNavigationHandler(controller: self)
     @ObservationIgnored
     private(set) lazy var layoutRefreshController = LayoutRefreshController(controller: self)
-    var niriLayoutHandler: NiriLayoutHandler {
-        layoutRefreshController.niriHandler
-    }
 
     var dwindleLayoutHandler: DwindleLayoutHandler {
         layoutRefreshController.dwindleHandler
@@ -198,8 +195,6 @@ final class WMController {
     private(set) var isMouseWarpPolicyEnabled = false
     @ObservationIgnored
     let ownedWindowRegistry: OwnedWindowRegistry
-    @ObservationIgnored
-    let columnModeToast: ColumnModeToastController
     @ObservationIgnored
     var warpMouseCursorPosition: (CGPoint) -> Void = { CGWarpMouseCursorPosition($0) }
     @ObservationIgnored
@@ -244,7 +239,6 @@ final class WMController {
         traceCaptureCoordinator = RuntimeTraceCaptureCoordinator(diagnosticsDirectory: diagnosticsDirectory)
         self.windowFocusOperations = windowFocusOperations
         self.ownedWindowRegistry = ownedWindowRegistry
-        columnModeToast = ColumnModeToastController(ownedWindowRegistry: ownedWindowRegistry)
         workspaceManager = WorkspaceManager(settings: settings)
         focusPolicyEngine = FocusPolicyEngine()
         if self.workspaceBarIconResolver.synchronize(

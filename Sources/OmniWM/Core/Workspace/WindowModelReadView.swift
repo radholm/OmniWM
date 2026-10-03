@@ -117,10 +117,6 @@ extension WindowModel {
             model.manualLayoutOverride(for: token)
         }
 
-        func admissionHints(for token: WindowToken) -> ManagedWindowAdmissionHints? {
-            model.admissionHints(for: token)
-        }
-
         func hiddenState(for token: WindowToken) -> HiddenState? {
             model.hiddenState(for: token)
         }

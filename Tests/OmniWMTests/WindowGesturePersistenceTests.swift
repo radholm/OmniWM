@@ -62,23 +62,16 @@ final class WindowGesturePersistenceTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var export = SettingsExport.defaults()
-        export.gestures.scrollEnabled = false
         export.gestures.windowMoveEnabled = true
         export.gestures.windowResizeEnabled = true
         let url = directory.appendingPathComponent(SettingsFilePersistence.fileName)
         let data = try SettingsTOMLCodec.encode(export)
         try data.write(to: url)
-        var monitorCalls = 0
         let persistence = SettingsFilePersistence(
-            directory: directory, startWatching: false, deferSaves: false,
-            monitorProvider: {
-                monitorCalls += 1
-                return []
-            }
+            directory: directory, startWatching: false, deferSaves: false
         )
 
         XCTAssertEqual(persistence.loadOutcome().export, export)
-        XCTAssertEqual(monitorCalls, 0)
         XCTAssertEqual(try Data(contentsOf: url), data)
     }
 
@@ -88,11 +81,10 @@ final class WindowGesturePersistenceTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let url = directory.appendingPathComponent(SettingsFilePersistence.fileName)
-        var initial = SettingsExport.defaults()
-        initial.gestures.scrollEnabled = false
+        let initial = SettingsExport.defaults()
         try SettingsTOMLCodec.encode(initial).write(to: url)
         let persistence = SettingsFilePersistence(
-            directory: directory, startWatching: false, deferSaves: false, monitorProvider: { [] }
+            directory: directory, startWatching: false, deferSaves: false
         )
         let settings = SettingsStore(
             persistence: persistence,

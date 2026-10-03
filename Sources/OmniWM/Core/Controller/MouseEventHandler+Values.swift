@@ -14,12 +14,6 @@ extension MouseEventHandler {
         case terminalTail
         case freshPhase
         case trackpadUnclaimed
-        case wheelDisabled
-        case overview
-        case ownWindow
-        case windowInteraction
-        case modifierMismatch
-        case wheelBinding
         case wheelUnclaimed
 
         var suppresses: Bool {
@@ -28,19 +22,12 @@ extension MouseEventHandler {
                  .activeGesture,
                  .liftLatch,
                  .momentumTail,
-                 .terminalTail,
-                 .wheelBinding:
+                 .terminalTail:
                 true
             default:
                 false
             }
         }
-    }
-
-    enum ViewportGestureTerminationDisposition {
-        case settleLiveOffset
-        case settleLiveOffsetWithoutRelayout
-        case viewportAlreadySettled
     }
 
     struct PerformanceSnapshot: Equatable, Sendable {
@@ -68,7 +55,6 @@ extension MouseEventHandler {
 
     enum MouseMoveMode: Equatable {
         case swap
-        case insert
     }
 
     struct GestureTouchSample: Equatable, Sendable {

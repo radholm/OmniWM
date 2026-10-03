@@ -21,7 +21,7 @@ final class IPCFocusCommandContractTests: XCTestCase {
         }
     }
 
-    func testFocusPayloadValuesPreserveDirectionsAndUnconstrainedIntegerRange() throws {
+    func testFocusPayloadValuesPreserveDirections() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         for direction: IPCDirection in [.left, .right, .up, .down] {
@@ -29,25 +29,6 @@ final class IPCFocusCommandContractTests: XCTestCase {
             let data = try encoder.encode(IPCCommandRequest.focus(.spatial(direction: direction)))
             XCTAssertEqual(try encoder.encode(FocusEnvelope(command: command)), data)
             XCTAssertEqual(try JSONDecoder().decode(FocusEnvelope.self, from: data).command, command)
-        }
-        for value in [Int.min, -1, 0, 1, Int.max] {
-            for fixture in [
-                Fixture(
-                    command: .column(columnIndex: value),
-                    request: .focus(.column(columnIndex: value)),
-                    arguments: [.integer(value)]
-                ),
-                Fixture(
-                    command: .windowInColumn(windowIndex: value),
-                    request: .focus(.windowInColumn(windowIndex: value)),
-                    arguments: [.integer(value)]
-                )
-            ] {
-                let command = try IPCFocusCommand(name: fixture.command.name, arguments: .values(fixture.arguments))
-                let data = try encoder.encode(fixture.request)
-                XCTAssertEqual(try encoder.encode(FocusEnvelope(command: command)), data)
-                XCTAssertEqual(try JSONDecoder().decode(FocusEnvelope.self, from: data).command, command)
-            }
         }
     }
 
@@ -83,7 +64,7 @@ final class IPCFocusCommandContractTests: XCTestCase {
 
     func testPayloadFocusCommandsPreserveDecodingErrorKindsSubjectsAndPaths() throws {
         let payloadFields: [IPCFocusCommandName: String] = [
-            .spatial: "direction", .windowInColumn: "windowIndex", .column: "columnIndex"
+            .spatial: "direction"
         ]
         for (name, field) in payloadFields {
             let values = [
@@ -173,23 +154,7 @@ final class IPCFocusCommandContractTests: XCTestCase {
             arguments: [.direction(.left)]
         ),
         Fixture(command: .previous, request: .focus(.previous)),
-        Fixture(command: .downOrLeft, request: .focus(.downOrLeft)),
-        Fixture(command: .upOrRight, request: .focus(.upOrRight)),
-        Fixture(
-            command: .windowInColumn(windowIndex: 2),
-            request: .focus(.windowInColumn(windowIndex: 2)),
-            arguments: [.integer(2)]
-        ),
-        Fixture(command: .windowTop, request: .focus(.windowTop)),
-        Fixture(command: .windowBottom, request: .focus(.windowBottom)),
         Fixture(command: .windowDownOrTop, request: .focus(.windowDownOrTop)),
-        Fixture(command: .windowUpOrBottom, request: .focus(.windowUpOrBottom)),
-        Fixture(command: .windowOrWorkspaceDown, request: .focus(.windowOrWorkspaceDown)),
-        Fixture(command: .windowOrWorkspaceUp, request: .focus(.windowOrWorkspaceUp)),
-        Fixture(command: .column(columnIndex: 2), request: .focus(.column(columnIndex: 2)), arguments: [.integer(2)]),
-        Fixture(command: .columnFirst, request: .focus(.columnFirst)),
-        Fixture(command: .columnLast, request: .focus(.columnLast)),
-        Fixture(command: .centerColumn, request: .focus(.centerColumn)),
-        Fixture(command: .centerVisibleColumns, request: .focus(.centerVisibleColumns))
+        Fixture(command: .windowUpOrBottom, request: .focus(.windowUpOrBottom))
     ]
 }

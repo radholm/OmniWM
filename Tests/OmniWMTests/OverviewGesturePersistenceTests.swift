@@ -13,15 +13,10 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         defer { fixture.remove() }
         let data = try canonicalData(removing: ["overviewGestureEnabled", "overviewGestureFingerCount"])
         try data.write(to: fixture.fileURL)
-        var monitorCalls = 0
         let persistence = SettingsFilePersistence(
             directory: fixture.directory,
             startWatching: false,
-            deferSaves: false,
-            monitorProvider: {
-                monitorCalls += 1
-                return []
-            }
+            deferSaves: false
         )
 
         let outcome = persistence.loadOutcome()
@@ -30,7 +25,6 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         XCTAssertEqual(export.gestures.overviewGestureEnabled, false)
         XCTAssertEqual(export.gestures.overviewGestureFingerCount, .four)
         XCTAssertNil(outcome.notice)
-        XCTAssertEqual(monitorCalls, 0)
         XCTAssertEqual(try Data(contentsOf: fixture.fileURL), data)
         XCTAssertEqual(try SettingsTOMLCodec.decode(SettingsTOMLCodec.encode(export)), export)
     }
@@ -47,68 +41,6 @@ final class OverviewGesturePersistenceTests: XCTestCase {
             let data = try canonicalData(replacing: [key: replacement])
             XCTAssertThrowsError(try SettingsTOMLCodec.decode(data), "\(key) = \(replacement)")
         }
-    }
-
-    @MainActor
-    func testInitialLoadAndReloadRejectVerticalColumnAndWorkspaceConflictsWithoutChangingFile() throws {
-        let vertical = makeMonitor(vertical: true)
-        var workspaceConflict = overviewExport()
-        workspaceConflict.gestures.scrollEnabled = false
-        workspaceConflict.gestures.workspaceSwipeEnabled = true
-        workspaceConflict.gestures.workspaceSwipeFingerCount = .four
-        workspaceConflict.gestures.workspaceSwipeAxis = .vertical
-
-        for (export, monitors) in [(overviewExport(), [vertical]), (workspaceConflict, [])] {
-            let fixture = try makeFixture()
-            defer { fixture.remove() }
-            let data = try SettingsTOMLCodec.encode(export)
-            try data.write(to: fixture.fileURL)
-            let persistence = makePersistence(in: fixture, monitors: monitors)
-
-            let outcome = persistence.loadOutcome()
-
-            XCTAssertNil(outcome.export)
-            assertRejected(outcome.notice)
-            XCTAssertEqual(try Data(contentsOf: fixture.fileURL), data)
-            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: fixture.directory.path), [
-                SettingsFilePersistence.fileName
-            ])
-            XCTAssertFalse(persistence.settingsWritesBlocked)
-
-            try SettingsTOMLCodec.encode(.defaults()).write(to: fixture.fileURL, options: .atomic)
-            XCTAssertEqual(persistence.loadOutcome().export, .defaults())
-            try data.write(to: fixture.fileURL, options: .atomic)
-
-            let reloaded = try XCTUnwrap(persistence.reloadOutcomeIfChanged())
-
-            XCTAssertNil(reloaded.export)
-            assertRejected(reloaded.notice)
-            XCTAssertEqual(try Data(contentsOf: fixture.fileURL), data)
-        }
-    }
-
-    @MainActor
-    func testInitialLoadUsesCandidateMonitorOrientationOverride() throws {
-        let fixture = try makeFixture()
-        defer { fixture.remove() }
-        let monitor = makeMonitor(vertical: false)
-        var export = overviewExport()
-        export.monitorOrientationSettings = [
-            MonitorOrientationSettings(
-                monitorName: monitor.name,
-                monitorDisplayId: monitor.displayId,
-                orientation: .vertical
-            )
-        ]
-        let data = try SettingsTOMLCodec.encode(export)
-        try data.write(to: fixture.fileURL)
-        let persistence = makePersistence(in: fixture, monitors: [monitor])
-
-        let outcome = persistence.loadOutcome()
-
-        XCTAssertNil(outcome.export)
-        assertRejected(outcome.notice)
-        XCTAssertEqual(try Data(contentsOf: fixture.fileURL), data)
     }
 
     @MainActor
@@ -132,7 +64,6 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         let fixture = try makeFixture()
         defer { fixture.remove() }
         var initial = SettingsExport.defaults()
-        initial.gestures.scrollEnabled = false
         initial.gestures.workspaceSwipeEnabled = false
         initial.gaps.size = 17
         try SettingsTOMLCodec.encode(initial).write(to: fixture.fileURL)
@@ -155,6 +86,9 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         settings.onExternalSettingsReloaded = { externalReloads += 1 }
         settings.onConfigNoticeChanged = { noticeChanges += 1 }
         var candidate = overviewExport()
+        candidate.gestures.workspaceSwipeEnabled = true
+        candidate.gestures.workspaceSwipeFingerCount = .four
+        candidate.gestures.workspaceSwipeAxis = .vertical
         candidate.gaps.size = 29
         candidate.ipcEnabled = !initial.ipcEnabled
         let rejectedData = try SettingsTOMLCodec.encode(candidate)
@@ -171,7 +105,7 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         XCTAssertEqual(externalReloads, 0)
         XCTAssertEqual(noticeChanges, 1)
 
-        candidate.gestures.fingerCount = .three
+        candidate.gestures.workspaceSwipeFingerCount = .three
         let repairedData = try SettingsTOMLCodec.encode(candidate)
         try repairedData.write(to: fixture.fileURL, options: .atomic)
         persistence.handlePossibleSettingsFileChange()
@@ -179,7 +113,7 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         XCTAssertEqual(settings.gaps.size, candidate.gaps.size)
         XCTAssertEqual(settings.ipcEnabled, candidate.ipcEnabled)
         XCTAssertTrue(settings.gestures.overviewGestureEnabled)
-        XCTAssertEqual(settings.gestures.fingerCount, .three)
+        XCTAssertEqual(settings.gestures.workspaceSwipeFingerCount, .three)
         XCTAssertNil(settings.configNotice)
         XCTAssertEqual(availabilityChanges, [true])
         XCTAssertEqual(ipcChanges, [candidate.ipcEnabled])
@@ -214,8 +148,7 @@ final class OverviewGesturePersistenceTests: XCTestCase {
         SettingsFilePersistence(
             directory: fixture.directory,
             startWatching: false,
-            deferSaves: false,
-            monitorProvider: { monitors }
+            deferSaves: false
         )
     }
 
@@ -233,8 +166,6 @@ final class OverviewGesturePersistenceTests: XCTestCase {
 
     private func overviewExport() -> SettingsExport {
         var export = SettingsExport.defaults()
-        export.gestures.scrollEnabled = true
-        export.gestures.fingerCount = .four
         export.gestures.workspaceSwipeEnabled = false
         export.gestures.overviewGestureEnabled = true
         export.gestures.overviewGestureFingerCount = .four

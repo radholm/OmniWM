@@ -92,39 +92,9 @@ extension WMController {
         )
     }
 
-    func niriInteractionGeometry(
-        for monitor: Monitor
-    ) -> NiriInteractionGeometry {
-        niriInteractionGeometry(for: monitor, scale: backingScaleFactor(for: monitor))
-    }
-
-    func niriInteractionGeometry(
-        for monitor: Monitor,
-        scale: CGFloat
-    ) -> NiriInteractionGeometry {
-        let gap = innerGap(for: monitor, scale: scale)
-        return NiriInteractionGeometry(
-            workingFrame: niriWorkingFrame(layoutFrames(for: monitor, scale: scale).workingFrame, gap: gap),
-            innerGap: gap,
-            scale: scale
-        )
-    }
-
     func insetWorkingFrame(for monitor: Monitor) -> CGRect {
         let scale = backingScaleFactor(for: monitor)
         return layoutFrames(for: monitor, scale: scale).workingFrame
-    }
-
-    func niriWorkingFrame(for monitor: Monitor) -> CGRect {
-        let scale = backingScaleFactor(for: monitor)
-        return niriWorkingFrame(
-            layoutFrames(for: monitor, scale: scale).workingFrame,
-            gap: innerGap(for: monitor, scale: scale)
-        )
-    }
-
-    func niriWorkingFrame(_ workingFrame: CGRect, gap: CGFloat) -> CGRect {
-        settings.niri.edgeGaps ? workingFrame : workingFrame.insetBy(dx: -gap, dy: -gap)
     }
 
     func fullscreenLayoutFrame(for monitor: Monitor) -> CGRect {

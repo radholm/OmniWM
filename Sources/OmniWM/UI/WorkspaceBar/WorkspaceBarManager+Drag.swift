@@ -88,25 +88,21 @@ extension WorkspaceBarManager {
             else {
                 return nil
             }
-            let layout = controller.workspaceBarDropLayout(for: item.id)
             let icons = item.tiledWindows.compactMap { window -> WorkspaceBarDropGeometry.Icon? in
                 guard let localIcon = interaction.frames[.window(item.id, window.id)],
                       let iconFrame = island.hostingView.workspaceBarScreenRect(forLocalRect: localIcon)
                 else {
                     return nil
                 }
-                let isPositional = window.windowCount == 1 && !window.isAppHidden
                 return WorkspaceBarDropGeometry.Icon(
                     tokens: window.allWindows.map(\.id),
                     frame: iconFrame,
-                    appName: window.appName,
-                    placement: isPositional ? layout.placements[window.id] : nil
+                    appName: window.appName
                 )
             }
             return WorkspaceBarDropGeometry.Workspace(
                 id: item.id,
                 name: item.name,
-                layout: layout.layout,
                 hitFrame: CGRect(
                     x: orientation.isVertical ? panelFrame.minX : frame.minX - 4,
                     y: orientation.isVertical ? frame.minY - 4 : panelFrame.minY,
@@ -114,7 +110,6 @@ extension WorkspaceBarManager {
                     height: orientation.isVertical ? frame.height + 8 : panelFrame.height
                 ).intersection(panelFrame),
                 icons: icons,
-                columnCount: layout.columnCount,
                 orientation: orientation
             )
         }

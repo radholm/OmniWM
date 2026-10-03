@@ -17,7 +17,6 @@ The current schema is strict — a missing required key in a version 4 file inva
 
 - Keys marked *(optional)* may be omitted; every other key is required.
 - **Colors** are tables with `red`, `green`, `blue`, `alpha` floats in `0.0`–`1.0`.
-- **`singleWindowFit`** values are strings: `"fill"`, a custom size `"WIDTHxHEIGHT"` (e.g. `"1920x1080"`), or — Niri only — `"container_primary_span"`. `"fill"` is the Settings window's "Full Screen" fit: the lone window takes the fullscreen layout frame, so it follows `fullscreenUsesOuterGaps` rather than the regular tiling gaps.
 - Values listed as enums accept exactly the raw strings shown.
 
 ## File schema
@@ -43,12 +42,12 @@ Global switches: hotkeys, Hyper key, default layout, sleep, updates, IPC, animat
 | `hotkeysEnabled` | boolean | `true` | Master switch for all global hotkeys. |
 | `systemHyperTrigger` | string | `"None"` | Physical trigger for Hyper: `None`, a key name (`CapsLock`, `F13`–`F20`, `LeftControl`/`RightControl`, `LeftOption`/`RightOption`, `LeftShift`/`RightShift`, `LeftCommand`/`RightCommand`; OmniWM writes these with a space, for example `"Left Control"` and `"Caps Lock"`, and accepts both spellings), or `MouseButton3`/`MouseButton4`/`MouseButton5`. |
 | `hyperKeyModifiers` | string | `"Control+Option+Shift+Command"` | Modifier set Hyper expands to: `+`-joined names, at least two of Control/Option/Shift/Command. |
-| `defaultLayoutType` | string | `"niri"` | Layout used by workspaces whose own `layoutType` is `default`: `niri` or `dwindle`. |
+| `defaultLayoutType` | string | `"dwindle"` | Default workspace layout: `dwindle`. |
 | `preventSleepEnabled` | boolean | `false` | Prevents idle display sleep while your user session is active. |
 | `updateChecksEnabled` | boolean | `true` | Automatic update checks. |
 | `ipcEnabled` | boolean | `false` | Enables the IPC server used by `omniwmctl`. |
 | `animationsEnabled` | boolean | `true` | Animates window layout changes and other OmniWM-authored motion. macOS Reduce Motion turns them off regardless of this key. |
-| `animationSpeed` *(optional)* | float | `1.0` | **Unreleased — available when building from `main`.** Tiling animation speed multiplier: `2.0` is twice as fast, `0.5` is half as fast. Applies to Niri focus, window/column movement and resizing, Dwindle layout changes, and workspace swipe settling. Values are clamped to `0.25`–`4.0`; nonfinite values use `1.0`. Changes apply to newly started transitions. Direct gesture tracking, inertial scrolling, Overview, and Quake terminal animations keep their own behavior. |
+| `animationSpeed` *(optional)* | float | `1.0` | **Unreleased — available when building from `main`.** Tiling animation speed multiplier: `2.0` is twice as fast, `0.5` is half as fast. Applies to Dwindle layout changes and workspace swipe settling. Values are clamped to `0.25`–`4.0`; nonfinite values use `1.0`. Changes apply to newly started transitions. Direct gesture tracking, inertial scrolling, Overview, and Quake terminal animations keep their own behavior. |
 | `language` | string | unset | Interface language as a packaged localization code, such as `"ja"` or `"sr-Latn"`. Leave it unset to follow macOS. Takes effect the next time OmniWM starts. |
 
 ## focus
@@ -62,7 +61,7 @@ Pointer-driven focus and monitor-edge focus/move behavior.
 | `lockModifier` | string | `"off"` | Modifier that holds focus in place while pressed: `off`, `option`, `leftOption`, `rightOption`, `command`, `leftCommand`, `rightCommand`, `control`, `leftControl`, `rightControl`, `shift`, `leftShift`, `rightShift`. |
 | `floatingWindowsAlwaysOnTop` | boolean | `false` | Keeps floating windows in front of tiled windows: focus-follows-mouse focuses a tiled window without raising it while a floating window overlaps it, and no longer moves focus from a focused floating window to a tiled window (click the tiled window instead). |
 | `moveMouseToFocusedWindow` | boolean | `false` | Moves the pointer to the window that gains focus. |
-| `followsWindowToMonitor` | boolean | `false` | Follows ordinary window or column transfers to another workspace, including dedicated monitor-move actions. Edge-crossing moves always follow. |
+| `followsWindowToMonitor` | boolean | `false` | Follows ordinary window transfers to another workspace, including dedicated monitor-move actions. Edge-crossing moves always follow. |
 | `crossesMonitorAtEdge` | boolean | `false` | Directional focus continues onto the neighboring monitor at the screen edge. |
 | `moveCrossesMonitorAtEdge` | boolean | `false` | Directional window move continues onto the neighboring monitor at the workspace edge and always follows the moved window. |
 
@@ -149,24 +148,6 @@ Gaps between tiled windows and screen edges (points).
 | `outer.bottom` | float | `0.0` | Outer gap at the bottom screen edge. |
 
 Per-display values come from [`[[monitorGapOverrides]]`](#per-monitor-overrides). An override row must match the connected display’s UUID, or both display ID and name if that display has no UUID. An unmatched row is ignored and the global values apply; the override row’s own `id` does not identify the display.
-
-## niri
-
-Options for the scrolling (Niri) layout.
-
-| Key | Type | Default | Description |
-| --- | --- | --- | --- |
-| `visibleContainerCount` | integer | `2` | How many containers (columns) share the viewport side by side. |
-| `infiniteLoop` | boolean | `false` | Treats the column strip as a loop instead of a bounded row. |
-| `centerFocusedColumn` | string | `"never"` | When to center the focused column: `never`, `always`, `onOverflow`. |
-| `alwaysCenterSingleColumn` | boolean | `false` | Centers the column when a workspace holds only one. |
-| `singleWindowFit` | string | `"fill"` | Size of a lone window: `fill` (the "Full Screen" fit, which uses the fullscreen layout frame and honors `fullscreenUsesOuterGaps`), `container_primary_span`, or `WIDTHxHEIGHT`. |
-| `containerPrimarySpanPresets` *(optional)* | float array | `[1/3, 1/2, 2/3]` | Span fractions the span-cycling actions step through. |
-| `defaultContainerPrimarySpan` *(optional)* | float | `0.5` | Primary-axis span fraction for new containers. |
-| `resizeStepPercent` *(optional)* | integer | `5` | Increment for Niri grow/shrink actions in percentage points, clamped to 1–100. Applies to container primary, window primary, and window secondary spans. Explicit CLI sizes are unaffected. |
-| `edgeGaps` *(optional)* | boolean | `true` | Keeps the inner gap between columns and the screen edges, in addition to the outer gaps. `false` uses the inner gap only between columns and between stacked windows. A lone window is unaffected. |
-
-The resize increment defaults to 5% instead of the previous fixed 10%.
 
 ## dwindle
 
@@ -274,33 +255,28 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| `scrollEnabled` | boolean | `true` | Trackpad column scrolling (`fingerCount`) and modifier + mouse scroll wheel scrolling along the Niri primary axis; `false` turns off both. |
-| `scrollSensitivity` | float | `5.0` | Scroll gesture sensitivity. |
-| `scrollModifierKey` | string | `"optionShift"` | Modifier for wheel scrolling: `optionShift` or `controlShift`. |
-| `mouseMoveModifierKey` | string | `"option"` | Modifier for drag-to-swap of tiled windows in Niri and Dwindle (Niri also accepts `Shift` for insert): `off`, `option`, `control`, `command`, `controlOption`, `optionCommand`, `controlCommand`, `controlOptionCommand`. |
+| `mouseMoveModifierKey` | string | `"option"` | Modifier for drag-to-swap of tiled windows in Dwindle: `off`, `option`, `control`, `command`, `controlOption`, `optionCommand`, `controlCommand`, `controlOptionCommand`. |
 | `mouseResizeModifierKey` | string | `"option"` | Modifier for right-drag resize: `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
-| `mouseEdgeDragResize` *(optional)* | boolean | `true` | Left-drag the gap between tiled windows (or a tiled window's edge, 4 pt inside) without a modifier to resize the split in Niri and Dwindle. The press is consumed so the app does not resize itself; presses on floating windows, menus or panels covering the gap are left alone. |
+| `mouseEdgeDragResize` *(optional)* | boolean | `true` | Left-drag the gap between tiled windows (or a tiled window's edge, 4 pt inside) without a modifier to resize the split in Dwindle. The press is consumed so the app does not resize itself; presses on floating windows, menus or panels covering the gap are left alone. |
 | `mouseTitleBarDragSwap` *(optional)* | boolean | `true` | In Dwindle, dragging a tiled window by its title bar and releasing over another tile swaps the two. Drops elsewhere snap the window back. |
-| `fingerCount` | integer | `3` | Trackpad column-scroll finger count: `2`, `3`, or `4`. |
 | `invertDirection` | boolean | `true` | Inverts trackpad gesture direction. |
-| `trackpadScrollStyle` | string | `"snap"` | `snap` (snap to columns) or `momentum`. |
 | `workspaceSwipeEnabled` | boolean | `false` | Trackpad swipe switches to the next/previous workspace. |
 | `workspaceSwipeFingerCount` | integer | `3` | Workspace-swipe finger count: `2`, `3`, or `4`. |
 | `workspaceSwipeAxis` | string | `"vertical"` | Workspace-swipe axis: `horizontal` or `vertical`. |
 | `overviewGestureEnabled` *(optional)* | boolean | `false` | Enable the trackpad gesture that opens Overview with an upward swipe and closes it with a downward swipe. |
 | `overviewGestureFingerCount` *(optional)* | integer | `4` | Overview gesture finger count: `3` or `4`. |
-| `windowMoveEnabled` *(optional)* | boolean | `false` | Drag without clicking to swap the tiled window under the cursor in either layout. |
+| `windowMoveEnabled` *(optional)* | boolean | `false` | Drag without clicking to swap the tiled window under the cursor in Dwindle. |
 | `windowMoveFingerCount` *(optional)* | integer | `4` | Window-move finger count: `2`, `3`, or `4`. |
-| `windowResizeEnabled` *(optional)* | boolean | `false` | Drag without clicking to resize the tiled window under the cursor in either layout. |
+| `windowResizeEnabled` *(optional)* | boolean | `false` | Drag without clicking to resize the tiled window under the cursor in Dwindle. |
 | `windowResizeFingerCount` *(optional)* | integer | `3` | Window-resize finger count: `2`, `3`, or `4`. |
 | `windowGestureSensitivity` *(optional)* | float | `1.0` | Move/resize sensitivity, clamped to `0.1…5.0`; non-finite values use `1.0`. |
 | `workspaceSwipeSensitivity` *(optional)* | float | `1.0` | Workspace-swipe sensitivity, clamped to `0.5…4.0`; higher values need shorter swipes. Non-finite values use `1.0`. |
 | `workspaceWallpaperParallax` *(optional)* | boolean | `true` | Draw the wallpaper slightly enlarged and pan it with the active workspace's position, so workspace switches (swipe or keyboard) scroll it a little. Needs Screen Recording permission. |
 | `workspaceWallpaperParallaxAmount` *(optional)* | float | `0.1` | How far the parallax wallpaper scrolls from the first to the last workspace, as a fraction of the display size, clamped to `0.02…0.5`. Non-finite values use `0.1`. |
 
-Window move and resize gestures use all directions, so their finger counts must differ from every other enabled gesture. Configuration loading rejects overlaps with each other, column scrolling, workspace switching, or Overview. In Settings, **Set Up…** previews the conflicting assignments and lets you choose which gestures to turn off before applying the change. When editing TOML, disable or reassign conflicting gestures in the same edit. Moving stays on the starting monitor; resizing can continue beyond its bounds. Lift all fingers to finish, and turn off matching macOS gestures under System Settings → Trackpad → More Gestures. These gestures are inactive while Overview is open and do not use `invertDirection`.
+Window move and resize gestures use all directions, so their finger counts must differ from every other enabled gesture. Configuration loading rejects overlaps with each other, workspace switching or Overview. In Settings, **Set Up…** previews the conflicting assignments and lets you choose which gestures to turn off before applying the change. When editing TOML, disable or reassign conflicting gestures in the same edit. Moving stays on the starting monitor; resizing can continue beyond its bounds. Lift all fingers to finish, and turn off matching macOS gestures under System Settings → Trackpad → More Gestures. These gestures are inactive while Overview is open and do not use `invertDirection`.
 
-Overview follows your fingers like Mission Control. Swipe up with the configured finger count and the thumbnails fly out as you move; release past the halfway point, or flick upward, to finish opening, and release earlier to cancel without disturbing the app you were in. Swipe down while Overview is open to close it the same way. Closing matches Escape: it activates the highlighted window, or restores the previously active app when there is no selection. Touching the trackpad while Overview is animating catches it in place. With `animationsEnabled` off or macOS Reduce Motion on, the swipe triggers immediately after a short travel instead of tracking. Direction is independent of `invertDirection`. Lift all fingers between gestures. Configuration validation rejects enabled gestures that share the same fingers and upward movement; the Settings **Set Up…** flow helps resolve those conflicts. Horizontal swipes may share fingers with Overview. Validation accounts for connected monitors' column orientations and workspace swipes running perpendicular to column scrolling when their finger counts match. Without column scrolling, workspace swipes use their configured axis. If a display change creates an overlap, ambiguous upward swipes are ignored until the assignments are corrected. Disable the matching macOS Mission Control gesture to avoid interception.
+Overview follows your fingers like Mission Control. Swipe up with the configured finger count and the thumbnails fly out as you move; release past the halfway point, or flick upward, to finish opening, and release earlier to cancel without disturbing the app you were in. Swipe down while Overview is open to close it the same way. Closing matches Escape: it activates the highlighted window, or restores the previously active app when there is no selection. Touching the trackpad while Overview is animating catches it in place. With `animationsEnabled` off or macOS Reduce Motion on, the swipe triggers immediately after a short travel instead of tracking. Direction is independent of `invertDirection`. Lift all fingers between gestures. Configuration validation rejects enabled gestures that share the same fingers and upward movement; the Settings **Set Up…** flow helps resolve those conflicts. Horizontal swipes may share fingers with Overview. Workspace swipes use their configured axis. Disable the matching macOS Mission Control gesture to avoid interception.
 
 ## statusBar
 
@@ -372,7 +348,7 @@ Appearance of OmniWM's own UI.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `mode` | string | `"dark"` | `automatic`, `light`, or `dark`. |
-| `tabRailAppIcons` *(optional)* | boolean | `false` | Replaces compact tab markers with app icons in Niri and Dwindle. Each tab group reserves a 28-point rail instead of 10 points; crowded rails scroll vertically. |
+| `tabRailAppIcons` *(optional)* | boolean | `false` | Replaces compact tab markers with app icons in Dwindle. Each tab group reserves a 28-point rail instead of 10 points; crowded rails scroll vertically. |
 
 The **Show app icons in tab rails** toggle in **Settings → General → Appearance** controls the same option. Changes apply live without restarting.
 
@@ -398,7 +374,7 @@ id = "toggleScratchpad.1"
 
 - `binding` is a human-readable chord: `+`-joined modifiers (`Control`, `Option`, `Shift`, `Command`, or the `Hyper` shorthand for the full [`hyperKeyModifiers`](#general) set) followed by a key name — or `"Unassigned"`. A `Left `/`Right ` prefix pins a modifier to one side (e.g. `"Left Option+H"`).
 - The array is validated strictly: every required action must appear **exactly once**. Workspace `10+` action IDs are optional and appear while those workspaces exist. An unknown, unassignable, duplicate, or missing required action id rejects the whole file, so rebind by editing `binding` values in place.
-- The numeric suffix is zero-based for `switchWorkspace.N`, `moveToWorkspace.N`, `focusColumn.N`, and `moveColumnToWorkspace.N` — `switchWorkspace.0` is *Switch to Workspace 1* (`Option + 1` by default) — and one-based for `switchWorkspaceSlot.N`, `moveToWorkspaceSlot.N`, `focusWindowInColumn.N`, `moveColumnToIndex.N`, `toggleScratchpad.N`, and `assignFocusedWindowToScratchpad.N`.
+- The numeric suffix is zero-based for `switchWorkspace.N` and `moveToWorkspace.N` — `switchWorkspace.0` is *Switch to Workspace 1* (`Option + 1` by default) — and one-based for `switchWorkspaceSlot.N`, `moveToWorkspaceSlot.N`, `toggleScratchpad.N`, and `assignFocusedWindowToScratchpad.N`.
 
 The default bindings are listed in the [keyboard shortcuts guide](/guides/keyboard-shortcuts/); assignable actions appear in **Settings > Hotkeys**.
 
@@ -412,17 +388,16 @@ Array of workspace definitions.
 | `name` | string | Workspace name; numeric names define the ordering and number-key targets. |
 | `displayName` *(optional)* | string | Label shown in the bar instead of `name` (emoji welcome). |
 | `monitorAssignment` | table | `type` = `main`, `secondary`, `tertiary`, or `specificDisplay`. For `specificDisplay`, the `output` sub-table contains a required `name` (string), optional `displayUUID` (string), and optional `displayId` (integer). The role types resolve through the [`monitors`](#monitors) ranking. |
-| `layoutType` | string | `default` (follow `general.defaultLayoutType`), `niri`, or `dwindle`. |
+| `defaultLayoutType` | string | `"dwindle"` | Default workspace layout: `dwindle`. |
 
 For `specificDisplay`, `displayUUID` takes precedence when present. Without it, `displayId` and `name` must match a monitor that has no display UUID. A name alone cannot identify the target monitor.
 
-Default: nine workspaces named `1`–`9`, all Niri — `1`–`5` and `8`–`9` on the main monitor, `6` (shown as ❤️) and `7` (shown as 🚀) on the secondary, matching the default `Option + 1`–`9` bindings.
 
 ```toml
 [[workspaces]]
 displayName = "❤️"
 id = "5953F2BF-A378-4266-91B2-287174C4FA4D"
-layoutType = "niri"
+layoutType = "dwindle"
 name = "6"
 
 [workspaces.monitorAssignment]
@@ -444,7 +419,6 @@ Array of per-app window rules, editable in the **App Rules** window. Matchers se
 | `axSubrole` *(optional)* | string | Matches the accessibility subrole. |
 | `layout` *(optional)* | string | `auto` (default), `tile`, or `float`. |
 | `assignToWorkspace` *(optional)* | string | Workspace name the window is routed to. |
-| `initialContainerPrimarySpan` *(optional)* | float | Initial Niri span for the window's container (`0.05`–`1.0`). |
 | `minWidth` *(optional)* | float | Minimum layout width in points. |
 | `minHeight` *(optional)* | float | Minimum layout height in points. |
 
@@ -468,7 +442,6 @@ When `workspaceBar.enabled = false`, no monitor can show its bar. Saved `monitor
 | --- | --- |
 | `monitorBarOverrides` | `enabled`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `notchMode`, `notchActiveZoneWidth`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar) |
 | `monitorOrientationOverrides` | `orientation`: `horizontal` or `vertical` layout orientation for that monitor |
-| `monitorNiriOverrides` | `visibleContainerCount`, `centerFocusedColumn`, `alwaysCenterSingleColumn`, `singleWindowFit`, `infiniteLoop` — see [`niri`](#niri) |
 | `monitorDwindleOverrides` | `smartSplit`, `defaultSplitRatio`, `splitWidthMultiplier`, `singleWindowFit`, `useGlobalGaps`, `innerGap` — see [`dwindle`](#dwindle) |
 | `monitorGapOverrides` | `innerGap`, `outerGapLeft`, `outerGapRight`, `outerGapTop`, `outerGapBottom`, `fullscreenUsesOuterGaps` — see [`gaps`](#gaps) |
 

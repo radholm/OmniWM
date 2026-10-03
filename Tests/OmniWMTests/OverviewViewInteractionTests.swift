@@ -15,7 +15,6 @@ final class OverviewViewInteractionTests: XCTestCase {
         var dragUpdates: [CGPoint] = []
         var dragEnds: [CGPoint] = []
         var workspaces: [WorkspaceDescriptor.ID] = []
-        var pills: [OverviewOverflowPill] = []
     }
 
     private let cardFrame = CGRect(x: 100, y: 100, width: 200, height: 140)
@@ -108,12 +107,11 @@ final class OverviewViewInteractionTests: XCTestCase {
         XCTAssertTrue(surface.recorder.dragBegins.isEmpty)
     }
 
-    func testRibbonPressActivatesWorkspaceAndOverflowPillPages() throws {
+    func testRibbonPressActivatesWorkspace() throws {
         let surface = try makeSurface()
         defer { surface.panel.close() }
         var section = try XCTUnwrap(surface.view.layout.workspaceSections.first)
         section.ribbonFrame = CGRect(x: 20, y: 40, width: 760, height: 300)
-        section.hiddenColumnsAfter = 2
         var layout = surface.view.layout
         layout.replaceWorkspaceSections([section])
         surface.view.updateLayout(layout, state: .open, searchQuery: "", selectedWindowHandle: nil)
@@ -123,14 +121,6 @@ final class OverviewViewInteractionTests: XCTestCase {
         surface.view.mouseDown(with: try mouseEvent(.leftMouseDown, at: ribbonBackground, in: surface.panel))
         XCTAssertEqual(surface.recorder.workspaces, [section.workspaceId])
         XCTAssertEqual(surface.recorder.dismissals, 0)
-
-        let pill = try XCTUnwrap(layout.overflowPills(for: section).first)
-        surface.view.mouseDown(with: try mouseEvent(
-            .leftMouseDown,
-            at: CGPoint(x: pill.frame.midX, y: pill.frame.midY),
-            in: surface.panel
-        ))
-        XCTAssertEqual(surface.recorder.pills, [pill])
         XCTAssertEqual(surface.recorder.workspaces.count, 1)
         XCTAssertTrue(surface.recorder.selected.isEmpty)
     }
@@ -206,7 +196,6 @@ final class OverviewViewInteractionTests: XCTestCase {
         view.onWindowClosed = { recorder.closed.append($0) }
         view.onDismiss = { recorder.dismissals += 1 }
         view.onWorkspaceSelected = { recorder.workspaces.append($0) }
-        view.onOverflowPillPressed = { recorder.pills.append($0) }
         view.onDragBegin = { recorder.dragBegins.append((handle: $0, start: $1)) }
         view.onDragUpdate = { recorder.dragUpdates.append($0) }
         view.onDragEnd = { recorder.dragEnds.append($0) }

@@ -56,8 +56,6 @@ struct SettingsExport: Equatable {
     var monitorRanking: [OutputId]
     var gaps: Gaps
 
-    var niri: Niri
-
     var workspaceConfigurations: [WorkspaceConfiguration]
     var defaultLayoutType: LayoutType
 
@@ -75,7 +73,6 @@ struct SettingsExport: Equatable {
 
     var appRules: [AppRule]
     var monitorOrientationSettings: [MonitorOrientationSettings]
-    var monitorNiriSettings: [MonitorNiriSettings]
 
     var dwindle: Dwindle
     var monitorDwindleSettings: [MonitorDwindleSettings]
@@ -134,18 +131,6 @@ struct SettingsExport: Equatable {
         var bottom: Double
     }
 
-    struct Niri: Codable, Equatable {
-        var visibleContainerCount: Int
-        var infiniteLoop: Bool
-        var centerFocusedColumn: CenterFocusedColumn
-        var alwaysCenterSingleColumn: Bool
-        var singleWindowFit: SingleWindowFit
-        var containerPrimarySpanPresets: [Double]?
-        var defaultContainerPrimarySpan: Double?
-        var edgeGaps: Bool?
-        var resizeStepPercent: Int?
-    }
-
     struct Dwindle: Codable, Equatable {
         var smartSplit: Bool
         var defaultSplitRatio: Double
@@ -197,14 +182,9 @@ struct SettingsExport: Equatable {
     }
 
     struct Gestures: Codable, Equatable {
-        var scrollEnabled: Bool
-        var scrollSensitivity: Double
-        var scrollModifierKey: ScrollModifierKey
         var mouseMoveModifierKey: MouseMoveModifierKey
         var mouseResizeModifierKey: MouseResizeModifierKey
-        var fingerCount: GestureFingerCount
         var invertDirection: Bool
-        var trackpadScrollStyle: TrackpadScrollStyle
         var workspaceSwipeEnabled: Bool
         var workspaceSwipeFingerCount: GestureFingerCount
         var workspaceSwipeAxis: WorkspaceSwipeAxis
@@ -289,9 +269,8 @@ extension SettingsExport {
             routing: Routing.defaults(),
             monitorRanking: [],
             gaps: Gaps.defaults(),
-            niri: Niri.defaults(),
             workspaceConfigurations: BuiltInSettingsDefaults.workspaceConfigurations,
-            defaultLayoutType: .niri,
+            defaultLayoutType: .dwindle,
             borders: Borders.defaults(),
             overview: Overview.defaults(),
             hotkeyBindings: HotkeyBindingRegistry.defaults(),
@@ -302,7 +281,6 @@ extension SettingsExport {
             monitorBarSettings: [],
             appRules: BuiltInSettingsDefaults.appRules,
             monitorOrientationSettings: [],
-            monitorNiriSettings: [],
             dwindle: Dwindle.defaults(),
             monitorDwindleSettings: [],
             monitorGapSettings: [],
@@ -378,22 +356,6 @@ extension SettingsExport.Gaps {
     }
 }
 
-extension SettingsExport.Niri {
-    static func defaults() -> Self {
-        Self(
-            visibleContainerCount: 2,
-            infiniteLoop: false,
-            centerFocusedColumn: .never,
-            alwaysCenterSingleColumn: false,
-            singleWindowFit: .fullScreen,
-            containerPrimarySpanPresets: BuiltInSettingsDefaults.niriContainerPrimarySpanPresets,
-            defaultContainerPrimarySpan: 0.5,
-            edgeGaps: true,
-            resizeStepPercent: BuiltInSettingsDefaults.niriResizeStepPercent
-        )
-    }
-}
-
 extension SettingsExport.Dwindle {
     static func defaults() -> Self {
         Self(
@@ -464,14 +426,9 @@ extension SettingsExport.Borders {
 extension SettingsExport.Gestures {
     static func defaults() -> Self {
         Self(
-            scrollEnabled: true,
-            scrollSensitivity: 5.0,
-            scrollModifierKey: .optionShift,
             mouseMoveModifierKey: .option,
             mouseResizeModifierKey: .option,
-            fingerCount: .three,
             invertDirection: true,
-            trackpadScrollStyle: .snap,
             workspaceSwipeEnabled: false,
             workspaceSwipeFingerCount: .three,
             workspaceSwipeAxis: .vertical

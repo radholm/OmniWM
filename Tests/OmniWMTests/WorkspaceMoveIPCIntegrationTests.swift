@@ -974,10 +974,7 @@ final class WorkspaceMoveIPCIntegrationTests: XCTestCase {
             controller.layoutRefreshController.requestWindowRemoval(
                 .init(
                     workspaceId: fixture.centerWorkspaceId,
-                    layoutType: .niri,
-                    removedNodeId: nil,
-                    removedNiriColumn: false,
-                    niriOldFrames: [:],
+                    layoutType: .dwindle,
                     shouldRecoverFocus: false,
                     allowsPreferredRecoveryToken: false
                 )
@@ -1021,10 +1018,7 @@ final class WorkspaceMoveIPCIntegrationTests: XCTestCase {
             controller.layoutRefreshController.requestWindowRemoval(
                 .init(
                     workspaceId: fixture.centerWorkspaceId,
-                    layoutType: .niri,
-                    removedNodeId: nil,
-                    removedNiriColumn: false,
-                    niriOldFrames: [:],
+                    layoutType: .dwindle,
                     shouldRecoverFocus: false,
                     allowsPreferredRecoveryToken: false
                 )
@@ -1177,17 +1171,17 @@ final class WorkspaceMoveIPCIntegrationTests: XCTestCase {
                 name: "1",
                 displayName: "Slack",
                 monitorAssignment: .specificDisplay(OutputId(from: left)),
-                layoutType: .niri
+                layoutType: .dwindle
             ),
             WorkspaceConfiguration(
                 name: "2",
                 monitorAssignment: .specificDisplay(OutputId(from: center)),
-                layoutType: .niri
+                layoutType: .dwindle
             ),
             WorkspaceConfiguration(
                 name: "3",
                 monitorAssignment: .specificDisplay(OutputId(from: right)),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         ]
         let controller = WMController(

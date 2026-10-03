@@ -62,86 +62,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
         )
     }
 
-    func testFullRescanAdmissionRechecksUnresolvedNativeFocusWithoutFronting() async throws {
-        var focusOperations: [String] = []
-        let controller = WindowAdmissionTestSupport.controller(
-            windowFocusOperations: WindowFocusOperations(
-                activateApp: { _ in focusOperations.append("activate") },
-                focusSpecificWindow: { _, _, _ in focusOperations.append("focus") },
-                raiseWindow: { _ in focusOperations.append("raise") },
-                orderWindow: { _ in focusOperations.append("order") }
-            )
-        )
-        defer {
-            controller.hasStartedServices = false
-            controller.factResolver.stop()
-            controller.eventIntake.close()
-            controller.layoutRefreshController.fullRescanEnumerationSnapshotForTests = nil
-            controller.layoutRefreshController.resetState()
-            controller.axManager.cleanup()
-        }
-        let manager = controller.workspaceManager
-        let workspaceId = try XCTUnwrap(manager.workspaceId(for: "1", createIfMissing: true))
-        _ = manager.focusWorkspace(id: workspaceId)
-        controller.motionPolicy.animationsEnabled = false
-        controller.niriLayoutHandler.enableNiriLayout()
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-        controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = true
-
-        let token = WindowToken(pid: 467_320, windowId: 467_321)
-        let axRef = WindowAdmissionTestSupport.axRef(for: token)
-        let frame = CGRect(x: 120, y: 80, width: 720, height: 520)
-        let facts = replacementFacts(
-            token: token,
-            bundleId: "org.example.launch-focus",
-            frame: frame
-        )
-        controller.layoutRefreshController.fullRescanEnumerationSnapshotForTests = enumerationSnapshot(
-            for: candidate(
-                pid: token.pid,
-                windowId: token.windowId,
-                axRef: axRef,
-                decisionEvidence: AXWindowDecisionEvidence(facts: facts.ax, sizeConstraints: .unconstrained),
-                admissionGeometry: WindowAdmissionGeometryEvidence(isSizeSettable: true, frame: frame),
-                fullscreenAttribute: false,
-                windowServerInfo: facts.windowServer
-            )
-        )
-        var focusedWindow: FocusedWindowFact?
-        var resolvedPIDs: [pid_t] = []
-        controller.factResolver.factProvider = { pid in
-            resolvedPIDs.append(pid)
-            return focusedWindow
-        }
-        controller.axEventHandler.frontmostApplicationPIDProvider = { token.pid }
-        controller.eventIntake.open(sink: controller.eventInterpreter)
-        controller.hasStartedServices = true
-
-        controller.axEventHandler.handleAppActivation(pid: token.pid, source: .workspaceDidActivateApplication)
-        controller.eventIntake.drainNow()
-
-        XCTAssertEqual(manager.nativeFocusOwner, .external(pid: token.pid, windowId: nil))
-        XCTAssertNil(manager.borderFocusToken)
-        XCTAssertNil(manager.entry(for: token))
-        XCTAssertEqual(resolvedPIDs, [token.pid])
-
-        focusedWindow = FocusedWindowFact(axRef: axRef, isFullscreen: false, isSystemModalSurface: false)
-        controller.layoutRefreshController.requestFullRescan(reason: .appRulesChanged)
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-        controller.eventIntake.drainNow()
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-
-        XCTAssertEqual(manager.entry(for: token)?.mode, .tiling)
-        XCTAssertEqual(manager.entry(for: token)?.lifetimeAuthority, .axTopLevelInventory)
-        XCTAssertEqual(manager.nativeManagedFocusToken, token)
-        XCTAssertEqual(manager.selectedManagedToken, token)
-        XCTAssertEqual(manager.borderFocusToken, token)
-        XCTAssertNil(manager.pendingFocusedToken)
-        XCTAssertNil(controller.intentLedger.activeManagedRequest)
-        XCTAssertEqual(resolvedPIDs, [token.pid, token.pid])
-        XCTAssertTrue(focusOperations.isEmpty)
-    }
-
     func testFullRescanAdmitsInitiallyMinimizedWindowWithoutAdoptingFocus() throws {
         let controller = WindowAdmissionTestSupport.controller()
         defer {
@@ -322,7 +242,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
             minHeight: 480,
             matchedRuleId: UUID()
         )
-        let admissionHints = ManagedWindowAdmissionHints(initialNiriContainerPrimarySpan: 0.4)
         let axRef = WindowAdmissionTestSupport.axRef(for: token)
         _ = controller.workspaceManager.addWindow(
             axRef,
@@ -331,7 +250,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
             to: workspaceId,
             mode: .floating,
             ruleEffects: ruleEffects,
-            admissionHints: admissionHints,
             lifetimeAuthority: .directLifecycle
         )
         let geometry = WindowAdmissionGeometryEvidence(
@@ -361,7 +279,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
         XCTAssertEqual(entry.workspaceId, workspaceId)
         XCTAssertEqual(entry.mode, .floating)
         XCTAssertEqual(entry.ruleEffects, ruleEffects)
-        XCTAssertEqual(entry.admissionHints, admissionHints)
         XCTAssertEqual(entry.lifetimeAuthority, .axTopLevelInventory)
         if appFullscreen {
             XCTAssertEqual(
@@ -427,7 +344,7 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
         let retryState = try XCTUnwrap(
             controller.axEventHandler.admissionRetryStateByWindowId[UInt32(windowId)]
         )
-        guard case let .identityRebind(oldWindow, newWindow, _, _, _) = retryState.trigger else {
+        guard case let .identityRebind(oldWindow, newWindow, _, _) = retryState.trigger else {
             return XCTFail("Expected an identity-rebind retry")
         }
         XCTAssertEqual(oldWindow.token, oldToken)
@@ -509,7 +426,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
             oldWindow,
             newWindow,
             managedReplacementMetadata,
-            admissionHints,
             sizeConstraints
         ) = retainedState.trigger else {
             return XCTFail("Expected the identity-rebind retry to retain ownership")
@@ -537,7 +453,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
                 oldWindow: oldWindow,
                 newWindow: newWindow,
                 managedReplacementMetadata: managedReplacementMetadata,
-                admissionHints: admissionHints,
                 sizeConstraints: sizeConstraints
             ),
             execution: .init(windowId: windowId, generation: retainedState.generation, executionOwner: executionOwner)
@@ -645,7 +560,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
                     axRef: mismatchedTargetRef
                 ),
                 managedReplacementMetadata: nil,
-                admissionHints: nil,
                 sizeConstraints: nil
             )
             fixture.controller.axEventHandler.admissionRetryStateByWindowId[
@@ -676,7 +590,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
                 oldWindow: fixture.sourceWindow,
                 newWindow: unrelatedWindow,
                 managedReplacementMetadata: nil,
-                admissionHints: nil,
                 sizeConstraints: nil
             )
             fixture.controller.axEventHandler.admissionRetryStateByWindowId[
@@ -714,235 +627,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
             )
         )
         assertProcessesUntrackedFullRescanCandidate(replacedSource)
-    }
-
-    func testGhosttyIdentityRoundTripPreservesNiriAndRuntimeStateDuringFullRescan() async throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        let monitor = Monitor(
-            id: .init(displayId: 468_560),
-            displayId: 468_560,
-            frame: CGRect(x: 0, y: 0, width: 1_440, height: 900),
-            visibleFrame: CGRect(x: 0, y: 0, width: 1_440, height: 860),
-            hasNotch: false,
-            name: "Ghostty Identity Test"
-        )
-        controller.workspaceManager.applyMonitorConfigurationChange([monitor])
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        _ = controller.workspaceManager.focusWorkspace(named: "1")
-        controller.niriLayoutHandler.enableNiriLayout()
-        controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = true
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let pid: pid_t = 468_560
-        let restoredToken = WindowToken(pid: pid, windowId: 5_537)
-        let transientToken = WindowToken(pid: pid, windowId: 5_617)
-        let originalAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(pid),
-            windowId: restoredToken.windowId
-        )
-        _ = controller.workspaceManager.addWindow(
-            originalAXRef,
-            pid: restoredToken.pid,
-            windowId: restoredToken.windowId,
-            to: workspaceId
-        )
-        let originalNode = controller.workspaceManager.withEngineMutationScope(
-            in: workspaceId,
-            label: "ghostty_identity_round_trip"
-        ) {
-            let node = engine.addWindow(token: restoredToken, to: workspaceId, afterSelection: nil)
-            engine.activateWindow(node.id, in: workspaceId)
-            return node
-        }
-        let originalColumn = try XCTUnwrap(engine.column(of: originalNode))
-        let originalHandle = try XCTUnwrap(controller.workspaceManager.handle(for: restoredToken))
-        XCTAssertTrue(
-            controller.workspaceManager.confirmManagedFocus(
-                restoredToken,
-                in: workspaceId,
-                activateWorkspaceOnMonitor: false
-            )
-        )
-        var viewport = controller.workspaceManager.niriViewportState(for: workspaceId)
-        viewport.activeColumnIndex = try XCTUnwrap(
-            engine.columnIndex(of: originalColumn, in: workspaceId)
-        )
-        viewport.selectedNodeId = originalNode.id
-        controller.workspaceManager.updateNiriViewportState(viewport, for: workspaceId)
-        let originalViewport = controller.workspaceManager.niriViewportState(for: workspaceId)
-        let desktopSpaceId: UInt64 = 468_561
-        controller.workspaceManager.commitSpaceTopology(
-            SpaceTopology(
-                displays: [
-                    .init(
-                        displayIdentifier: "ghostty-test-display",
-                        spaceIds: [desktopSpaceId],
-                        currentSpaceId: desktopSpaceId
-                    )
-                ],
-                activeSpaceId: desktopSpaceId,
-                fullscreenSpaceIds: [],
-                windowSpace: [restoredToken.windowId: desktopSpaceId]
-            )
-        )
-        let appliedFrame = CGRect(x: 80, y: 60, width: 720, height: 520)
-        controller.axManager.confirmFrameWrite(
-            for: restoredToken.windowId,
-            frame: appliedFrame
-        )
-
-        let transientAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(pid + 1),
-            windowId: transientToken.windowId
-        )
-        guard case .committed = controller.axEventHandler.rekeyManagedWindowIdentity(
-            from: restoredToken,
-            to: transientToken,
-            windowId: UInt32(transientToken.windowId),
-            axRef: transientAXRef
-        ) else {
-            return XCTFail("Expected the initial Ghostty identity change to commit synchronously")
-        }
-        XCTAssertNil(controller.workspaceManager.entry(for: restoredToken))
-        XCTAssertEqual(controller.workspaceManager.allEntries().map(\.token), [transientToken])
-        XCTAssertTrue(controller.workspaceManager.handle(for: transientToken) === originalHandle)
-        XCTAssertTrue(engine.findNode(for: transientToken, in: workspaceId) === originalNode)
-        XCTAssertTrue(engine.column(of: originalNode) === originalColumn)
-        XCTAssertEqual(engine.columns(in: workspaceId).count, 1)
-        XCTAssertEqual(originalColumn.windowNodes.map(\.token), [transientToken])
-        XCTAssertTrue(controller.workspaceManager.selectedManagedHandle === originalHandle)
-        XCTAssertEqual(controller.workspaceManager.selectedManagedToken, transientToken)
-        XCTAssertEqual(
-            controller.workspaceManager.niriViewportState(for: workspaceId),
-            originalViewport
-        )
-        XCTAssertNil(controller.workspaceManager.spaceTopology.spaceForWindow(restoredToken.windowId))
-        XCTAssertEqual(
-            controller.workspaceManager.spaceTopology.spaceForWindow(transientToken.windowId),
-            desktopSpaceId
-        )
-        XCTAssertNil(controller.axManager.lastAppliedFrame(for: restoredToken.windowId))
-        XCTAssertEqual(
-            controller.axManager.lastAppliedFrame(for: transientToken.windowId),
-            appliedFrame
-        )
-
-        let restoredAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(pid + 2),
-            windowId: restoredToken.windowId
-        )
-        let gate = FullRescanManagedWindowRebindGate()
-        defer { gate.release() }
-        let acknowledgementEntered = expectation(description: "Ghostty rebind acknowledgement entered")
-        controller.hasStartedServices = true
-        controller.axEventHandler.managedWindowIdentityRebindTargetIsAliveProvider = { $0 == pid }
-        controller.axEventHandler.managedWindowIdentityRebindAcknowledgementProvider = { _, _ in
-            acknowledgementEntered.fulfill()
-            await gate.wait()
-            return true
-        }
-        controller.axEventHandler.managedWindowIdentityRebindFinalizationProvider = { _, _ in true }
-        guard case .pending = controller.axEventHandler.rekeyManagedWindowIdentity(
-            from: transientToken,
-            to: restoredToken,
-            windowId: UInt32(restoredToken.windowId),
-            axRef: restoredAXRef
-        ) else {
-            return XCTFail("Expected the restored Ghostty identity to wait for acknowledgement")
-        }
-        var retryState = try XCTUnwrap(
-            controller.axEventHandler.admissionRetryStateByWindowId[UInt32(restoredToken.windowId)]
-        )
-        retryState.task?.cancel()
-        retryState.task = nil
-        let executionOwner: UInt64 = 468_562
-        retryState.executionPhase = .running(executionOwner)
-        controller.axEventHandler.admissionRetryStateByWindowId[UInt32(restoredToken.windowId)] = retryState
-        guard case let .identityRebind(
-            oldWindow,
-            newWindow,
-            managedReplacementMetadata,
-            admissionHints,
-            sizeConstraints
-        ) = retryState.trigger else {
-            return XCTFail("Expected the reverse Ghostty identity rebind retry")
-        }
-
-        let completion = Task { @MainActor in
-            await controller.axEventHandler.completeManagedWindowIdentityRebind(
-                rebind: .init(
-                    oldWindow: oldWindow,
-                    newWindow: newWindow,
-                    managedReplacementMetadata: managedReplacementMetadata,
-                    admissionHints: admissionHints,
-                    sizeConstraints: sizeConstraints
-                ),
-                execution: .init(
-                    windowId: UInt32(restoredToken.windowId),
-                    generation: retryState.generation,
-                    executionOwner: executionOwner
-                )
-            )
-        }
-        await fulfillment(of: [acknowledgementEntered], timeout: 2)
-
-        let resolution = controller.axEventHandler.resolveFullRescanIdentity(
-            axRef: restoredAXRef,
-            pid: restoredToken.pid,
-            windowId: restoredToken.windowId,
-            observedAliases: nil
-        )
-        guard case let .preserve(preservedToken) = resolution else {
-            gate.release()
-            await completion.value
-            return XCTFail("Expected full rescan to preserve the pending Ghostty source identity")
-        }
-        XCTAssertEqual(preservedToken, transientToken)
-        XCTAssertEqual(controller.workspaceManager.allEntries().map(\.token), [transientToken])
-        XCTAssertNil(controller.workspaceManager.entry(for: restoredToken))
-        XCTAssertTrue(engine.findNode(for: transientToken, in: workspaceId) === originalNode)
-        XCTAssertTrue(engine.column(of: originalNode) === originalColumn)
-        XCTAssertEqual(engine.columns(in: workspaceId).count, 1)
-        XCTAssertEqual(originalColumn.windowNodes.map(\.token), [transientToken])
-        XCTAssertTrue(controller.workspaceManager.selectedManagedHandle === originalHandle)
-        XCTAssertEqual(
-            controller.workspaceManager.niriViewportState(for: workspaceId),
-            originalViewport
-        )
-
-        gate.release()
-        await completion.value
-
-        XCTAssertNil(controller.workspaceManager.entry(for: transientToken))
-        XCTAssertEqual(controller.workspaceManager.allEntries().map(\.token), [restoredToken])
-        XCTAssertTrue(controller.workspaceManager.handle(for: restoredToken) === originalHandle)
-        XCTAssertTrue(controller.workspaceManager.selectedManagedHandle === originalHandle)
-        XCTAssertEqual(controller.workspaceManager.selectedManagedToken, restoredToken)
-        XCTAssertNil(engine.findNode(for: transientToken, in: workspaceId))
-        XCTAssertTrue(engine.findNode(for: restoredToken, in: workspaceId) === originalNode)
-        XCTAssertTrue(engine.column(of: originalNode) === originalColumn)
-        XCTAssertEqual(engine.columns(in: workspaceId).count, 1)
-        XCTAssertEqual(originalColumn.windowNodes.map(\.token), [restoredToken])
-        XCTAssertEqual(
-            controller.workspaceManager.niriViewportState(for: workspaceId),
-            originalViewport
-        )
-        XCTAssertNil(controller.workspaceManager.spaceTopology.spaceForWindow(transientToken.windowId))
-        XCTAssertEqual(
-            controller.workspaceManager.spaceTopology.spaceForWindow(restoredToken.windowId),
-            desktopSpaceId
-        )
-        XCTAssertNil(controller.axManager.lastAppliedFrame(for: transientToken.windowId))
-        XCTAssertEqual(
-            controller.axManager.lastAppliedFrame(for: restoredToken.windowId),
-            appliedFrame
-        )
-        XCTAssertNil(
-            controller.axEventHandler.admissionRetryStateByWindowId[UInt32(restoredToken.windowId)]
-        )
-        XCTAssertEqual(controller.workspaceManager.invariantViolationCountsDump(), "clean")
     }
 
     func testDeferredCreatePreservesOnlyUniqueStructuralReplacement() throws {
@@ -1973,51 +1657,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
         controller.axEventHandler.resetManagedReplacementState()
     }
 
-    func testFailedExistingEndpointCannotBeRetiredByUnprovenCandidate() throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        controller.niriLayoutHandler.enableNiriLayout()
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        let existingPID: pid_t = 46_793
-        let candidatePID: pid_t = 46_794
-        let windowId = 46_795
-        let existingAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(existingPID),
-            windowId: windowId
-        )
-        let candidateAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(candidatePID),
-            windowId: windowId
-        )
-        let existingToken = controller.workspaceManager.addWindow(
-            existingAXRef,
-            pid: existingPID,
-            windowId: windowId,
-            to: workspaceId
-        )
-        controller.workspaceManager.withEngineMutationScope {
-            _ = controller.niriEngine?.addWindow(token: existingToken, to: workspaceId, afterSelection: nil)
-        }
-
-        let resolution = controller.axEventHandler.resolveFullRescanIdentity(
-            axRef: candidateAXRef,
-            pid: candidatePID,
-            windowId: windowId,
-            observedAliases: .init(pids: [candidatePID], axRefs: [candidateAXRef]),
-            failedPIDs: [existingPID]
-        )
-
-        guard case let .preserve(preservedToken) = resolution else {
-            return XCTFail("Expected failed existing endpoint to remain authoritative")
-        }
-        XCTAssertEqual(preservedToken, existingToken)
-        let retained = try XCTUnwrap(controller.workspaceManager.entry(for: existingToken))
-        XCTAssertTrue(CFEqual(retained.axRef.element, existingAXRef.element))
-        XCTAssertNotNil(controller.niriEngine?.findNode(for: existingToken, in: workspaceId))
-        XCTAssertNil(controller.workspaceManager.entry(for: WindowToken(pid: candidatePID, windowId: windowId)))
-    }
-
     private func pendingFullRescanIdentityRebindFixture(
         suffix: Int,
         tracksSource: Bool = true
@@ -2062,7 +1701,6 @@ final class FullRescanWindowAdmissionTests: XCTestCase {
                     oldWindow: sourceWindow,
                     newWindow: targetWindow,
                     managedReplacementMetadata: nil,
-                    admissionHints: nil,
                     sizeConstraints: nil
                 ),
                 exhausted: false,

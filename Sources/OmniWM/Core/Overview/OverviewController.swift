@@ -287,8 +287,6 @@ extension OverviewController {
         if hasActiveDragSession {
             drag.cancelDrag()
         }
-
-        commitOverviewPans()
         let resolvedTargetWindow = reason == .selection ? targetWindow : nil
         if let resolvedTargetWindow {
             prepareActivation(resolvedTargetWindow)
@@ -311,19 +309,9 @@ extension OverviewController {
         }
     }
 
-    func commitOverviewPans() {
-        guard let wmController else { return }
-        let pans = projection.drainStripPans()
-        guard !pans.isEmpty else { return }
-        let affected = wmController.niriLayoutHandler.commitOverviewPans(pans)
-        overviewSnapshot.refresh(affectedWorkspaceIds: affected, settledNiriFrames: true)
-        projection.rebuildProjectedLayouts(revealingSelection: false)
-    }
-
     func refreshCachedOverviewProjection(
         affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>,
         selectedHandle: WindowHandle? = nil,
-        settledNiriFrames: Bool = false,
         revealingSelection: Bool = true,
         preservingViewport: Bool = false,
         update: OverviewLayoutUpdate = .preserve
@@ -336,12 +324,7 @@ extension OverviewController {
             overviewSnapshot.windows[$0]?.workspaceId == workspaceManager.workspace(for: $0.id)
         } == true
         let anchors = preservesViewport ? [:] : projection.captureSelectedViewportAnchors()
-        let stripViewportOrigins = preservesViewport
-            ? projection.captureStripViewportOrigins(in: affectedWorkspaceIds)
-            : [:]
-
-        overviewSnapshot.refresh(affectedWorkspaceIds: affectedWorkspaceIds, settledNiriFrames: settledNiriFrames)
-
+        overviewSnapshot.refresh(affectedWorkspaceIds: affectedWorkspaceIds)
         if let selectedHandle,
            overviewSnapshot.windows[selectedHandle] != nil,
            workspaceManager.entry(for: selectedHandle) != nil
@@ -350,7 +333,6 @@ extension OverviewController {
         }
         projection.rebuildProjectedLayouts(
             preservingSelectedAnchors: anchors,
-            preservingStripViewportOrigins: stripViewportOrigins,
             revealingSelection: revealingSelection && !preservesViewport
         )
         windowSession.updateWindowDisplays(state: state, update: update)

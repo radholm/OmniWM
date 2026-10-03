@@ -168,10 +168,6 @@ final class WindowMoveIPCIntegrationTests: XCTestCase {
         )
         settings.animationsEnabled = false
         settings.focus.followsWindowToMonitor = followsFocus
-        settings.workspaces.defaultLayoutType = .niri
-        settings.workspaces.configurations = ["1", "2"].map { name in
-            WorkspaceConfiguration(name: name, monitorAssignment: .main, layoutType: .niri)
-        }
 
         let focusRecorder = FocusRecorder()
         let controller = WMController(
@@ -193,12 +189,12 @@ final class WindowMoveIPCIntegrationTests: XCTestCase {
             hasNotch: false,
             name: "Window Move IPC Tests"
         )
+        settings.workspaces.configurations = ["1", "2"].map { name in
+            WorkspaceConfiguration(name: name, monitorAssignment: .main, layoutType: .dwindle)
+        }
         controller.workspaceManager.applyMonitorConfigurationChange([monitor])
         controller.workspaceManager.applySettings()
-        let niriEngine = NiriLayoutEngine()
-        niriEngine.animationClock = controller.animationClock
-        controller.niriEngine = niriEngine
-        controller.niriLayoutHandler.syncMonitorsToNiriEngine()
+        controller.enableDwindleLayout()
 
         let workspaceIds = try ["1", "2"].map { name in
             try XCTUnwrap(controller.workspaceManager.workspaceId(for: name, createIfMissing: false))
@@ -229,7 +225,7 @@ final class WindowMoveIPCIntegrationTests: XCTestCase {
             to: workspaceId
         )
         controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
-            _ = controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
+            _ = controller.dwindleEngine?.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
         }
         return try XCTUnwrap(controller.workspaceManager.handle(for: token))
     }
@@ -240,17 +236,12 @@ final class WindowMoveIPCIntegrationTests: XCTestCase {
         fixture: Fixture
     ) throws {
         let controller = fixture.controller
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let node = try XCTUnwrap(engine.findNode(for: handle, in: workspaceId))
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        let node = try XCTUnwrap(engine.findNode(for: handle.id, in: workspaceId))
         controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
-            engine.activateWindow(node.id, in: workspaceId)
+            engine.setSelectedNode(node, in: workspaceId)
         }
-        _ = controller.workspaceManager.commitWorkspaceSelection(
-            nodeId: node.id,
-            focusedToken: handle.id,
-            in: workspaceId,
-            onMonitor: fixture.monitor.id
-        )
+        _ = controller.workspaceManager.rememberFocus(handle.id, in: workspaceId)
         _ = controller.workspaceManager.setManagedFocus(handle.id, in: workspaceId, onMonitor: fixture.monitor.id)
         fixture.focusRecorder.focusedTokens.removeAll()
     }

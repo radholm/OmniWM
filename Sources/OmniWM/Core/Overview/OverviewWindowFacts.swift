@@ -66,34 +66,4 @@ final class OverviewWindowFacts {
     func isStructurallyMutable(_ entry: WindowState) -> Bool {
         entry.layoutReason == .standard
     }
-
-    func cachedNiriSnapshot(
-        _ snapshot: NiriOverviewWorkspaceSnapshot
-    ) -> NiriOverviewWorkspaceSnapshot? {
-        let columns = snapshot.columns.compactMap { column -> NiriOverviewColumnSnapshot? in
-            let tiles = column.tiles.filter { tile in
-                guard let workspaceManager = wmController?.workspaceManager,
-                      let entry = workspaceManager.entry(for: tile.token)
-                else {
-                    return false
-                }
-                return entry.workspaceId == snapshot.workspaceId
-                    && isOverviewEligible(entry, workspaceManager: workspaceManager)
-            }
-            guard !tiles.isEmpty else { return nil }
-            return NiriOverviewColumnSnapshot(
-                index: column.index, widthWeight: column.widthWeight, preferredWidth: column.preferredWidth,
-                tiles: tiles, stripFrame: column.stripFrame, isTabbed: column.isTabbed, activeToken: column.activeToken
-            )
-        }
-        guard !columns.isEmpty else { return nil }
-        return NiriOverviewWorkspaceSnapshot(workspaceId: snapshot.workspaceId, columns: columns, strip: snapshot.strip)
-    }
-
-    func isNiriLayout(workspaceId: WorkspaceDescriptor.ID) -> Bool {
-        guard let wmController else { return false }
-        guard let name = wmController.workspaceManager.descriptor(for: workspaceId)?.name else { return false }
-        let layoutType = wmController.settings.workspaces.layoutType(for: name)
-        return layoutType != .dwindle
-    }
 }

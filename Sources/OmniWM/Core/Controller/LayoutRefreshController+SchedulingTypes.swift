@@ -17,9 +17,6 @@ extension LayoutRefreshController {
     struct WindowRemovalPayload {
         var workspaceId: WorkspaceDescriptor.ID
         let layoutType: LayoutType
-        let removedNodeId: NodeId?
-        let removedNiriColumn: Bool
-        let niriOldFrames: [WindowToken: CGRect]
         let shouldRecoverFocus: Bool
         let allowsPreferredRecoveryToken: Bool
     }

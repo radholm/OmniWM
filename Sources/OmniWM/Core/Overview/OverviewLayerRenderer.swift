@@ -24,7 +24,6 @@ final class OverviewLayerRenderer {
     let content = CALayer()
     let workspaceChrome = CALayer()
     private let cards = CALayer()
-    let overflowPills = CALayer()
     let dropTarget = CAShapeLayer()
     let selectionOutline = CAShapeLayer()
     let search = CALayer()
@@ -39,7 +38,6 @@ final class OverviewLayerRenderer {
     var chromeLayout: OverviewLayout?
     var chromeSections: [WorkspaceDescriptor.ID: CALayer] = [:]
     var tabControlLayers: [WindowHandle: CALayer] = [:]
-    var columnLayers: [WorkspaceDescriptor.ID: [Int: CALayer]] = [:]
     var ribbonLayers: [WorkspaceDescriptor.ID: (wallpaper: CALayer, shade: CALayer)] = [:]
     private var previewAnimationsEnabled = true
     var contentsScale: CGFloat = 1
@@ -53,7 +51,6 @@ final class OverviewLayerRenderer {
         root.addSublayer(content)
         content.addSublayer(workspaceChrome)
         content.addSublayer(cards)
-        content.addSublayer(overflowPills)
         content.addSublayer(dropTarget)
         content.addSublayer(selectionOutline)
         root.addSublayer(search)
@@ -89,7 +86,7 @@ final class OverviewLayerRenderer {
         let reflow = (update == .structural || update == .viewport) && animationsEnabled
             && state.progress == 1 && activeTransition == nil && !root.bounds.isEmpty
         var chromeMotion = reflow || reflowTransition != nil
-            ? (tabMotionLayers + columnMotionLayers + ribbonMotionLayers).map { OverviewLayerMotion($0) } : []
+            ? (tabMotionLayers + ribbonMotionLayers).map { OverviewLayerMotion($0) } : []
         if reflow, update == .structural {
             reflowArrivals = Set(layout.workspaceSections.flatMap { section in
                 section.windows.compactMap { window in
@@ -146,14 +143,14 @@ final class OverviewLayerRenderer {
         reflowTransition = nil
         reflowArrivals.removeAll(keepingCapacity: true)
         completionLayer.removeAnimation(forKey: "overview.completion")
-        for layer in [backdropGroup, content, workspaceChrome, overflowPills, dropTarget, selectionOutline, search] {
+        for layer in [backdropGroup, content, workspaceChrome, dropTarget, selectionOutline, search] {
             OverviewLayerMotion.remove(from: layer)
         }
         if let glassLayer { OverviewLayerMotion.remove(from: glassLayer) }
         for layers in windowLayers.values { layers.cancelAnimation() }
         for mask in ribbonMasks.values { OverviewLayerMotion.remove(from: mask) }
         for control in tabMotionLayers { OverviewLayerMotion.remove(from: control) }
-        for layer in columnMotionLayers + ribbonMotionLayers { OverviewLayerMotion.remove(from: layer) }
+        for layer in ribbonMotionLayers { OverviewLayerMotion.remove(from: layer) }
     }
 
     func windowHit(at point: CGPoint, layout: OverviewLayout) -> OverviewLayout.WindowHit? {
@@ -187,7 +184,6 @@ final class OverviewLayerRenderer {
             backdropGroup.opacity = Float(state.progress)
             content.frame = root.bounds.offsetBy(dx: 0, dy: -layout.scrollOffset * CGFloat(state.progress))
             workspaceChrome.opacity = Float(state.progress)
-            overflowPills.opacity = Float(state.progress)
             dropTarget.opacity = Float(state.progress)
             selectionOutline.opacity = Float(state.progress)
             search.opacity = Float(state.progress)
@@ -225,7 +221,7 @@ final class OverviewLayerRenderer {
     private func captureMotion(for transition: OverviewNativeTransition) -> [OverviewLayerMotion] {
         [OverviewLayerMotion(backdropGroup), OverviewLayerMotion(content)]
             + (glassLayer.map { [OverviewLayerMotion($0)] } ?? [])
-            + [workspaceChrome, overflowPills, dropTarget, selectionOutline, search]
+            + [workspaceChrome, dropTarget, selectionOutline, search]
             .map { OverviewLayerMotion($0, response: transition.chromeExitResponse) }
             + tabMotionLayers.map { OverviewLayerMotion($0, response: transition.chromeExitResponse) }
             + ribbonMotionLayers.map { OverviewLayerMotion($0) }

@@ -1329,10 +1329,6 @@ final class ScratchpadRevealTests: XCTestCase {
         XCTAssertEqual(fixture.controller.workspaceManager.scratchpadIndex(for: fullscreen), 5)
     }
 
-    func testReturningScratchpadMemberToNiriReleasesOnlyThatMember() throws {
-        try verifyReturningScratchpadMemberToLayout(.niri)
-    }
-
     func testReturningScratchpadMemberToDwindleReleasesOnlyThatMember() throws {
         try verifyReturningScratchpadMemberToLayout(.dwindle)
     }
@@ -1358,11 +1354,7 @@ final class ScratchpadRevealTests: XCTestCase {
             $0.name == "1" ? $0.with(layoutType: layout) : $0
         }
         manager.applySettings()
-        if layout == .niri {
-            controller.niriLayoutHandler.enableNiriLayout()
-        } else {
-            controller.dwindleLayoutHandler.enableDwindleLayout()
-        }
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         controller.layoutRefreshController.resetState()
         let first = addFloatingWindow(pid: 972_001, windowId: 972_101, to: fixture)
         let second = addFloatingWindow(pid: 972_002, windowId: 972_102, to: fixture)
@@ -1391,20 +1383,11 @@ final class ScratchpadRevealTests: XCTestCase {
         XCTAssertNil(manager.hiddenState(for: first))
         XCTAssertEqual(manager.scratchpadMembers(in: 1), [second])
         XCTAssertEqual(manager.revealedScratchpadIndex(), 1)
-        if layout == .niri {
-            _ = manager.withBatchedLayoutBuild {
-                controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: [fixture.workspaceId])
-            }
-            let engine = try XCTUnwrap(controller.niriEngine)
-            let handle = try XCTUnwrap(manager.handle(for: first))
-            XCTAssertNotNil(engine.findNode(for: handle, in: fixture.workspaceId))
-        } else {
-            _ = manager.withBatchedLayoutBuild {
-                controller.dwindleLayoutHandler.layoutWithDwindleEngine(activeWorkspaces: [fixture.workspaceId])
-            }
-            let engine = try XCTUnwrap(controller.dwindleEngine)
-            XCTAssertNotNil(engine.findNode(for: first, in: fixture.workspaceId))
+        _ = manager.withBatchedLayoutBuild {
+            controller.dwindleLayoutHandler.layoutWithDwindleEngine(activeWorkspaces: [fixture.workspaceId])
         }
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        XCTAssertNotNil(engine.findNode(for: first, in: fixture.workspaceId))
 
         XCTAssertEqual(controller.toggleScratchpad(1), .executed)
         XCTAssertNil(manager.hiddenState(for: first))

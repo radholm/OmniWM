@@ -71,8 +71,6 @@ struct WorldView {
         switch controller.workspaceManager.activeLayoutKind(for: entry.workspaceId) {
         case .dwindle:
             return controller.dwindleEngine?.isWindowFullscreen(token, in: entry.workspaceId) == true
-        case .niri:
-            return controller.niriEngine?.isWindowFullscreen(token, in: entry.workspaceId) == true
         }
     }
 
@@ -85,9 +83,7 @@ struct WorldView {
     }
 
     func tabRailInfos() -> [TabRailInfo] {
-        var infos = controller.niriLayoutHandler.desiredTabRailInfos()
-        infos.append(contentsOf: controller.dwindleLayoutHandler.desiredTabRailInfos())
-        return infos
+        controller.dwindleLayoutHandler.desiredTabRailInfos()
     }
 
     var tabRailStyle: TabRailStyle {

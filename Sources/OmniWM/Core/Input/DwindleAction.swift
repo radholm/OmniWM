@@ -6,6 +6,7 @@ import OmniWMIPC
 
 enum DwindleAction: Equatable, Hashable {
     case moveToRoot
+    case moveGroup(Direction)
     case toggleSplit
     case swapSplit
     case resizeAlongAxis(DwindleOrientation, Bool)
@@ -17,6 +18,7 @@ enum DwindleAction: Equatable, Hashable {
 extension DwindleAction {
     func actionDisplayName() -> LocalizedStringResource {
         switch self {
+        case let .moveGroup(direction): Self.groupDisplayName(direction)
         case .moveToRoot: LocalizedStringResource(
                 "command.dwindle.moveToRoot", defaultValue: "Move to Root", table: "Commands", bundle: .omniWM
             )
@@ -61,15 +63,26 @@ extension DwindleAction {
         case .preselect(.down): LocalizedStringResource(
                 "command.dwindle.preselectDown", defaultValue: "Preselect Down", table: "Commands", bundle: .omniWM
             )
-        case .preselectClear: LocalizedStringResource(
-                "command.dwindle.clearPreselection", defaultValue: "Clear Preselection", table: "Commands",
-                bundle: .omniWM
-            )
+        case .preselectClear: Self.clearPreselectionDisplayName
         }
+    }
+
+    private static let clearPreselectionDisplayName = LocalizedStringResource(
+        "command.dwindle.clearPreselection", defaultValue: "Clear Preselection", table: "Commands",
+        bundle: .omniWM
+    )
+
+    private static func groupDisplayName(_ direction: Direction) -> LocalizedStringResource {
+        LocalizedStringResource(
+            "command.dwindle.moveGroup", defaultValue: "Move Group \(direction.displayName)",
+            table: "Commands", bundle: .omniWM
+        )
     }
 
     func ipcCommandName() -> IPCCommandName? {
         switch self {
+        case .moveGroup:
+            .dwindle(.moveGroup)
         case .moveToRoot:
             .dwindle(.moveToRoot)
         case .toggleSplit:
@@ -90,6 +103,7 @@ extension DwindleAction {
     var compatibility: LayoutCompatibility {
         switch self {
         case .moveToRoot,
+             .moveGroup,
              .toggleSplit,
              .swapSplit,
              .resizeAlongAxis,

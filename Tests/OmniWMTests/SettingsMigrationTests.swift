@@ -36,7 +36,7 @@ final class SettingsMigrationTests: XCTestCase {
                     "scratchpads.labels",
                     "routing.arrangements"
                 ],
-                ["consumeOrExpelWindowLeft", "consumeOrExpelWindowRight"]
+                []
             ),
             (
                 "v0.6.3-custom",
@@ -64,7 +64,7 @@ final class SettingsMigrationTests: XCTestCase {
             )
             XCTAssertEqual(
                 Set(migration.retiredHotkeys.flatMap(\.suggestedIDs)),
-                testCase.retired.isEmpty ? [] : ["consumeWindowIntoColumn", "expelWindowFromColumn"],
+                [],
                 testCase.name
             )
 
@@ -76,7 +76,6 @@ final class SettingsMigrationTests: XCTestCase {
             XCTAssertFalse(export.workspaceBar.hideInNativeFullscreen, testCase.name)
             XCTAssertEqual(export.workspaceBar.excludedBundleIDs, ["com.example.Hidden"], testCase.name)
             XCTAssertEqual(export.scratchpads.labels, [:], testCase.name)
-            XCTAssertNil(export.niri.defaultContainerPrimarySpan, testCase.name)
 
             let workspace = try XCTUnwrap(export.workspaceConfigurations.only, testCase.name)
             XCTAssertEqual(workspace.id.uuidString, "11111111-1111-1111-1111-111111111111", testCase.name)
@@ -91,7 +90,6 @@ final class SettingsMigrationTests: XCTestCase {
             XCTAssertEqual(rule.titleRegex, "^Project", testCase.name)
             XCTAssertEqual(rule.layout, .float, testCase.name)
             XCTAssertEqual(rule.assignToWorkspace, "dev", testCase.name)
-            XCTAssertEqual(rule.initialContainerPrimarySpan, 0.65, testCase.name)
             XCTAssertEqual(rule.minWidth, 720, testCase.name)
             XCTAssertEqual(rule.minHeight, 480, testCase.name)
 
@@ -111,8 +109,6 @@ final class SettingsMigrationTests: XCTestCase {
             }
             XCTAssertNil(hotkey("assignFocusedWindowToScratchpad", in: export), testCase.name)
             XCTAssertNil(hotkey("toggleScratchpadWindow", in: export), testCase.name)
-            XCTAssertNil(hotkey("consumeOrExpelWindowLeft", in: export), testCase.name)
-            XCTAssertNil(hotkey("consumeOrExpelWindowRight", in: export), testCase.name)
 
             XCTAssertEqual(
                 migration.mappedHotkeys,
@@ -509,7 +505,6 @@ final class SettingsMigrationTests: XCTestCase {
         XCTAssertEqual(rule.titleRegex, "^Project")
         XCTAssertEqual(rule.layout, .float)
         XCTAssertEqual(rule.assignToWorkspace, "dev")
-        XCTAssertEqual(rule.initialContainerPrimarySpan, 0.65)
         XCTAssertEqual(rule.minWidth, 720)
         XCTAssertEqual(rule.minHeight, 480)
 
@@ -563,7 +558,6 @@ final class SettingsMigrationTests: XCTestCase {
 
     func testVersionZeroMigrationStillRejectsMalformedTriggersTypesAndValues() throws {
         let fixture = String(decoding: try legacyFixtureData(named: "v0.6.3-custom"), as: UTF8.self)
-        let retiredFixture = String(decoding: try legacyFixtureData(named: "v0.6.2-custom"), as: UTF8.self)
         let ignoredAlias = String(decoding: addingHotkey(
             id: "assignFocusedWindowToScratchpad.1",
             binding: "Option+L",
@@ -592,9 +586,9 @@ final class SettingsMigrationTests: XCTestCase {
                 "general.systemHyperTrigger"
             ),
             (
-                retiredFixture.replacingOccurrences(
-                    of: "binding = \"Unassigned\"\nid = \"consumeOrExpelWindowLeft\"",
-                    with: "binding = \"NotAKey\"\nid = \"consumeOrExpelWindowLeft\""
+                fixture.replacingOccurrences(
+                    of: "binding = \"Option+J\"\nid = \"swapSplit\"",
+                    with: "binding = \"NotAKey\"\nid = \"swapSplit\""
                 ),
                 "hotkeys["
             ),
@@ -883,76 +877,6 @@ final class SettingsMigrationTests: XCTestCase {
         XCTAssertThrowsError(try persistence.saveImmediately(export))
         try assertSymlink(at: settingsURL(in: fixture), destination: targetURL.path)
         assertNoCorruptFiles(in: fixture, file: #filePath, line: #line)
-    }
-
-    @MainActor
-    func testMigrationStampsIDsOnLegacyAppRulesAndPreservesTheirExtensions() throws {
-        let fixture = try makeFixture("idless-app-rules")
-        defer { fixture.remove() }
-        let originalRule = """
-        [[appRules]]
-        assignToWorkspace = "dev"
-        bundleId = "com.example.Terminal"
-        id = "22222222-2222-2222-2222-222222222222"
-        initialContainerPrimarySpan = 0.65
-        layout = "float"
-        minHeight = 480.0
-        minWidth = 720.0
-        titleRegex = "^Project"
-        """
-        let ambiguousRules = """
-        [[appRules]]
-        bundleId = "com.example.Shared"
-        extensionMarker = "first"
-        layout = "float"
-
-        [[appRules]]
-        bundleId = "com.example.Shared"
-        extensionMarker = "second"
-        layout = "tile"
-        """
-        let legacy = String(
-            decoding: try legacyFixtureData(named: "v0.6.3-custom"),
-            as: UTF8.self
-        ).replacingOccurrences(of: originalRule, with: ambiguousRules)
-        XCTAssertTrue(legacy.contains("extensionMarker = \"first\""))
-        try Data(legacy.utf8).write(to: settingsURL(in: fixture))
-        let persistence = makePersistence(in: fixture)
-
-        let outcome = persistence.loadOutcome()
-        let export = try XCTUnwrap(outcome.export)
-        let rewritten = try String(contentsOf: settingsURL(in: fixture), encoding: .utf8)
-        let ruleSections = rewritten.components(separatedBy: "[[appRules]]")
-
-        XCTAssertEqual(export.appRules.map(\.bundleId), ["com.example.Shared", "com.example.Shared"])
-        XCTAssertEqual(export.appRules.map(\.layout), [.float, .tile])
-        XCTAssertEqual(ruleSections.count, 3)
-        XCTAssertTrue(ruleSections[1].contains("id = \"\(export.appRules[0].id.uuidString)\""))
-        XCTAssertTrue(ruleSections[2].contains("id = \"\(export.appRules[1].id.uuidString)\""))
-        XCTAssertTrue(ruleSections[1].contains("extensionMarker = \"first\""))
-        XCTAssertFalse(ruleSections[1].contains("extensionMarker = \"second\""))
-        XCTAssertTrue(ruleSections[2].contains("extensionMarker = \"second\""))
-        XCTAssertFalse(ruleSections[2].contains("extensionMarker = \"first\""))
-        let markerPaths = SettingsTOMLCodec.unknownKeyPaths(in: Data(rewritten.utf8))
-            .filter { $0.hasSuffix(".extensionMarker") }
-        XCTAssertEqual(
-            Set(markerPaths),
-            ["appRules[0].extensionMarker", "appRules[1].extensionMarker"]
-        )
-
-        var reordered = export
-        reordered.appRules.reverse()
-        try persistence.saveImmediately(reordered)
-        let reorderedText = try String(contentsOf: settingsURL(in: fixture), encoding: .utf8)
-        let reorderedSections = reorderedText.components(separatedBy: "[[appRules]]")
-        let firstSection = try XCTUnwrap(reorderedSections.first {
-            $0.contains(export.appRules[0].id.uuidString)
-        })
-        let secondSection = try XCTUnwrap(reorderedSections.first {
-            $0.contains(export.appRules[1].id.uuidString)
-        })
-        XCTAssertTrue(firstSection.contains("extensionMarker = \"first\""))
-        XCTAssertTrue(secondSection.contains("extensionMarker = \"second\""))
     }
 
     @MainActor

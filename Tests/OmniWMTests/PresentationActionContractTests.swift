@@ -30,10 +30,10 @@ final class PresentationActionContractTests: XCTestCase {
         }
     }
 
-    func testPresentationRegistrationKeepsInterleavedWorkspaceLayoutOrder() {
-        XCTAssertEqual(Array(ActionCatalog.allSpecs().suffix(6).map(\.id)), [
-            "toggleWorkspaceBarVisibility", "toggleHiddenBarPanel", "toggleQuakeTerminal",
-            "toggleWorkspaceLayout", "toggleOverview", "toggleSystemStats"
+    func testPresentationRegistrationKeepsDeclaredOrder() {
+        XCTAssertEqual(Array(ActionCatalog.allSpecs().suffix(5).map(\.id)), [
+            "toggleWorkspaceBarVisibility", "toggleHiddenBarPanel", "toggleQuakeTerminal", "toggleOverview",
+            "toggleSystemStats"
         ])
         XCTAssertEqual(
             ActionCatalog.spec(for: "toggleOverview")?.keywords,

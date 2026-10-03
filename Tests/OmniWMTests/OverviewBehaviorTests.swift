@@ -2322,126 +2322,6 @@ final class OverviewBehaviorTests: XCTestCase {
         try harness.completeLastTransition()
     }
 
-    func testRestAnchorsFollowEachMonitorsActiveWorkspace() async throws {
-        let fixture = try makeRuntimeOverviewFixture(windowCount: 1, secondWorkspaceWindowCount: 1)
-        let manager = fixture.controller.workspaceManager
-        let firstMonitor = try XCTUnwrap(manager.monitors.first)
-        let otherMonitor = Monitor(
-            id: .init(displayId: 91_002),
-            displayId: 91_002,
-            frame: screenFrame.offsetBy(dx: 1000, dy: 200),
-            visibleFrame: screenFrame.offsetBy(dx: 1000, dy: 200),
-            hasNotch: false,
-            name: "Other Overview"
-        )
-        fixture.controller.settings.workspaces.configurations = [
-            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri),
-            WorkspaceConfiguration(name: "2", monitorAssignment: .main, layoutType: .niri),
-            WorkspaceConfiguration(
-                name: "3",
-                monitorAssignment: .specificDisplay(OutputId(from: otherMonitor)),
-                layoutType: .niri
-            )
-        ]
-        manager.applyMonitorConfigurationChange([firstMonitor, otherMonitor])
-        manager.applySettings()
-        fixture.controller.syncMonitorsToNiriEngine()
-        let destination = try XCTUnwrap(fixture.secondWorkspaceId)
-        manager.assignWorkspaceToMonitor(fixture.workspaceId, monitorId: firstMonitor.id)
-        manager.assignWorkspaceToMonitor(destination, monitorId: firstMonitor.id)
-        let otherWorkspace = try XCTUnwrap(manager.workspaceId(for: "3", createIfMissing: true))
-        manager.assignWorkspaceToMonitor(otherWorkspace, monitorId: otherMonitor.id)
-        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspaceId, on: firstMonitor.id))
-        XCTAssertTrue(manager.setActiveWorkspace(otherWorkspace, on: otherMonitor.id))
-        let snapshot = OverviewSnapshot(
-            wmController: fixture.controller,
-            facts: OverviewWindowFacts(wmController: fixture.controller, environment: fixture.environment)
-        )
-        snapshot.build()
-        let projection = OverviewViewportProjection(wmController: fixture.controller, snapshot: snapshot, scale: 1)
-        projection.rebuildProjectedLayouts()
-        let target = try XCTUnwrap(snapshot.windows.first { $0.value.workspaceId == destination }?.key)
-        XCTAssertEqual(projection.layoutsByMonitor[firstMonitor.id]?.anchorWorkspaceId, fixture.workspaceId)
-        XCTAssertEqual(projection.layoutsByMonitor[otherMonitor.id]?.anchorWorkspaceId, otherWorkspace)
-
-        fixture.controller.windowActionHandler.prepareOverviewSelection(handle: target, workspaceId: destination)
-        projection.settleRestFrames(targetWindow: target)
-
-        XCTAssertEqual(projection.layoutsByMonitor[firstMonitor.id]?.anchorWorkspaceId, destination)
-        XCTAssertEqual(projection.layoutsByMonitor[otherMonitor.id]?.anchorWorkspaceId, otherWorkspace)
-        XCTAssertEqual(manager.activeWorkspace(on: firstMonitor.id)?.id, destination)
-        XCTAssertEqual(manager.activeWorkspace(on: otherMonitor.id)?.id, otherWorkspace)
-        projection.settleRestFrames(targetWindow: nil)
-        XCTAssertEqual(projection.layoutsByMonitor[firstMonitor.id]?.anchorWorkspaceId, destination)
-        XCTAssertEqual(projection.layoutsByMonitor[otherMonitor.id]?.anchorWorkspaceId, otherWorkspace)
-        while let task = fixture.controller.layoutRefreshController.layoutState.activeRefreshTask { await task.value }
-    }
-
-    func testEachMonitorPanelListsOnlyItsOwnWorkspacesAndDragsRemapAcrossPanels() async throws {
-        let fixture = try makeRuntimeOverviewFixture(windowCount: 1, secondWorkspaceWindowCount: 1)
-        let manager = fixture.controller.workspaceManager
-        let firstMonitor = try XCTUnwrap(manager.monitors.first)
-        let otherMonitor = Monitor(
-            id: .init(displayId: 91_003),
-            displayId: 91_003,
-            frame: screenFrame.offsetBy(dx: 1000, dy: 200),
-            visibleFrame: screenFrame.offsetBy(dx: 1000, dy: 200),
-            hasNotch: false,
-            name: "Other Overview"
-        )
-        fixture.controller.settings.workspaces.configurations = [
-            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri),
-            WorkspaceConfiguration(name: "2", monitorAssignment: .main, layoutType: .niri),
-            WorkspaceConfiguration(
-                name: "3",
-                monitorAssignment: .specificDisplay(OutputId(from: otherMonitor)),
-                layoutType: .niri
-            )
-        ]
-        manager.applyMonitorConfigurationChange([firstMonitor, otherMonitor])
-        manager.applySettings()
-        fixture.controller.syncMonitorsToNiriEngine()
-        let destination = try XCTUnwrap(fixture.secondWorkspaceId)
-        manager.assignWorkspaceToMonitor(fixture.workspaceId, monitorId: firstMonitor.id)
-        manager.assignWorkspaceToMonitor(destination, monitorId: firstMonitor.id)
-        let otherWorkspace = try XCTUnwrap(manager.workspaceId(for: "3", createIfMissing: true))
-        manager.assignWorkspaceToMonitor(otherWorkspace, monitorId: otherMonitor.id)
-        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspaceId, on: firstMonitor.id))
-        XCTAssertTrue(manager.setActiveWorkspace(otherWorkspace, on: otherMonitor.id))
-        let snapshot = OverviewSnapshot(
-            wmController: fixture.controller,
-            facts: OverviewWindowFacts(wmController: fixture.controller, environment: fixture.environment)
-        )
-        snapshot.build()
-        let projection = OverviewViewportProjection(wmController: fixture.controller, snapshot: snapshot, scale: 1)
-        projection.rebuildProjectedLayouts()
-
-        let firstLayout = try XCTUnwrap(projection.layoutsByMonitor[firstMonitor.id])
-        let otherLayout = try XCTUnwrap(projection.layoutsByMonitor[otherMonitor.id])
-        XCTAssertEqual(
-            Set(firstLayout.workspaceSections.map(\.workspaceId)),
-            Set(manager.workspaces(on: firstMonitor.id).map(\.id))
-        )
-        XCTAssertEqual(otherLayout.workspaceSections.map(\.workspaceId), [otherWorkspace])
-        XCTAssertTrue(otherLayout.allWindows.isEmpty)
-        XCTAssertEqual(Set(firstLayout.allWindows.map(\.handle)), Set(snapshot.windows.keys))
-
-        let insideFirst = CGPoint(x: 400, y: 300)
-        let insideFirstLocation = projection.pointerLocation(from: insideFirst, on: firstMonitor.id)
-        XCTAssertEqual(insideFirstLocation.monitorId, firstMonitor.id)
-        XCTAssertEqual(insideFirstLocation.point, insideFirst)
-        let beyondFirst = CGPoint(x: 1300, y: 500)
-        let remapped = projection.pointerLocation(from: beyondFirst, on: firstMonitor.id)
-        XCTAssertEqual(remapped.monitorId, otherMonitor.id)
-        XCTAssertEqual(remapped.point, CGPoint(x: 300, y: 300))
-        let outsideEveryMonitor = CGPoint(x: 5000, y: 5000)
-        XCTAssertEqual(
-            projection.pointerLocation(from: outsideEveryMonitor, on: firstMonitor.id).monitorId,
-            firstMonitor.id
-        )
-        while let task = fixture.controller.layoutRefreshController.layoutState.activeRefreshTask { await task.value }
-    }
-
     func testAnimatorExcludesUnavailableDisplaysWhileInstalledAnimationsCompleteNormally() throws {
         let fixture = try makeRuntimeOverviewFixture(windowCount: 1)
         let overview = OverviewController(
@@ -2576,47 +2456,6 @@ final class OverviewBehaviorTests: XCTestCase {
         XCTAssertEqual(overview.selectedWindowHandle?.id, visibleToken)
         XCTAssertEqual(titleReads, 1)
         XCTAssertEqual(frameReads, 1)
-    }
-
-    func testCachedProjectionRemovesAndRestoresHiddenNiriWindow() throws {
-        var titleReads = 0
-        var fixture = try makeRuntimeOverviewFixture(windowCount: 2)
-        fixture.environment.windowTitle = { _ in
-            titleReads += 1
-            return "Window"
-        }
-        let overview = OverviewController(
-            wmController: fixture.controller,
-            motionPolicy: fixture.controller.motionPolicy,
-            environment: fixture.environment
-        )
-        overview.prepareOpenState()
-        overview.onAnimationComplete(state: .open)
-        let hiddenHandle = try XCTUnwrap(overview.selectedWindowHandle)
-
-        titleReads = 0
-        fixture.controller.workspaceManager.setAppHidden(
-            true,
-            pid: hiddenHandle.pid,
-            source: .service
-        )
-        overview.refreshCachedOverviewProjection(affectedWorkspaceIds: [fixture.workspaceId])
-
-        XCTAssertNotEqual(overview.selectedWindowHandle, hiddenHandle)
-        XCTAssertEqual(titleReads, 0)
-
-        fixture.controller.workspaceManager.setAppHidden(
-            false,
-            pid: hiddenHandle.pid,
-            source: .service
-        )
-        overview.refreshCachedOverviewProjection(
-            affectedWorkspaceIds: [fixture.workspaceId],
-            selectedHandle: hiddenHandle
-        )
-
-        XCTAssertEqual(overview.selectedWindowHandle, hiddenHandle)
-        XCTAssertEqual(titleReads, 1)
     }
 
     func testCachedProjectionRefreshDoesNotRereadWindowMetadataOrRestartCapture() throws {
@@ -2866,8 +2705,6 @@ final class OverviewBehaviorTests: XCTestCase {
             : nil
         if let secondWorkspaceId {
             controller.workspaceManager.assignWorkspaceToMonitor(secondWorkspaceId, monitorId: monitor.id)
-            controller.niriEngine = NiriLayoutEngine()
-            controller.niriLayoutHandler.syncMonitorsToNiriEngine()
         }
         let handles = (0 ..< windowCount + secondWorkspaceWindowCount).map { index in
             let pid = pid_t(91_100 + index)
@@ -2880,13 +2717,6 @@ final class OverviewBehaviorTests: XCTestCase {
                 to: destination
             )
             if secondWorkspaceId != nil {
-                controller.workspaceManager.withEngineMutationScope {
-                    _ = controller.niriEngine?.addWindow(
-                        token: token,
-                        to: destination,
-                        afterSelection: nil
-                    )
-                }
             }
             return WindowHandle(id: token)
         }

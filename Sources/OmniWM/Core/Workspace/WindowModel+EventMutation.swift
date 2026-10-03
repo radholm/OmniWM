@@ -29,9 +29,6 @@ extension WindowModel {
         case let .manualLayoutOverrideChanged(token, _, layoutOverride, _):
             setManualLayoutOverride(layoutOverride, for: token)
 
-        case let .niriPlacementsResolved(placements, _):
-            applyNiriPlacements(placements, monitors: monitors)
-
         case let .dwindlePlacementsResolved(placements, _):
             applyDwindlePlacements(placements, monitors: monitors)
 

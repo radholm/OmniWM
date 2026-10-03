@@ -6,26 +6,14 @@ import Foundation
 import QuartzCore
 
 extension WorkspaceManager {
-    func activeLayoutKind(for workspaceId: WorkspaceDescriptor.ID) -> ActiveLayoutKind {
-        guard let descriptor = workspaceCatalog.descriptor(for: workspaceId) else { return .niri }
-        return settings.workspaces.layoutType(for: descriptor.name) == .dwindle ? .dwindle : .niri
+    func activeLayoutKind(for _: WorkspaceDescriptor.ID) -> ActiveLayoutKind {
+        .dwindle
     }
 
     func isInactiveTabMember(_ token: WindowToken, in workspaceId: WorkspaceDescriptor.ID) -> Bool {
         switch activeLayoutKind(for: workspaceId) {
         case .dwindle:
             return dwindleEngine?.isInactiveGroupMember(token, in: workspaceId) == true
-        case .niri:
-            guard let engine = niriEngine,
-                  let window = engine.findNode(for: token, in: workspaceId),
-                  let column = engine.column(of: window),
-                  column.isTabbed,
-                  !engine.isExcludedFromProjection(token, in: workspaceId),
-                  let activeWindow = engine.projectedActiveWindow(in: column, workspaceId: workspaceId)
-            else {
-                return false
-            }
-            return activeWindow !== window
         }
     }
 
@@ -56,7 +44,7 @@ extension WorkspaceManager {
         var layouts: [WorkspaceDescriptor.ID: LayoutTopology] = [:]
         for workspaceId in workspaceIds {
             let topology = layoutTopology(for: workspaceId)
-            if topology.hasColumns || !topology.dwindleFullscreenTokens.isEmpty {
+            if !topology.dwindleFullscreenTokens.isEmpty {
                 layouts[workspaceId] = topology
             }
         }
@@ -65,7 +53,6 @@ extension WorkspaceManager {
             topologyProfile: currentTopologyProfile(),
             focusSession: focusSessionSnapshot,
             windows: windowSnapshots,
-            viewports: recordedViewportStates,
             layouts: layouts
         )
     }

@@ -174,7 +174,7 @@ enum CommandPaletteSearch {
     static func buildCommandItems(from wmController: WMController) -> [CommandPaletteCommandItem] {
         let layoutType = wmController.activeWorkspace().map {
             wmController.settings.workspaces.layoutType(for: $0.name)
-        } ?? .niri
+        } ?? .dwindle
         let triggersByID = Dictionary(
             wmController.settings.hotkeyBindings.map { ($0.id, $0.binding) },
             uniquingKeysWith: { first, _ in first }

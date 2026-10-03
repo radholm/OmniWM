@@ -34,15 +34,6 @@ extension OverviewLayout {
         switch target {
         case .newWorkspace:
             label = String(localized: "Create workspace on \(monitor.name)")
-        case .niriColumnInsert:
-            label = String(localized: "New column")
-        case let .niriWindowInsert(workspaceId, _, position):
-            let vertical = workspaceSections.first { $0.workspaceId == workspaceId }?.orientation == .vertical
-            if vertical {
-                label = position == .before ? String(localized: "Stack right") : String(localized: "Stack left")
-            } else {
-                label = position == .before ? String(localized: "Stack above") : String(localized: "Stack below")
-            }
         case let .workspaceMove(workspaceId):
             guard workspaceId != sourceWorkspaceId,
                   let section = workspaceSections.first(where: { $0.workspaceId == workspaceId })

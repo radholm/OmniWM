@@ -31,7 +31,6 @@ enum AppVisibilityProjectionEngineDiagnostics {
 struct AppVisibilityProjectionDiagnostics {
     let workspaceId: WorkspaceDescriptor.ID
     let expectedExcludedCount: Int
-    let niri: AppVisibilityProjectionEngineDiagnostics
     let dwindle: AppVisibilityProjectionEngineDiagnostics
 }
 
@@ -80,23 +79,16 @@ extension WorkspaceManager {
                     .filter { self.isAppHidden(pid: $0.pid) }
                     .map(\.token)
             )
-            let niri = projectionDiagnostics(
-                engine: niriEngine,
-                hasWorkspaceState: niriEngine?.root(for: workspace.id) != nil,
-                excludedTokens: niriEngine?.projectionExclusions(in: workspace.id),
-                expected: expected
-            )
             let dwindle = projectionDiagnostics(
                 engine: dwindleEngine,
                 hasWorkspaceState: dwindleEngine?.root(for: workspace.id) != nil,
                 excludedTokens: dwindleEngine?.excludedTokens(in: workspace.id),
                 expected: expected
             )
-            guard !expected.isEmpty || niri.hasExclusions || dwindle.hasExclusions else { return nil }
+            guard !expected.isEmpty || dwindle.hasExclusions else { return nil }
             return AppVisibilityProjectionDiagnostics(
                 workspaceId: workspace.id,
                 expectedExcludedCount: expected.count,
-                niri: niri,
                 dwindle: dwindle
             )
         }

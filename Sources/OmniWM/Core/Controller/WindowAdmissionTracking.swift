@@ -10,15 +10,6 @@ extension AXEventHandler {
         guard let controller else { return }
         discardCreatePlacementContext(windowId: candidate.windowId)
         let axPid = AXWindowService.processIdentifier(candidate.axRef)
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .candidateTracked(
-                    token: candidate.token,
-                    axPid: axPid,
-                    workspaceId: candidate.workspaceId
-                )
-            )
-        )
 
         guard let trackedEntry = admitPreparedCreate(candidate, axPid: axPid, controller: controller) else { return }
         let floatingTargetFrame = floatingCreateTarget(candidate, entry: trackedEntry, controller: controller)
@@ -160,7 +151,6 @@ extension AXEventHandler {
             to: candidate.workspaceId,
             mode: candidate.mode,
             ruleEffects: candidate.ruleEffects,
-            admissionHints: candidate.admissionHints,
             lifetimeAuthority: .directLifecycle,
             allowsNativeFocusAdoption: !candidate.appFullscreen && !isMinimized,
             isMinimized: isMinimized,

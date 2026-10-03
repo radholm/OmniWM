@@ -73,20 +73,10 @@ extension MouseEventHandler {
               controller.settings.gestures.mouseEdgeDragResize,
               let monitor = controller.workspaceManager.monitor(for: wsId)
         else { return false }
-        let isDwindle = controller.workspaceManager.descriptor(for: wsId)
-            .map { controller.settings.workspaces.layoutType(for: $0.name) } == .dwindle
-        let frames: [WindowToken: CGRect]
-        let innerGap: CGFloat
-        if isDwindle {
-            // Stacked fullscreen windows have no tile edges to drag.
-            guard let engine = controller.dwindleEngine, engine.fullscreenTokens(in: wsId).isEmpty else { return false }
-            frames = engine.presentedFrames(in: wsId, at: controller.animationClock.now())
-            innerGap = controller.resolvedDwindleSettings(for: monitor).innerGap
-        } else {
-            guard let engine = controller.niriEngine else { return false }
-            frames = niriTiledFrames(engine: engine, workspaceId: wsId)
-            innerGap = controller.niriInteractionGeometry(for: monitor).innerGap
-        }
+        // Stacked fullscreen windows have no tile edges to drag.
+        guard let engine = controller.dwindleEngine, engine.fullscreenTokens(in: wsId).isEmpty else { return false }
+        let frames = engine.presentedFrames(in: wsId, at: controller.animationClock.now())
+        let innerGap = controller.resolvedDwindleSettings(for: monitor).innerGap
         let tiledFrames = frames.filter { controller.workspaceManager.entry(for: $0.key)?.mode == .tiling }
         let candidates = Self.edgeDragResizeCandidates(
             point: location,
@@ -99,7 +89,6 @@ extension MouseEventHandler {
         else { return false }
         for candidate in candidates where beginEdgeDragResize(
             candidate,
-            isDwindle: isDwindle,
             wsId: wsId,
             at: location
         ) {
@@ -113,42 +102,14 @@ extension MouseEventHandler {
 
     private func beginEdgeDragResize(
         _ candidate: EdgeDragResizeCandidate,
-        isDwindle: Bool,
         wsId: WorkspaceDescriptor.ID,
         at location: CGPoint
     ) -> Bool {
-        guard let controller else { return false }
-        if isDwindle {
-            guard let engine = controller.dwindleEngine else { return false }
-            return beginDwindleResize(
-                token: candidate.token, engine: engine, wsId: wsId, at: location,
-                edges: candidate.edges, source: .mouse(.left)
-            )
-        }
-        guard let engine = controller.niriEngine,
-              let window = engine.findNode(for: candidate.token, in: wsId)
-        else { return false }
-        return beginNiriResize(
-            window: window, engine: engine, wsId: wsId, at: location,
+        guard let engine = controller?.dwindleEngine else { return false }
+        return beginDwindleResize(
+            token: candidate.token, engine: engine, wsId: wsId, at: location,
             edges: candidate.edges, source: .mouse(.left)
         )
-    }
-
-    private func niriTiledFrames(
-        engine: NiriLayoutEngine,
-        workspaceId: WorkspaceDescriptor.ID
-    ) -> [WindowToken: CGRect] {
-        guard let root = engine.root(for: workspaceId) else { return [:] }
-        var frames: [WindowToken: CGRect] = [:]
-        for column in root.columns {
-            for case let window as NiriWindow in column.children {
-                guard engine.isProjectedFocusableWindow(window, in: workspaceId),
-                      let frame = window.renderedFrame ?? window.frame
-                else { continue }
-                frames[window.token] = frame
-            }
-        }
-        return frames
     }
 
     /// The press must land on a tiled window or on bare desktop, not on a floating

@@ -10,26 +10,16 @@ extension LayoutRefreshController {
         context: FullRescanMutationContext,
         affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>
     ) -> EffectPlan {
-        let removalPayloads = request.removalPayloads
         let postLayoutActions = request.postLayoutActions
-        let niriRemovalSeeds = makeNiriRemovalSeeds(from: removalPayloads)
         let layoutWorkspaceIds = fullRescanLayoutWorkspaceIds(
             request,
             context: context,
             affectedWorkspaceIds: affectedWorkspaceIds
         )
-        let (niriWorkspaces, dwindleWorkspaces) = partitionWorkspacesByLayoutType(layoutWorkspaceIds)
 
+        let dwindleWorkspaces = layoutWorkspaceIds
         let workspacePlans = buildWorkspacePlansInBatch {
             var plans: [WorkspaceLayoutPlan] = []
-            plans.reserveCapacity(niriWorkspaces.count + dwindleWorkspaces.count)
-            if !niriWorkspaces.isEmpty {
-                plans.append(contentsOf: self.niriHandler.layoutWithNiriEngine(
-                    activeWorkspaces: niriWorkspaces,
-                    useScrollAnimationPath: false,
-                    removalSeeds: niriRemovalSeeds
-                ))
-            }
             if !dwindleWorkspaces.isEmpty {
                 plans.append(
                     contentsOf: self.dwindleHandler.layoutWithDwindleEngine(activeWorkspaces: dwindleWorkspaces)

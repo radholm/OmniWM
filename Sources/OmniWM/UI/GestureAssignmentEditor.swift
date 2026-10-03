@@ -21,7 +21,7 @@ extension WorkspaceSwipeAxis {
 }
 
 enum GestureAssignmentAction: String, CaseIterable, Identifiable {
-    case columns, workspaces, overview, move, resize
+    case workspaces, overview, move, resize
 
     var id: String {
         rawValue
@@ -29,7 +29,6 @@ enum GestureAssignmentAction: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .columns: String(localized: "Scroll columns")
         case .workspaces: String(localized: "Switch workspaces")
         case .overview: String(localized: "Overview")
         case .move: String(localized: "Move windows")
@@ -43,7 +42,6 @@ enum GestureAssignmentAction: String, CaseIterable, Identifiable {
 
     func isEnabled(in gestures: SettingsExport.Gestures) -> Bool {
         switch self {
-        case .columns: gestures.scrollEnabled
         case .workspaces: gestures.workspaceSwipeEnabled
         case .overview: gestures.overviewGestureEnabled ?? false
         case .move: gestures.windowMoveEnabled ?? false
@@ -53,7 +51,6 @@ enum GestureAssignmentAction: String, CaseIterable, Identifiable {
 
     func fingerCount(in gestures: SettingsExport.Gestures) -> Int {
         switch self {
-        case .columns: gestures.fingerCount.rawValue
         case .workspaces: gestures.workspaceSwipeFingerCount.rawValue
         case .overview: (gestures.overviewGestureFingerCount ?? .four).rawValue
         case .move: (gestures.windowMoveFingerCount ?? .four).rawValue
@@ -86,7 +83,6 @@ struct GestureAssignmentEdit: Equatable {
         switch change {
         case let .enabled(enabled):
             switch action {
-            case .columns: candidate.scrollEnabled = enabled
             case .workspaces: candidate.workspaceSwipeEnabled = enabled
             case .overview: candidate.overviewGestureEnabled = enabled
             case .move: candidate.windowMoveEnabled = enabled
@@ -98,7 +94,6 @@ struct GestureAssignmentEdit: Equatable {
                 preconditionFailure("Unsupported gesture finger count")
             }
             switch action {
-            case .columns: candidate.fingerCount = fingers
             case .workspaces: candidate.workspaceSwipeFingerCount = fingers
             case .overview: candidate.overviewGestureFingerCount = OverviewGestureFingerCount(rawValue: count)
             case .move: candidate.windowMoveFingerCount = fingers
@@ -117,10 +112,6 @@ struct GestureAssignmentResolution: Equatable, Identifiable {
 
     var id: String {
         disabledActions.map(\.rawValue).joined(separator: ",")
-    }
-
-    var disablesMouseWheelScrolling: Bool {
-        disabledActions.contains(.columns)
     }
 
     func title(for edit: GestureAssignmentEdit) -> String {
@@ -181,22 +172,14 @@ struct GestureAssignmentProposal {
 
 private struct GestureAssignmentContext: Equatable {
     let gestures: SettingsExport.Gestures
-    let orientationOverrides: [MonitorOrientationSettings]
-    let monitors: [Monitor]
 
     @MainActor
-    init(settings: SettingsStore, monitors: [Monitor]) {
+    init(settings: SettingsStore) {
         gestures = settings.gestures.export()
-        orientationOverrides = settings.monitors.orientationOverrides
-        self.monitors = monitors
     }
 
     func conflict(in candidate: SettingsExport.Gestures) -> TrackpadGestureConflict? {
-        GestureSettingsValidation.conflict(
-            gestures: candidate,
-            orientationOverrides: orientationOverrides,
-            monitors: monitors
-        )
+        GestureSettingsValidation.conflict(gestures: candidate)
     }
 }
 
@@ -204,25 +187,25 @@ private struct GestureAssignmentContext: Equatable {
 final class GestureAssignmentEditor {
     var proposal: GestureAssignmentProposal?
 
-    func submit(_ edit: GestureAssignmentEdit, settings: SettingsStore, monitors: [Monitor]) {
-        let context = GestureAssignmentContext(settings: settings, monitors: monitors)
-        if settings.updateGestureSettings(edit.applying(to: context.gestures), monitors: monitors) == nil {
+    func submit(_ edit: GestureAssignmentEdit, settings: SettingsStore) {
+        let context = GestureAssignmentContext(settings: settings)
+        if settings.updateGestureSettings(edit.applying(to: context.gestures)) == nil {
             proposal = nil
         } else {
             proposal = GestureAssignmentProposal(edit: edit, baseline: context)
         }
     }
 
-    func confirm(_ resolution: GestureAssignmentResolution, settings: SettingsStore, monitors: [Monitor]) {
+    func confirm(_ resolution: GestureAssignmentResolution, settings: SettingsStore) {
         guard let proposal else { return }
-        let context = GestureAssignmentContext(settings: settings, monitors: monitors)
+        let context = GestureAssignmentContext(settings: settings)
         guard context == proposal.baseline else {
             self.proposal = GestureAssignmentProposal(edit: proposal.edit, baseline: context, refreshed: true)
             return
         }
         guard proposal.resolutions.contains(resolution) else { return }
         let candidate = resolution.applying(to: proposal.edit.applying(to: context.gestures))
-        if settings.updateGestureSettings(candidate, monitors: monitors) == nil {
+        if settings.updateGestureSettings(candidate) == nil {
             self.proposal = nil
         } else {
             self.proposal = GestureAssignmentProposal(edit: proposal.edit, baseline: context, refreshed: true)
@@ -233,19 +216,18 @@ final class GestureAssignmentEditor {
         proposal = nil
     }
 
-    func refresh(settings: SettingsStore, monitors: [Monitor]) {
+    func refresh(settings: SettingsStore) {
         guard let proposal else { return }
-        let context = GestureAssignmentContext(settings: settings, monitors: monitors)
+        let context = GestureAssignmentContext(settings: settings)
         guard context != proposal.baseline else { return }
         self.proposal = GestureAssignmentProposal(edit: proposal.edit, baseline: context, refreshed: true)
     }
 
     static func conflict(
         enabling action: GestureAssignmentAction,
-        settings: SettingsStore,
-        monitors: [Monitor]
+        settings: SettingsStore
     ) -> TrackpadGestureConflict? {
-        let context = GestureAssignmentContext(settings: settings, monitors: monitors)
+        let context = GestureAssignmentContext(settings: settings)
         return context.conflict(in: GestureAssignmentEdit(action: action, change: .enabled(true))
             .applying(to: context.gestures))
     }

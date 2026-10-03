@@ -13,7 +13,6 @@ extension AXEventHandler {
         terminalFrameFailureStateByWindowId = terminalFrameFailureStateByWindowId.filter { windowId, _ in
             controller.workspaceManager.entry(forWindowId: windowId)?.pid != pid
         }
-        clearManagedReplacementFocusTransactions(pid: pid, reason: "app_terminated")
         let entries = controller.workspaceManager.entries(forPid: pid)
         for entry in entries {
             clearManagedFocusState(

@@ -8,9 +8,3 @@ struct MonitorLayoutFrames {
     let borderSafeFillFrame: CGRect
     let fullscreenLayoutFrame: CGRect
 }
-
-struct NiriInteractionGeometry {
-    let workingFrame: CGRect
-    let innerGap: CGFloat
-    let scale: CGFloat
-}

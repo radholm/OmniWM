@@ -42,37 +42,6 @@ final class WindowAdmissionIdentityLifecycleTests: XCTestCase {
         XCTAssertEqual(controller.workspaceManager.entry(forWindowId: Int(windowId))?.token, token)
     }
 
-    func testCanonicalObservationDoesNotMutateNiriState() throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        controller.niriLayoutHandler.enableNiriLayout()
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        let oldAXRef = AXWindowRef(element: AXUIElementCreateApplication(467_953), windowId: 467_954)
-        let oldToken = controller.workspaceManager.addWindow(
-            oldAXRef,
-            pid: 467_953,
-            windowId: oldAXRef.windowId,
-            to: workspaceId
-        )
-        controller.workspaceManager.withEngineMutationScope {
-            _ = controller.niriEngine?.addWindow(token: oldToken, to: workspaceId, afterSelection: nil)
-        }
-        let replacementAXRef = AXWindowRef(
-            element: AXUIElementCreateApplication(467_955),
-            windowId: oldToken.windowId
-        )
-
-        let observed = controller.axEventHandler.canonicalObservedWindowToken(
-            pid: 467_955,
-            axRef: replacementAXRef
-        )
-
-        XCTAssertEqual(observed, WindowToken(pid: 467_955, windowId: oldToken.windowId))
-        XCTAssertEqual(controller.workspaceManager.entry(for: oldToken)?.token, oldToken)
-        XCTAssertNotNil(controller.niriEngine?.findNode(for: oldToken, in: workspaceId))
-    }
-
     func testCanonicalObservationDoesNotMutateDwindleState() throws {
         let controller = WindowAdmissionTestSupport.controller()
         controller.dwindleLayoutHandler.enableDwindleLayout()
@@ -112,31 +81,6 @@ final class WindowAdmissionIdentityLifecycleTests: XCTestCase {
         XCTAssertTrue(controller.dwindleEngine?.containsWindow(oldToken, in: workspaceId) == true)
     }
 
-    func testExplicitStaleRetirementRemovesNiriLayoutNode() async throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        controller.niriLayoutHandler.enableNiriLayout()
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        let axRef = AXWindowRef(element: AXUIElementCreateApplication(467_959), windowId: 467_960)
-        let token = controller.workspaceManager.addWindow(
-            axRef,
-            pid: 467_959,
-            windowId: axRef.windowId,
-            to: workspaceId
-        )
-        controller.workspaceManager.withEngineMutationScope {
-            _ = controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
-        }
-        let entry = try XCTUnwrap(controller.workspaceManager.entry(for: token))
-
-        controller.axEventHandler.discardStaleManagedWindowIncarnation(entry)
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-
-        XCTAssertNil(controller.workspaceManager.entry(for: token))
-        XCTAssertNil(controller.niriEngine?.findNode(for: token, in: workspaceId))
-    }
-
     func testExplicitStaleRetirementRemovesDwindleLayoutNode() async throws {
         let controller = WindowAdmissionTestSupport.controller()
         controller.dwindleLayoutHandler.enableDwindleLayout()
@@ -168,54 +112,6 @@ final class WindowAdmissionIdentityLifecycleTests: XCTestCase {
 
         XCTAssertNil(controller.workspaceManager.entry(for: token))
         XCTAssertFalse(controller.dwindleEngine?.containsWindow(token, in: workspaceId) == true)
-    }
-
-    func testAuthoritativeRescanRetirementCancelsRebindAndRemovesNiriIdentity() async throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        controller.niriLayoutHandler.enableNiriLayout()
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        let oldPID: pid_t = 467_973
-        let newPID: pid_t = 467_974
-        let windowId = 467_975
-        let oldAXRef = AXWindowRef(element: AXUIElementCreateApplication(oldPID), windowId: windowId)
-        let newAXRef = AXWindowRef(element: AXUIElementCreateApplication(newPID), windowId: windowId)
-        let token = controller.workspaceManager.addWindow(
-            oldAXRef,
-            pid: oldPID,
-            windowId: windowId,
-            to: workspaceId
-        )
-        controller.workspaceManager.withEngineMutationScope {
-            _ = controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
-        }
-        let aliases = FullRescanWindowIdentityAliases(
-            pids: [oldPID, newPID],
-            axRefs: [oldAXRef, newAXRef]
-        )
-        controller.axEventHandler.updateIdentityAliases([windowId: aliases])
-        _ = controller.axEventHandler.resolveFullRescanIdentity(
-            axRef: newAXRef,
-            pid: newPID,
-            windowId: windowId,
-            observedAliases: aliases
-        )
-        XCTAssertNotNil(controller.axEventHandler.admissionRetryStateByWindowId[UInt32(windowId)])
-        XCTAssertTrue(
-            controller.layoutRefreshController.confirmedMissingEntries(keys: [], requiredConsecutiveMisses: 2).isEmpty
-        )
-        let missingEntry = try XCTUnwrap(
-            controller.layoutRefreshController.confirmedMissingEntries(keys: [], requiredConsecutiveMisses: 2).first
-        )
-
-        controller.axEventHandler.retireManagedWindowFromAuthoritativeRescan(missingEntry)
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-
-        XCTAssertNil(controller.axEventHandler.admissionRetryStateByWindowId[UInt32(windowId)])
-        XCTAssertNil(controller.axEventHandler.identityAliasesByWindowId[windowId])
-        XCTAssertNil(controller.workspaceManager.entry(for: token))
-        XCTAssertNil(controller.niriEngine?.findNode(for: token, in: workspaceId))
     }
 
     func testAuthoritativeRescanRetirementRemovesDwindleIdentity() async throws {

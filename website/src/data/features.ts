@@ -8,14 +8,6 @@ export interface Feature {
 
 export const features: Feature[] = [
   {
-    id: 'niri',
-    title: 'Niri layout',
-    kicker: 'Scrolling columns',
-    blurb:
-      'A scrolling strip of columns or rows, depending on your monitor’s orientation setting. Focus glides the camera along the strip. Swap windows inside a container, cycle its size through presets, or resize both axes with the mouse — the whole strip re-flows live under your hand.',
-    kbHref: '/guides/layouts/',
-  },
-  {
     id: 'dwindle',
     title: 'Hyprland layout',
     kicker: 'Dwindle BSP',
@@ -52,7 +44,7 @@ export const features: Feature[] = [
     title: 'Trackpad gestures',
     kicker: 'Two fingers, three, four',
     blurb:
-      'Swipe with 2, 3, or 4 fingers to drive the Niri strip — Snap to Columns lands you on the nearest column, or switch to Momentum for free inertial glides with rubber-band edges. Opt in to workspace swipe and another gesture flips workspaces on the monitor under your cursor, one switch per swipe.',
+      'Assign 2-, 3-, or 4-finger gestures to move and resize windows, switch workspaces on the monitor under your cursor, or open Overview. Workspace swipes make one switch per swipe.',
     kbHref: '/guides/tips/#trackpad-gestures',
   },
   {

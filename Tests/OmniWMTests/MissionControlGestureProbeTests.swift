@@ -162,7 +162,7 @@ final class MissionControlGestureProbeTests: XCTestCase {
         XCTAssertFalse(unknownProbe.shouldWarn(axis: .vertical, fingerCount: .four))
     }
 
-    func testDisabledWorkspaceSwipeStillWarnsWhenCollisionForcesEffectiveAxisVertical() {
+    func testHorizontalWorkspaceSwipeDoesNotWarnAboutSystemVerticalSwipe() {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("MissionControlGestureProbeTests-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -178,8 +178,6 @@ final class MissionControlGestureProbeTests: XCTestCase {
             ),
             autosaveEnabled: false
         )
-        settings.gestures.scrollEnabled = true
-        settings.gestures.fingerCount = .three
         settings.gestures.workspaceSwipeEnabled = false
         settings.gestures.workspaceSwipeFingerCount = .three
         settings.gestures.workspaceSwipeAxis = .horizontal
@@ -189,10 +187,9 @@ final class MissionControlGestureProbeTests: XCTestCase {
         let probe = fixture.makeProbe()
         probe.refresh()
 
-        XCTAssertTrue(settings.gestures.workspaceSwipeAxisLockedToVertical)
-        XCTAssertEqual(settings.gestures.effectiveWorkspaceSwipeAxis, .vertical)
-        XCTAssertTrue(probe.shouldWarn(
-            axis: settings.gestures.effectiveWorkspaceSwipeAxis,
+        XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
+        XCTAssertFalse(probe.shouldWarn(
+            axis: settings.gestures.workspaceSwipeAxis,
             fingerCount: settings.gestures.workspaceSwipeFingerCount
         ))
     }

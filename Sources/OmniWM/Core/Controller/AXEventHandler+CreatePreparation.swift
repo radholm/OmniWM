@@ -255,7 +255,6 @@ extension AXEventHandler {
             token: token,
             axRef: axRef,
             ruleEffects: evaluation.decision.ruleEffects,
-            admissionHints: evaluation.decision.admissionHints,
             appFullscreen: evaluation.appFullscreen,
             isMinimized: AXWindowService.isMinimized(axRef) ?? false,
             replacementMetadata: makeManagedReplacementMetadata(
@@ -335,14 +334,5 @@ extension AXEventHandler {
         cancelCreatedWindowRetry(windowId: windowId)
         discardCreatePlacementContext(windowId: windowId)
         rejectDeferredReplacement(windowId: windowId)
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .admissionRejected(
-                    windowId: windowId,
-                    pid: token?.pid,
-                    reason: reason
-                )
-            )
-        )
     }
 }

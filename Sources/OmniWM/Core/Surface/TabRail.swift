@@ -4,13 +4,10 @@
 import AppKit
 
 enum TabRailOwner: Hashable {
-    case niriColumn(NodeId)
     case dwindleTile(DwindleTileId)
 
     var surfaceIdentifier: String {
         switch self {
-        case let .niriColumn(id):
-            "niri-column-\(id.uuid.uuidString)"
         case let .dwindleTile(id):
             "dwindle-tile-\(id.uuidString)"
         }

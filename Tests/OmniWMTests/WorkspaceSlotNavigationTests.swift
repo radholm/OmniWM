@@ -450,9 +450,6 @@ final class WorkspaceSlotNavigationTests: XCTestCase {
             windowId: windowId,
             to: workspaceId
         )
-        fixture.manager.withEngineMutationScope(in: workspaceId) {
-            _ = fixture.controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
-        }
         XCTAssertTrue(fixture.manager.setManagedFocus(token, in: workspaceId))
         XCTAssertEqual(fixture.manager.selectedManagedToken, token)
         return token
@@ -495,27 +492,24 @@ final class WorkspaceSlotNavigationTests: XCTestCase {
                 name: "1",
                 displayName: "Workspace One",
                 monitorAssignment: .specificDisplay(OutputId(from: monitorA)),
-                layoutType: .niri
+                layoutType: .dwindle
             ),
             WorkspaceConfiguration(
                 name: "2",
                 displayName: "Workspace Two",
                 monitorAssignment: .specificDisplay(OutputId(from: monitorB)),
-                layoutType: .niri
+                layoutType: .dwindle
             ),
             WorkspaceConfiguration(
                 name: "3",
                 monitorAssignment: .specificDisplay(OutputId(from: monitorA)),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         ]
         let controller = WMController(
             settings: settings,
             windowFocusOperations: windowFocusOperations
         )
-        let niriEngine = NiriLayoutEngine()
-        niriEngine.animationClock = controller.animationClock
-        controller.niriEngine = niriEngine
         let manager = controller.workspaceManager
         manager.applyMonitorConfigurationChange([monitorA, monitorB])
         manager.applySettings()

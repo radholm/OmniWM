@@ -7,7 +7,6 @@ import Foundation
 enum ReconcileEventDomain {
     case window
     case focus
-    case viewport
     case session
 }
 
@@ -22,9 +21,7 @@ extension WMEvent {
              .floatingGeometryUpdated,
              .floatingStateChanged,
              .manualLayoutOverrideChanged,
-             .windowAdmissionHintsChanged,
              .topLevelInventoryObserved,
-             .niriPlacementsResolved,
              .dwindlePlacementsResolved,
              .layoutOperationPerformed,
              .managedReplacementMetadataChanged,
@@ -48,11 +45,6 @@ extension WMEvent {
              .interactionMonitorChanged,
              .workspaceFocusCleared:
             .focus
-        case .viewportChanged,
-             .viewportCommitted,
-             .viewportForgotten,
-             .selectionChanged:
-            .viewport
         case .scratchpadMembershipChanged,
              .scratchpadRevealChanged,
              .visibleWorkspacesChanged,

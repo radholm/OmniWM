@@ -18,7 +18,6 @@ enum IntakeEvent: Sendable {
     case ipcCommand(IPCCommandIntake)
     case mouseDragged(button: MouseEventHandler.MouseButton, location: CGPoint)
     case mouseMoved(location: CGPoint, modifiersRawValue: UInt64, windowIdUnderPointer: Int?)
-    case mouseScroll(MouseScrollIntake)
     case nativeFullscreenTransitionExpired(originalToken: WindowToken, generation: Int)
     case systemSleep
     case systemWake
@@ -294,22 +293,6 @@ final class EventIntake {
             }
             state.openMouseMovedSeq = state.nextSeq
 
-        case let .mouseScroll(payload):
-            state.closeMouseCoalescingWindows(keeping: \.openScrollSeq)
-            if let openSeq = state.openScrollSeq,
-               let index = state.orderedEvents.lastIndex(where: { $0.seq == openSeq }),
-               case let .mouseScroll(existing) = state.orderedEvents[index].event
-            {
-                if existing.matches(payload), existing.canCoalesce(payload) {
-                    var merged = existing
-                    merged.accumulate(payload)
-                    state.orderedEvents[index] = state.orderedEvents[index].replacingEvent(with: .mouseScroll(merged))
-                    return
-                }
-                state.closeMouseCoalescingWindows()
-            }
-            state.openScrollSeq = state.nextSeq
-
         default:
             state.closeMouseCoalescingWindows()
         }
@@ -334,8 +317,7 @@ final class EventIntake {
             state.orderedEvents.removeAll { stamped in
                 switch stamped.event {
                 case .mouseDragged,
-                     .mouseMoved,
-                     .mouseScroll:
+                     .mouseMoved:
                     return true
                 default:
                     return false

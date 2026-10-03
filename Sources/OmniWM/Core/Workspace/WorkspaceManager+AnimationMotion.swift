@@ -8,9 +8,8 @@ extension WorkspaceManager {
     func removeAnimationMotions<S: Sequence>(
         for workspaceIds: S
     ) where S.Element == WorkspaceDescriptor.ID {
-        let activeWorkspaceIds = Set(workspaceIds.filter { animationDriver.hasMotion(in: $0) })
+        let activeWorkspaceIds = Set(workspaceIds)
         guard !activeWorkspaceIds.isEmpty else { return }
         onAnimationMotionsWillBeRemoved?(activeWorkspaceIds)
-        animationDriver.removeMotions(for: activeWorkspaceIds)
     }
 }

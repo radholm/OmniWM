@@ -5,6 +5,14 @@ import AppKit
 import Foundation
 
 extension MouseEventHandler {
+    nonisolated static func resolvedWheelAxisDelta(
+        pointDelta: CGFloat, fixedPointDelta: CGFloat, isContinuous: Bool
+    ) -> CGFloat {
+        let delta = abs(pointDelta) > 0.001 ? pointDelta : fixedPointDelta
+        guard !isContinuous, abs(delta) > 0.001 else { return delta }
+        return delta > 0 ? 120 : -120
+    }
+
     nonisolated static func sessionEventMask(annotatedMoveTapInstalled: Bool) -> CGEventMask {
         var mask: CGEventMask =
             (1 << CGEventType.leftMouseDown.rawValue) |

@@ -10,7 +10,6 @@ import InstallSection from '../components/landing/InstallSection.astro';
 import CreditsSection from '../components/landing/CreditsSection.astro';
 import SponsorsSection from '../components/landing/SponsorsSection.astro';
 import Footer from '../components/landing/Footer.astro';
-import NiriDemo from '../components/demos/NiriDemo.astro';
 import DwindleDemo from '../components/demos/DwindleDemo.astro';
 import QuakeDemo from '../components/demos/QuakeDemo.astro';
 import PaletteDemo from '../components/demos/PaletteDemo.astro';
@@ -34,13 +33,12 @@ const structuredData = {
 ---
 
 <LandingLayout
-  title="OmniWM — macOS tiling window manager, Niri & Hyprland style"
-  description="Free, open-source tiling window manager for macOS — Niri scrolling columns, Hyprland tiling, quake terminal, command palette, CLI. A yabai & AeroSpace alternative."
+  title="OmniWM — macOS tiling window manager, Hyprland style"
+  description="Free, open-source tiling window manager for macOS — Dwindle tiling, quake terminal, command palette, CLI. A yabai & AeroSpace alternative."
   {structuredData}
 >
   <Hero />
   <div id="features">
-    <FeatureSection feature={byId.niri}><NiriDemo /></FeatureSection>
     <FeatureSection feature={byId.dwindle} flip><DwindleDemo /></FeatureSection>
     <FeatureSection feature={byId.overview}><OverviewDemo /></FeatureSection>
     <FeatureSection feature={byId.palette} flip><PaletteDemo /></FeatureSection>

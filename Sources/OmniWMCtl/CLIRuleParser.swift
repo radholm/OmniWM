@@ -105,7 +105,6 @@ private struct CLIRuleDefinitionArguments {
     private var axSubrole: String?
     private var layout: IPCRuleLayout = .auto
     private var assignToWorkspace: String?
-    private var initialContainerPrimarySpan: Double?
     private var minWidth: Double?
     private var minHeight: Double?
 
@@ -130,8 +129,6 @@ private struct CLIRuleDefinitionArguments {
             layout = parsedLayout
         case "--assign-to-workspace":
             assignToWorkspace = value
-        case "--initial-container-primary-span":
-            initialContainerPrimarySpan = try CLIArgumentParser.parseInitialContainerPrimarySpan(value)
         case "--min-width":
             minWidth = try CLIArgumentParser.parsePositiveDouble(value)
         case "--min-height":
@@ -151,7 +148,6 @@ private struct CLIRuleDefinitionArguments {
             axSubrole: axSubrole,
             layout: layout,
             assignToWorkspace: assignToWorkspace,
-            initialContainerPrimarySpan: initialContainerPrimarySpan,
             minWidth: minWidth,
             minHeight: minHeight
         )

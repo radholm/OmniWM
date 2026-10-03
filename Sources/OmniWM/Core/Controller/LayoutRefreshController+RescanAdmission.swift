@@ -25,8 +25,7 @@ extension LayoutRefreshController {
                 let restoredEntry = controller.workspaceManager.entry(for: existingEntry.token) ?? existingEntry
                 return .init(
                     workspaceId: restoredEntry.workspaceId,
-                    ruleEffects: restoredEntry.ruleEffects,
-                    admissionHints: restoredEntry.admissionHints
+                    ruleEffects: restoredEntry.ruleEffects
                 )
             } else if appFullscreen {
                 cancelPendingScratchpadReveal(for: existingEntry.token)
@@ -37,22 +36,19 @@ extension LayoutRefreshController {
                 let existingAssignment = controller.workspaceAssignment(pid: pid, windowId: winId)
                 return .init(
                     workspaceId: deferredTrackedEntry?.workspaceId ?? existingAssignment ?? defaultWorkspace,
-                    ruleEffects: deferredTrackedEntry?.ruleEffects ?? decision.ruleEffects,
-                    admissionHints: deferredTrackedEntry?.admissionHints ?? decision.admissionHints
+                    ruleEffects: deferredTrackedEntry?.ruleEffects ?? decision.ruleEffects
                 )
             } else if let deferredTrackedEntry {
                 return .init(
                     workspaceId: deferredTrackedEntry.workspaceId,
-                    ruleEffects: deferredTrackedEntry.ruleEffects,
-                    admissionHints: deferredTrackedEntry.admissionHints
+                    ruleEffects: deferredTrackedEntry.ruleEffects
                 )
             }
         }
         let existingAssignment = controller.workspaceAssignment(pid: pid, windowId: winId)
         return .init(
             workspaceId: existingAssignment ?? defaultWorkspace,
-            ruleEffects: decision.ruleEffects,
-            admissionHints: decision.admissionHints
+            ruleEffects: decision.ruleEffects
         )
     }
 
@@ -133,7 +129,6 @@ extension LayoutRefreshController {
         let managedReplacementMetadata = admission.managedReplacementMetadata
         let wsForWindow = admission.assignment.workspaceId
         let ruleEffects = admission.assignment.ruleEffects
-        let admissionHints = admission.assignment.admissionHints
         let isMinimized = refreshedEntry?.observedState.isMinimized ?? window.candidate.minimizedAttribute ?? false
         if let refreshedEntry,
            !Self.shouldReadmitTrackedWindow(
@@ -163,7 +158,6 @@ extension LayoutRefreshController {
                 to: wsForWindow,
                 mode: admittedMode,
                 ruleEffects: ruleEffects,
-                admissionHints: admissionHints,
                 allowsNativeFocusAdoption: !appFullscreen && !isMinimized,
                 isMinimized: isMinimized,
                 managedReplacementMetadata: managedReplacementMetadata

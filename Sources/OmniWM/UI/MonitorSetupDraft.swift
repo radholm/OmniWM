@@ -214,7 +214,6 @@ enum MonitorRoutingGridEditor {
         let rows = Array(Set(cells.values.map(\.row))).sorted()
         let normalizedColumns = Dictionary(uniqueKeysWithValues: columns.enumerated().map { ($1, $0) })
         let normalizedRows = Dictionary(uniqueKeysWithValues: rows.enumerated().map { ($1, $0) })
-
         cells = cells.mapValues { cell in
             MonitorSetupDraft.Cell(
                 column: normalizedColumns[cell.column] ?? 0,

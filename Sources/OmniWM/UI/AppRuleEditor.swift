@@ -224,61 +224,7 @@ struct RuleWindowBehaviorSection: View {
                         .foregroundStyle(.orange)
                 }
             }
-
-            Toggle("Initial Container Primary Span", isOn: $draft.initialContainerPrimarySpanEnabled)
-            if draft.initialContainerPrimarySpanEnabled {
-                LabeledContent("Primary Span") {
-                    HStack {
-                        TextField(
-                            "Initial Container Primary Span",
-                            value: initialContainerPrimarySpanPercent,
-                            format: .number.precision(.significantDigits(1 ... 15)).grouping(.never)
-                        )
-                        .labelsHidden()
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
-                        .multilineTextAlignment(.trailing)
-                        .accessibilityLabel("Initial container primary span percentage")
-                        .accessibilityValue(initialContainerPrimarySpanAccessibilityValue)
-                        .accessibilityHint(initialContainerPrimarySpanAccessibilityHint)
-                        Text("%")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let error = draft.initialContainerPrimarySpanError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-
-            SettingsCaption(
-                localized: "Only affects resizable windows in Niri when they create or claim a container. Primary span is width in horizontal orientation and height in vertical orientation."
-            )
         }
-    }
-
-    private var initialContainerPrimarySpanPercent: Binding<Double> {
-        Binding(
-            get: { AppRulePrimarySpanPercent.percent(from: draft.initialContainerPrimarySpan) },
-            set: { percent in
-                draft.initialContainerPrimarySpan = AppRulePrimarySpanPercent.proportion(from: percent)
-            }
-        )
-    }
-
-    private var initialContainerPrimarySpanAccessibilityValue: String {
-        let percent = AppRulePrimarySpanPercent.displayText(for: draft.initialContainerPrimarySpan)
-        let value = String(localized: "\(percent) percent")
-        guard draft.initialContainerPrimarySpanError != nil else { return value }
-        return String(localized: "\(value), invalid")
-    }
-
-    private var initialContainerPrimarySpanAccessibilityHint: String {
-        let range = String(localized: "Enter a value from 5 through 100 percent.")
-        guard let error = draft.initialContainerPrimarySpanError else { return range }
-        return String(localized: "\(error). \(range)")
     }
 
     private var isWorkspaceMissing: Bool {

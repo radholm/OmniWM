@@ -31,32 +31,6 @@ enum EventNormalizer {
 
     private static func normalizeAdmission(_ event: WMEvent, existingEntry: WindowState?) -> WMEvent {
         switch event {
-        case let .windowAdmitted(
-            token,
-            workspaceId,
-            monitorId,
-            mode,
-            axRef,
-            ruleEffects,
-            admissionHints,
-            lifetimeAuthority,
-            adoptNativeFocus,
-            metadata,
-            source
-        ):
-            return .windowAdmitted(
-                token: token,
-                workspaceId: workspaceId,
-                monitorId: monitorId ?? existingEntry?.observedState.monitorId ?? existingEntry?.desiredState.monitorId,
-                mode: mode,
-                axRef: axRef,
-                ruleEffects: ruleEffects,
-                admissionHints: admissionHints,
-                lifetimeAuthority: lifetimeAuthority,
-                adoptNativeFocus: adoptNativeFocus,
-                managedReplacementMetadata: metadata,
-                source: source
-            )
         case let .windowRekeyed(from, to, workspaceId, monitorId, reason, newAXRef, metadata, source):
             return .windowRekeyed(
                 from: from,

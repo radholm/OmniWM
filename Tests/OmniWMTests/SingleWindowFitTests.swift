@@ -14,17 +14,12 @@ final class SingleWindowFitTests: XCTestCase {
 
     func testSerializedRoundTrips() {
         XCTAssertEqual(SingleWindowFit(mode: .fill).serialized, "fill")
-        XCTAssertEqual(SingleWindowFit(mode: .containerPrimarySpan).serialized, "container_primary_span")
         XCTAssertEqual(SingleWindowFit(mode: .custom, width: 1920, height: 1080).serialized, "1920x1080")
         XCTAssertEqual(SingleWindowFit(mode: .custom, width: 1600, height: 900).serialized, "1600x900")
     }
 
     func testDecodeNewFormats() {
         XCTAssertEqual(SingleWindowFit(serialized: "fill"), SingleWindowFit(mode: .fill))
-        XCTAssertEqual(
-            SingleWindowFit(serialized: "container_primary_span"),
-            SingleWindowFit(mode: .containerPrimarySpan)
-        )
         XCTAssertEqual(
             SingleWindowFit(serialized: "1920x1080"),
             SingleWindowFit(mode: .custom, width: 1920, height: 1080)
@@ -44,7 +39,6 @@ final class SingleWindowFitTests: XCTestCase {
     func testFrameFillReturnsWorkingFrame() {
         let working = CGRect(x: 100, y: 50, width: 2000, height: 1200)
         XCTAssertEqual(SingleWindowFit(mode: .fill).frame(in: working), working)
-        XCTAssertEqual(SingleWindowFit(mode: .containerPrimarySpan).frame(in: working), working)
     }
 
     func testFrameCustomCentersWhenSmaller() {
@@ -67,14 +61,7 @@ final class SingleWindowFitTests: XCTestCase {
 
     func testSettingsTOMLRoundTripsSingleWindowFitKeys() throws {
         var export = SettingsExport.defaults()
-        export.niri.singleWindowFit = SingleWindowFit(mode: .containerPrimarySpan)
         export.dwindle.singleWindowFit = SingleWindowFit(mode: .custom, width: 1280, height: 720)
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: "Portrait",
-                singleWindowFit: SingleWindowFit(mode: .containerPrimarySpan)
-            )
-        ]
         export.monitorDwindleSettings = [
             MonitorDwindleSettings(
                 monitorName: "Landscape",
@@ -88,22 +75,13 @@ final class SingleWindowFitTests: XCTestCase {
 
         XCTAssertTrue(toml.contains("singleWindowFit"))
         XCTAssertFalse(toml.contains("singleWindowAspectRatio"))
-        XCTAssertEqual(decoded.niri.singleWindowFit.serialized, "container_primary_span")
         XCTAssertEqual(decoded.dwindle.singleWindowFit.serialized, "1280x720")
-        XCTAssertEqual(decoded.monitorNiriSettings.first?.singleWindowFit?.serialized, "container_primary_span")
         XCTAssertEqual(decoded.monitorDwindleSettings.first?.singleWindowFit?.serialized, "1024x768")
     }
 
     func testLegacySingleWindowAspectRatioKeysAreIgnoredAndDiagnosed() throws {
         var export = SettingsExport.defaults()
-        export.niri.singleWindowFit = SingleWindowFit(mode: .containerPrimarySpan)
         export.dwindle.singleWindowFit = SingleWindowFit(mode: .custom, width: 1280, height: 720)
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: "Portrait",
-                singleWindowFit: SingleWindowFit(mode: .containerPrimarySpan)
-            )
-        ]
         export.monitorDwindleSettings = [
             MonitorDwindleSettings(
                 monitorName: "Landscape",
@@ -130,12 +108,8 @@ final class SingleWindowFitTests: XCTestCase {
         )
         let decoded = try SettingsTOMLCodec.decode(legacy)
         let unknownKeys = Set(SettingsTOMLCodec.unknownKeyPaths(in: legacy))
-
-        XCTAssertEqual(decoded.niri.singleWindowFit, export.niri.singleWindowFit)
         XCTAssertEqual(decoded.dwindle.singleWindowFit, export.dwindle.singleWindowFit)
-        XCTAssertTrue(unknownKeys.contains("niri.singleWindowAspectRatio"))
         XCTAssertTrue(unknownKeys.contains("dwindle.singleWindowAspectRatio"))
-        XCTAssertTrue(unknownKeys.contains("monitorNiriOverrides[0].singleWindowAspectRatio"))
         XCTAssertTrue(unknownKeys.contains("monitorDwindleOverrides[0].singleWindowAspectRatio"))
     }
 }
@@ -252,288 +226,5 @@ final class DwindleSingleWindowFitEngineTests: XCTestCase {
         XCTAssertEqual(frames[second], fullscreenFrame)
         // The other windows stack underneath the fullscreen one so paging through them only reveals them.
         XCTAssertEqual(frames[first], fullscreenFrame)
-    }
-}
-
-final class NiriSingleWindowFitEngineTests: XCTestCase {
-    private struct Fixture {
-        let engine: NiriLayoutEngine
-        let workspaceId: WorkspaceDescriptor.ID
-        let token: WindowToken
-        let window: NiriWindow
-    }
-
-    private func makeSingleWindowFixture() -> Fixture {
-        let engine = NiriLayoutEngine()
-        let workspaceId = WorkspaceDescriptor.ID()
-        let token = WindowToken(pid: 1, windowId: 1)
-        let window = engine.addWindow(
-            token: token,
-            to: workspaceId,
-            afterSelection: nil
-        )
-        return Fixture(engine: engine, workspaceId: workspaceId, token: token, window: window)
-    }
-
-    func testFillUsesBorderSafeFrame() {
-        let fixture = makeSingleWindowFixture()
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .fill)
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let borderSafeFillFrame = CGRect(x: 8, y: 8, width: 1264, height: 784)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            borderSafeFillFrame: borderSafeFillFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-
-        XCTAssertEqual(frame, borderSafeFillFrame)
-        XCTAssertEqual(fixture.window.sizingMode, .normal)
-    }
-
-    func testInvalidCustomFitUsesBorderSafeFrame() {
-        let fixture = makeSingleWindowFixture()
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .custom, width: 0, height: 600)
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let borderSafeFillFrame = CGRect(x: 8, y: 8, width: 1264, height: 784)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            borderSafeFillFrame: borderSafeFillFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-        XCTAssertEqual(frame, borderSafeFillFrame)
-    }
-
-    func testFullscreenSizingUsesFullscreenLayoutFrame() {
-        let fixture = makeSingleWindowFixture()
-        fixture.window.sizingMode = .fullscreen
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-
-        XCTAssertEqual(frame, fullscreenFrame)
-    }
-
-    func testMaximizedSizingUsesBorderSafeFrame() {
-        let fixture = makeSingleWindowFixture()
-        fixture.window.sizingMode = .maximized
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let borderSafeFillFrame = CGRect(x: 8, y: 8, width: 1264, height: 784)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            borderSafeFillFrame: borderSafeFillFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-
-        XCTAssertEqual(frame, borderSafeFillFrame)
-    }
-
-    func testCustomFitStaysBoundedByWorkingFrame() {
-        let fixture = makeSingleWindowFixture()
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .custom, width: 800, height: 600)
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-
-        XCTAssertEqual(frame, CGRect(x: 224, y: 96, width: 800, height: 600))
-    }
-
-    func testManualSingleWindowWidthStaysBoundedByWorkingFrame() throws {
-        let fixture = makeSingleWindowFixture()
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .fill)
-        let column = try XCTUnwrap(fixture.engine.columns(in: fixture.workspaceId).first)
-        column.hasManualSingleWindowWidthOverride = true
-        column.cachedWidth = 700
-        let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-        let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-
-        let frame = fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-
-        XCTAssertEqual(frame, CGRect(x: 274, y: 16, width: 700, height: 760))
-    }
-
-    func testHiddenPlacementKeepsOnePointReveal() {
-        let monitor = HiddenPlacementMonitorContext(
-            id: Monitor.ID(displayId: 1),
-            frame: CGRect(x: 0, y: 0, width: 1280, height: 800),
-            visibleFrame: CGRect(x: 0, y: 0, width: 1280, height: 760)
-        )
-        let size = CGSize(width: 400, height: 300)
-
-        let placement = HiddenWindowPlacementResolver(
-            monitor: monitor,
-            monitors: [monitor]
-        ).placement(
-            for: size,
-            requestedEdge: .maximum,
-            orthogonalOrigin: 40,
-            baseReveal: 1,
-            orientation: .horizontal
-        )
-        let frame = placement.frame(for: size)
-
-        XCTAssertEqual(frame.minX, monitor.visibleFrame.maxX - 1.0)
-        XCTAssertEqual(frame.minY, 40)
-        XCTAssertEqual(frame.width, size.width)
-        XCTAssertEqual(frame.height, size.height)
-    }
-}
-
-final class NiriSingleWindowMinimumSizeTests: XCTestCase {
-    private let workingFrame = CGRect(x: 24, y: 16, width: 1200, height: 760)
-    private let fullscreenFrame = CGRect(x: 0, y: 0, width: 1280, height: 800)
-
-    private struct Fixture {
-        let engine: NiriLayoutEngine
-        let workspaceId: WorkspaceDescriptor.ID
-        let token: WindowToken
-        let column: NiriContainer
-    }
-
-    private func makeFixture(minWidth: CGFloat, minHeight: CGFloat) -> Fixture {
-        let engine = NiriLayoutEngine()
-        let workspaceId = WorkspaceDescriptor.ID()
-        let token = WindowToken(pid: 1, windowId: 1)
-        _ = engine.addWindow(token: token, to: workspaceId, afterSelection: nil)
-        engine.updateWindowConstraints(
-            for: token,
-            constraints: WindowSizeConstraints(
-                minSize: CGSize(width: minWidth, height: minHeight),
-                maxSize: .zero,
-                isFixed: false
-            ),
-            in: workspaceId,
-            motion: .enabled
-        )
-        return Fixture(
-            engine: engine,
-            workspaceId: workspaceId,
-            token: token,
-            column: engine.columns(in: workspaceId)[0]
-        )
-    }
-
-    private func layoutFrame(_ fixture: Fixture) -> CGRect? {
-        let area = WorkingAreaContext(
-            workingFrame: workingFrame,
-            fullscreenLayoutFrame: fullscreenFrame,
-            viewFrame: fullscreenFrame,
-            scale: 1
-        )
-        return fixture.engine.calculateLayout(
-            state: ViewportState(),
-            workspaceId: fixture.workspaceId,
-            monitorFrame: workingFrame,
-            gaps: (horizontal: 12, vertical: 12),
-            workingArea: area,
-            orientation: .horizontal
-        )[fixture.token]
-    }
-
-    func testFillFitExpandsToOversizedMin() throws {
-        let fixture = makeFixture(minWidth: 1300, minHeight: 900)
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .fill)
-
-        let frame = try XCTUnwrap(layoutFrame(fixture))
-
-        XCTAssertEqual(frame.width, 1300, accuracy: 0.5)
-        XCTAssertEqual(frame.height, 900, accuracy: 0.5)
-    }
-
-    func testCustomFitIsFlooredToMin() throws {
-        let fixture = makeFixture(minWidth: 600, minHeight: 500)
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .custom, width: 400, height: 300)
-
-        let frame = try XCTUnwrap(layoutFrame(fixture))
-
-        XCTAssertEqual(frame.width, 600, accuracy: 0.5)
-        XCTAssertEqual(frame.height, 500, accuracy: 0.5)
-    }
-
-    func testManualWidthOverrideIsFlooredToMin() throws {
-        let fixture = makeFixture(minWidth: 1000, minHeight: 1)
-        fixture.engine.singleWindowFit = SingleWindowFit(mode: .fill)
-        fixture.column.hasManualSingleWindowWidthOverride = true
-        fixture.column.cachedWidth = 300
-
-        let frame = try XCTUnwrap(layoutFrame(fixture))
-
-        XCTAssertEqual(frame.width, 1000, accuracy: 0.5)
     }
 }

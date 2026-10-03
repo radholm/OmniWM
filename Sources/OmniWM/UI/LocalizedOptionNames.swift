@@ -38,7 +38,6 @@ extension LayoutType {
     var localizedDisplayName: String {
         switch self {
         case .defaultLayout: String(localized: "Default")
-        case .niri: String(localized: "Niri (Scrolling)")
         case .dwindle: String(localized: "Dwindle (BSP)")
         }
     }
@@ -59,35 +58,6 @@ extension SingleWindowFit.Mode {
         switch self {
         case .fill: String(localized: "Full Screen")
         case .custom: String(localized: "Custom (W:H)")
-        case .containerPrimarySpan: String(localized: "Container Primary Span")
-        }
-    }
-}
-
-extension CenterFocusedColumn {
-    var localizedDisplayName: String {
-        switch self {
-        case .never: String(localized: "Never")
-        case .always: String(localized: "Always")
-        case .onOverflow: String(localized: "On Overflow")
-        }
-    }
-}
-
-extension TrackpadScrollStyle {
-    var localizedDisplayName: String {
-        switch self {
-        case .snap: String(localized: "Snap to Columns")
-        case .momentum: String(localized: "Momentum")
-        }
-    }
-}
-
-extension ScrollModifierKey {
-    var localizedDisplayName: String {
-        switch self {
-        case .optionShift: String(localized: "Option+Shift (⌥⇧)")
-        case .controlShift: String(localized: "Control+Shift (⌃⇧)")
         }
     }
 }

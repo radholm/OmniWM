@@ -130,8 +130,6 @@ struct RestoreIntent: Equatable {
     var normalizedFloatingOrigin: CGPoint?
     var restoreToFloating: Bool
     var rescueEligible: Bool
-    var niriPlacement: PersistedNiriPlacement?
-    var detachedNiriContainerSizingState: NiriContainerSizingState?
     var dwindlePlacement: PersistedDwindlePlacement?
 }
 
@@ -178,7 +176,6 @@ struct ReconcileSnapshot: Equatable {
     let topologyProfile: TopologyProfile
     let focusSession: FocusSessionSnapshot
     let windows: [ReconcileWindowSnapshot]
-    var viewports: [WorkspaceDescriptor.ID: ViewportState] = [:]
     var layouts: [WorkspaceDescriptor.ID: LayoutTopology] = [:]
 
     var selectedManagedToken: WindowToken? {

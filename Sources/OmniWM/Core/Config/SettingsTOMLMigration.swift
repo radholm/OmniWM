@@ -166,16 +166,11 @@ enum SettingsTOMLMigration {
             "assignFocusedWindowToScratchpad": "assignFocusedWindowToScratchpad.1",
             "toggleScratchpadWindow": "toggleScratchpad.1"
         ]
-        let retirements = [
-            "consumeOrExpelWindowLeft": ["consumeWindowIntoColumn", "expelWindowFromColumn"],
-            "consumeOrExpelWindowRight": ["consumeWindowIntoColumn", "expelWindowFromColumn"]
-        ]
         let explicitCurrentIDs = Set(entries.compactMap(hotkeyID))
         var migrated = migrateLegacyHotkeyEntries(
             entries,
             explicitCurrentIDs: explicitCurrentIDs,
-            mappings: mappings,
-            retirements: retirements
+            mappings: mappings
         )
         let addedIDs = appendMissingUnassignedHotkeys(versionOneHotkeyIDs, to: &migrated.entries)
         raw["hotkeys"] = .array(migrated.entries)
@@ -189,17 +184,12 @@ enum SettingsTOMLMigration {
     private static func migrateLegacyHotkeyEntries(
         _ entries: [TOMLNode],
         explicitCurrentIDs: Set<String>,
-        mappings: [String: String],
-        retirements: [String: [String]]
+        mappings: [String: String]
     ) -> SettingsHotkeyMigrationAccumulator {
         var result = SettingsHotkeyMigrationAccumulator(entries: [], mapped: [], retired: [])
         for entry in entries {
             guard let id = hotkeyID(entry) else {
                 result.entries.append(entry)
-                continue
-            }
-            if let suggestedIDs = retirements[id] {
-                result.retired.append(SettingsRetiredHotkey(id: id, suggestedIDs: suggestedIDs))
                 continue
             }
             guard let currentID = mappings[id] else {

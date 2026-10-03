@@ -255,8 +255,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNotNil(controller.workspaceManager.entry(for: pending.oldWindow.token))
@@ -295,8 +294,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -453,23 +451,6 @@ final class ManagedWindowIdentityTests: XCTestCase {
         let windowId: UInt32 = 467_973
         let token = WindowToken(pid: 467_974, windowId: Int(windowId))
         let axRef = WindowAdmissionTestSupport.track(token, in: workspaceId, controller: controller)
-        let identity = AXManagedWindowIdentity(token: token, axRef: axRef)
-        XCTAssertTrue(
-            controller.axEventHandler.scheduleAdmissionRetry(
-                windowId: windowId,
-                expectedToken: token,
-                axRef: axRef,
-                reason: .factsDeferred,
-                trigger: .identityRebind(
-                    oldWindow: identity,
-                    newWindow: identity,
-                    managedReplacementMetadata: nil,
-                    admissionHints: nil,
-                    sizeConstraints: nil
-                )
-            )
-        )
-
         let rebound = controller.axEventHandler.rekeyManagedWindowIdentity(
             from: token,
             to: token,
@@ -519,7 +500,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
         await controller.axEventHandler.lifecycleQueries.task?.value
 
         let state = try XCTUnwrap(controller.axEventHandler.admissionRetryStateByWindowId[windowId])
-        guard case let .identityRebind(retryOld, retryNew, _, _, _) = state.trigger else {
+        guard case let .identityRebind(retryOld, retryNew, _, _) = state.trigger else {
             return XCTFail("Expected identity rebind retry")
         }
         XCTAssertEqual(retryOld.token, oldToken)
@@ -611,7 +592,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
         let state = try XCTUnwrap(
             controller.axEventHandler.admissionRetryStateByWindowId[UInt32(newToken.windowId)]
         )
-        guard case let .identityRebind(oldWindow, newWindow, _, _, _) = state.trigger else {
+        guard case let .identityRebind(oldWindow, newWindow, _, _) = state.trigger else {
             return XCTFail("Expected identity rebind ownership")
         }
         XCTAssertEqual(oldWindow.token, oldToken)
@@ -663,7 +644,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
         let state = try XCTUnwrap(
             controller.axEventHandler.admissionRetryStateByWindowId[UInt32(modalToken.windowId)]
         )
-        guard case let .identityRebind(oldWindow, newWindow, _, _, _) = state.trigger else {
+        guard case let .identityRebind(oldWindow, newWindow, _, _) = state.trigger else {
             return XCTFail("Expected identity rebind ownership")
         }
         XCTAssertEqual(oldWindow.token, oldToken)
@@ -725,8 +706,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -780,8 +760,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(controller.workspaceManager.entry(for: pending.oldWindow.token))
@@ -841,8 +820,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -891,8 +869,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNotNil(controller.workspaceManager.entry(for: pending.oldWindow.token))
@@ -924,8 +901,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNotNil(controller.workspaceManager.entry(for: pending.oldWindow.token))
@@ -960,8 +936,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(handler.admissionRetryStateByWindowId[pending.windowId])
@@ -993,8 +968,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(handler.admissionRetryStateByWindowId[pending.windowId])
@@ -1017,8 +991,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(handler.admissionRetryStateByWindowId[pending.windowId])
@@ -1155,8 +1128,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: runningState.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(handler.admissionRetryStateByWindowId[pending.windowId])
@@ -1281,7 +1253,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             suffix: 22,
             sizeConstraints: constraints
         )
-        guard case let .identityRebind(_, _, _, _, capturedConstraints) = pending.state.trigger else {
+        guard case let .identityRebind(_, _, _, capturedConstraints) = pending.state.trigger else {
             return XCTFail("Expected identity rebind retry")
         }
         controller.axEventHandler.managedWindowIdentityRebindAcknowledgementProvider = { _, _ in true }
@@ -1293,7 +1265,6 @@ final class ManagedWindowIdentityTests: XCTestCase {
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
             managedReplacementMetadata: nil,
-            admissionHints: nil,
             sizeConstraints: capturedConstraints
         )
 
@@ -1324,8 +1295,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -1372,8 +1342,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -1405,8 +1374,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [acknowledgementEntered], timeout: 2)
@@ -1450,8 +1418,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [finalizationEntered], timeout: 2)
@@ -1494,8 +1461,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertNil(controller.workspaceManager.entry(for: pending.oldWindow.token))
@@ -1542,8 +1508,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
             to: pending.newWindow,
             windowId: pending.windowId,
             retryGeneration: pending.state.generation,
-            managedReplacementMetadata: nil,
-            admissionHints: nil
+            managedReplacementMetadata: nil
         )
 
         XCTAssertEqual(terminalDeliveryCount, 1)
@@ -1583,8 +1548,7 @@ final class ManagedWindowIdentityTests: XCTestCase {
                 windowId: pending.windowId,
                 retryGeneration: pending.state
                     .generation,
-                managedReplacementMetadata: nil,
-                admissionHints: nil
+                managedReplacementMetadata: nil
             )
         }
         await fulfillment(of: [finalizationEntered], timeout: 2)
@@ -1670,7 +1634,6 @@ private extension AXEventHandler {
         windowId: UInt32,
         retryGeneration: UInt64,
         managedReplacementMetadata: ManagedReplacementMetadata?,
-        admissionHints: ManagedWindowAdmissionHints?,
         sizeConstraints: WindowSizeConstraints? = nil
     ) async {
         guard let state = admissionRetryStateByWindowId[windowId],
@@ -1684,7 +1647,6 @@ private extension AXEventHandler {
                 oldWindow: oldWindow,
                 newWindow: newWindow,
                 managedReplacementMetadata: managedReplacementMetadata,
-                admissionHints: admissionHints,
                 sizeConstraints: sizeConstraints
             ),
             execution: .init(windowId: windowId, generation: retryGeneration, executionOwner: executionOwner)

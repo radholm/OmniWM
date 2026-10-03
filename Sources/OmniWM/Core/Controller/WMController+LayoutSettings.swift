@@ -11,15 +11,6 @@ extension WMController {
         for monitor in workspaceManager.monitors {
             orientations[monitor.id] = settings.monitors.effectiveOrientation(for: monitor)
         }
-        workspaceManager.withEngineMutationScope {
-            niriEngine?.updateMonitorOrientations(orientations)
-        }
-        layoutRefreshController.requestRelayout(reason: .monitorSettingsChanged)
-    }
-
-    func updateMonitorNiriSettings() {
-        guard niriEngine != nil else { return }
-        niriLayoutHandler.refreshResolvedMonitorSettings()
         layoutRefreshController.requestRelayout(reason: .monitorSettingsChanged)
     }
 
@@ -30,7 +21,6 @@ extension WMController {
     }
 
     func updateMonitorGapSettings() {
-        workspaceManager.invalidateNiriCachedPrimarySpans()
         workspaceManager.invalidateAllLayouts()
         layoutRefreshController.requestRelayout(reason: .monitorSettingsChanged)
         publishDisplayChanged()
@@ -45,7 +35,6 @@ extension WMController {
 
     func updateWorkspaceConfig() {
         workspaceManager.applySettings()
-        syncMonitorsToNiriEngine()
         layoutRefreshController.requestRelayout(reason: .workspaceConfigChanged)
     }
 
@@ -56,44 +45,6 @@ extension WMController {
     func updateAppRules() {
         rebuildAppRulesCache()
         layoutRefreshController.requestFullRescan(reason: .appRulesChanged)
-    }
-
-    func enableNiriLayout(
-        centerFocusedColumn: CenterFocusedColumn = .never,
-        alwaysCenterSingleColumn: Bool = false
-    ) {
-        niriLayoutHandler.enableNiriLayout(
-            centerFocusedColumn: centerFocusedColumn,
-            alwaysCenterSingleColumn: alwaysCenterSingleColumn
-        )
-    }
-
-    func syncMonitorsToNiriEngine() {
-        niriLayoutHandler.syncMonitorsToNiriEngine()
-    }
-
-    func updateNiriConfig(
-        visibleContainerCount: Int? = nil,
-        infiniteLoop: Bool? = nil,
-        centerFocusedColumn: CenterFocusedColumn? = nil,
-        alwaysCenterSingleColumn: Bool? = nil,
-        singleWindowFit: SingleWindowFit? = nil,
-        containerPrimarySpanPresets: [Double]? = nil,
-        defaultContainerPrimarySpan: Double?? = nil
-    ) {
-        niriLayoutHandler.updateNiriConfig(
-            visibleContainerCount: visibleContainerCount,
-            infiniteLoop: infiniteLoop,
-            centerFocusedColumn: centerFocusedColumn,
-            alwaysCenterSingleColumn: alwaysCenterSingleColumn,
-            singleWindowFit: singleWindowFit,
-            containerPrimarySpanPresets: containerPrimarySpanPresets,
-            defaultContainerPrimarySpan: defaultContainerPrimarySpan
-        )
-    }
-
-    func balanceNiriSizesAllWorkspaces() {
-        niriLayoutHandler.balanceSizesAllWorkspaces()
     }
 
     func enableDwindleLayout() {
@@ -114,11 +65,6 @@ extension WMController {
             singleWindowFit: singleWindowFit,
             innerGap: innerGap
         )
-    }
-
-    var niriEngine: NiriLayoutEngine? {
-        get { workspaceManager.niriEngine }
-        set { workspaceManager.niriEngine = newValue }
     }
 
     var dwindleEngine: DwindleLayoutEngine? {

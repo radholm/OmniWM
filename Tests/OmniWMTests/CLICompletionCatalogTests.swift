@@ -16,7 +16,7 @@ final class CLICompletionCatalogTests: XCTestCase {
     func testFocusCombinesDirectArgumentsAndNestedCommands() {
         XCTAssertEqual(
             CLICompletionCatalog.commandSlotThreeSuggestionsByFirst["focus"],
-            ["left", "right", "up", "down", "previous", "down-or-left", "up-or-right"].sorted()
+            ["left", "right", "up", "down", "previous"].sorted()
         )
     }
 

@@ -11,7 +11,6 @@ extension AXEventHandler {
         identity: AXManagedWindowIdentity,
         windowId: UInt32,
         candidate: ManagedReplacementCandidateFacts,
-        admissionHints: ManagedWindowAdmissionHints? = nil,
         sizeConstraints: WindowSizeConstraints? = nil
     ) -> Bool {
         let token = identity.token
@@ -31,7 +30,6 @@ extension AXEventHandler {
             windowId: windowId,
             axRef: axRef,
             managedReplacementMetadata: metadata,
-            admissionHints: admissionHints,
             sizeConstraints: sizeConstraints
         )
         guard rebindResult.isHandled else {
@@ -195,7 +193,6 @@ extension AXEventHandler {
             windowId: create.windowId,
             axRef: create.axRef,
             managedReplacementMetadata: create.replacementMetadata,
-            admissionHints: create.admissionHints,
             preparedSubscriptionRetainContribution: 1,
             focusedAdmissionContinuation: focusedAdmissionContinuation
         )
@@ -244,7 +241,6 @@ extension AXEventHandler {
 
     func flushManagedReplacementBurst(for key: ManagedReplacementKey) {
         guard let burst = takeManagedReplacementBurst(for: key) else { return }
-        markManagedReplacementFocusBurstClosed(for: key)
         let elapsedMillis = max(
             0,
             Int(((managedReplacementCurrentUptime() - burst.firstEventUptime) * 1000).rounded())

@@ -13,7 +13,6 @@ struct FullRescanEvaluatedWindow {
 struct FullRescanAdmissionAssignment {
     let workspaceId: WorkspaceDescriptor.ID
     let ruleEffects: ManagedWindowRuleEffects
-    let admissionHints: ManagedWindowAdmissionHints
 }
 
 struct FullRescanAdmission {

@@ -3,11 +3,9 @@
 
 extension SettingsStore {
     func updateGestureSettings(
-        _ candidate: SettingsExport.Gestures,
-        monitors: [Monitor]
+        _ candidate: SettingsExport.Gestures
     ) -> TrackpadGestureConflict? {
         var disabledCandidate = gestures.export()
-        disabledCandidate.scrollEnabled = disabledCandidate.scrollEnabled && candidate.scrollEnabled
         disabledCandidate.workspaceSwipeEnabled = disabledCandidate.workspaceSwipeEnabled && candidate
             .workspaceSwipeEnabled
         disabledCandidate.overviewGestureEnabled =
@@ -17,11 +15,7 @@ extension SettingsStore {
         disabledCandidate.windowResizeEnabled =
             (disabledCandidate.windowResizeEnabled ?? false) && (candidate.windowResizeEnabled ?? false)
         if candidate != disabledCandidate,
-           let conflict = GestureSettingsValidation.conflict(
-               gestures: candidate,
-               orientationOverrides: self.monitors.orientationOverrides,
-               monitors: monitors
-           )
+           let conflict = GestureSettingsValidation.conflict(gestures: candidate)
         {
             return conflict
         }
@@ -31,9 +25,8 @@ extension SettingsStore {
 
     func updateMonitorOrientation(
         _ orientation: Monitor.Orientation?,
-        for monitor: Monitor,
-        monitors: [Monitor]
-    ) -> TrackpadGestureConflict? {
+        for monitor: Monitor
+    ) {
         var overrides = self.monitors.orientationOverrides
         if let orientation {
             MonitorSettingsStore.update(
@@ -44,14 +37,6 @@ extension SettingsStore {
         } else {
             MonitorSettingsStore.remove(for: monitor, from: &overrides)
         }
-        if let conflict = GestureSettingsValidation.conflict(
-            gestures: gestures.export(),
-            orientationOverrides: overrides,
-            monitors: monitors
-        ) {
-            return conflict
-        }
         self.monitors.orientationOverrides = overrides
-        return nil
     }
 }

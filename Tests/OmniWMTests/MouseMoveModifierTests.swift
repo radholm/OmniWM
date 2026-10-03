@@ -5,10 +5,9 @@ import CoreGraphics
 @testable import OmniWM
 import XCTest
 
-final class MouseMoveModifierTests: NiriInteractionTestCase {
+final class MouseMoveModifierTests: XCTestCase {
     private struct Fixture {
         let controller: WMController
-        let engine: NiriLayoutEngine
         let workspaceId: WorkspaceDescriptor.ID
         let token: WindowToken
         let windowFrame: CGRect
@@ -35,12 +34,11 @@ final class MouseMoveModifierTests: NiriInteractionTestCase {
                 MouseEventHandler.mouseMoveMode(modifiers: required, required: required),
                 .swap
             )
-            XCTAssertEqual(
+            XCTAssertNil(
                 MouseEventHandler.mouseMoveMode(
                     modifiers: required.union(.maskShift),
                     required: required
-                ),
-                .insert
+                )
             )
             XCTAssertEqual(
                 MouseEventHandler.mouseMoveMode(
@@ -66,177 +64,6 @@ final class MouseMoveModifierTests: NiriInteractionTestCase {
                 required: .maskAlternate
             )
         )
-    }
-
-    @MainActor
-    func testOffDoesNotStartMoveForOptionDrag() throws {
-        let fixture = try makeFixture(pid: 1_101)
-        fixture.controller.settings.gestures.mouseMoveModifierKey = .off
-        let worldSeq = fixture.controller.workspaceManager.worldSeq
-
-        XCTAssertFalse(
-            fixture.handler.dispatchMouseDown(
-                at: fixture.windowFrame.center,
-                modifiers: .maskAlternate
-            )
-        )
-
-        XCTAssertFalse(fixture.handler.state.isMoving)
-        XCTAssertNil(fixture.handler.state.activeInteractionButton)
-        XCTAssertNil(fixture.handler.state.dragGhostController)
-        XCTAssertNil(fixture.engine.interactiveMove)
-        XCTAssertEqual(fixture.controller.workspaceManager.worldSeq, worldSeq)
-    }
-
-    @MainActor
-    func testConfiguredModifierReplacesOptionAndShiftSelectsInsert() throws {
-        let fixture = try makeFixture(pid: 1_102)
-        fixture.controller.settings.gestures.mouseMoveModifierKey = .control
-
-        XCTAssertFalse(
-            fixture.handler.dispatchMouseDown(
-                at: fixture.windowFrame.center,
-                modifiers: .maskAlternate
-            )
-        )
-        XCTAssertFalse(fixture.handler.state.isMoving)
-        XCTAssertNil(fixture.engine.interactiveMove)
-
-        XCTAssertFalse(
-            fixture.handler.dispatchMouseDown(
-                at: fixture.windowFrame.center,
-                modifiers: [.maskControl, .maskShift]
-            )
-        )
-        XCTAssertTrue(fixture.handler.state.isMoving)
-        XCTAssertEqual(fixture.handler.state.activeInteractionButton, .left)
-        XCTAssertTrue(try XCTUnwrap(fixture.engine.interactiveMove).isInsertMode)
-
-        fixture.handler.dispatchMouseUp(at: fixture.windowFrame.center)
-
-        XCTAssertFalse(fixture.handler.state.isMoving)
-        XCTAssertNil(fixture.engine.interactiveMove)
-    }
-
-    @MainActor
-    func testDefaultOptionStartsSwapAndSettingChangeDoesNotCancelActiveMove() throws {
-        let fixture = try makeFixture(pid: 1_103)
-
-        XCTAssertFalse(
-            fixture.handler.dispatchMouseDown(
-                at: fixture.windowFrame.center,
-                modifiers: .maskAlternate
-            )
-        )
-        XCTAssertTrue(fixture.handler.state.isMoving)
-        XCTAssertFalse(try XCTUnwrap(fixture.engine.interactiveMove).isInsertMode)
-
-        fixture.controller.settings.gestures.mouseMoveModifierKey = .off
-
-        XCTAssertTrue(fixture.handler.state.isMoving)
-        XCTAssertNotNil(fixture.engine.interactiveMove)
-
-        fixture.handler.dispatchMouseUp(at: fixture.windowFrame.center)
-
-        XCTAssertFalse(fixture.handler.state.isMoving)
-        XCTAssertNil(fixture.engine.interactiveMove)
-    }
-
-    @MainActor
-    func testMouseMoveSettingDoesNotChangeRightMouseResize() throws {
-        let fixture = try makeFixture(pid: 1_104)
-        fixture.controller.settings.gestures.mouseMoveModifierKey = .off
-        let resizePoint = CGPoint(x: fixture.windowFrame.maxX - 1, y: fixture.windowFrame.midY)
-
-        XCTAssertTrue(
-            fixture.handler.dispatchMouseDown(
-                at: resizePoint,
-                modifiers: .maskAlternate,
-                button: .right
-            )
-        )
-        XCTAssertTrue(fixture.handler.state.isResizing)
-        XCTAssertNotNil(fixture.engine.interactiveResize)
-
-        fixture.handler.dispatchMouseUp(at: resizePoint, button: .right)
-
-        XCTAssertFalse(fixture.handler.state.isResizing)
-        XCTAssertNil(fixture.engine.interactiveResize)
-    }
-
-    @MainActor
-    func testNiriResizeTargetIncludesOnlyTheFocusedExteriorBorder() throws {
-        let fixture = try makeFixture(pid: 1_105)
-        let border = DesiredBorderSurface(
-            token: fixture.token,
-            frame: fixture.windowFrame,
-            config: borderConfig(width: 5)
-        )
-        let surfaceFrame = border.config.resolvedGeometry(for: border.frame, scale: 1).surfaceFrame
-        let exteriorPoints = [
-            CGPoint(x: fixture.windowFrame.maxX, y: fixture.windowFrame.midY),
-            CGPoint(x: fixture.windowFrame.maxX + 4, y: fixture.windowFrame.midY),
-            CGPoint(x: fixture.windowFrame.maxX + 4, y: fixture.windowFrame.maxY + 4)
-        ]
-
-        XCTAssertNil(fixture.engine.hitTestTiled(point: exteriorPoints[1], in: fixture.workspaceId))
-        for point in exteriorPoints {
-            let token = fixture.handler.focusedBorderResizeToken(
-                at: point,
-                in: fixture.workspaceId,
-                scale: 1,
-                appliedBorder: border
-            )
-            XCTAssertEqual(token, fixture.token)
-        }
-
-        XCTAssertNil(
-            fixture.handler.focusedBorderResizeToken(
-                at: CGPoint(x: surfaceFrame.maxX, y: surfaceFrame.midY),
-                in: fixture.workspaceId,
-                scale: 1,
-                appliedBorder: border
-            )
-        )
-        XCTAssertNil(
-            fixture.handler.focusedBorderResizeToken(
-                at: CGPoint(x: fixture.windowFrame.maxX + 1, y: fixture.windowFrame.midY),
-                in: fixture.workspaceId,
-                scale: 1,
-                appliedBorder: DesiredBorderSurface(
-                    token: fixture.token,
-                    frame: fixture.windowFrame,
-                    config: borderConfig(enabled: false, width: 5)
-                )
-            )
-        )
-        XCTAssertTrue(fixture.controller.workspaceManager.recordExternalFocus(pid: 1_108, windowId: 3))
-        XCTAssertNil(
-            fixture.handler.focusedBorderResizeToken(
-                at: exteriorPoints[1],
-                in: fixture.workspaceId,
-                scale: 1,
-                appliedBorder: border
-            )
-        )
-    }
-
-    @MainActor
-    func testGlowDoesNotExpandFocusedExteriorBorderResizeZone() throws {
-        let fixture = try makeFixture(pid: 1_109)
-        var config = borderConfig(width: 5)
-        config.glow = BorderGlow(enabled: true, radius: 8, opacity: 0.6)
-        let border = DesiredBorderSurface(token: fixture.token, frame: fixture.windowFrame, config: config)
-        let haloPoint = CGPoint(x: fixture.windowFrame.maxX + 6, y: fixture.windowFrame.midY)
-        XCTAssertTrue(config.resolvedGeometry(for: border.frame, scale: 1).surfaceFrame.contains(haloPoint))
-        XCTAssertNil(fixture.engine.hitTestTiled(point: haloPoint, in: fixture.workspaceId))
-        XCTAssertNil(fixture.handler.focusedBorderResizeToken(
-            at: haloPoint, in: fixture.workspaceId, scale: 1, appliedBorder: border
-        ))
-        XCTAssertEqual(fixture.handler.focusedBorderResizeToken(
-            at: CGPoint(x: fixture.windowFrame.maxX + 4, y: fixture.windowFrame.midY),
-            in: fixture.workspaceId, scale: 1, appliedBorder: border
-        ), fixture.token)
     }
 
     @MainActor
@@ -407,49 +234,6 @@ final class MouseMoveModifierTests: NiriInteractionTestCase {
         )
     }
 
-    @MainActor
-    private func makeFixture(pid: pid_t) throws -> Fixture {
-        let controller = makeController()
-        let monitor = makeMonitor()
-        controller.workspaceManager.applyMonitorConfigurationChange([monitor])
-        let workspaceId = try XCTUnwrap(
-            controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
-        )
-        _ = controller.workspaceManager.focusWorkspace(named: "1")
-        controller.enableNiriLayout()
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let window = addWindow(engine, pid: pid, to: workspaceId)
-        _ = controller.workspaceManager.addWindow(
-            WindowAdmissionTestSupport.axRef(for: window.token),
-            pid: window.token.pid,
-            windowId: window.token.windowId,
-            to: workspaceId
-        )
-        XCTAssertTrue(
-            controller.workspaceManager.confirmManagedFocus(
-                window.token,
-                in: workspaceId,
-                activateWorkspaceOnMonitor: false
-            )
-        )
-        let gap = controller.innerGap(for: monitor)
-        let frames = engine.calculateLayout(
-            state: controller.workspaceManager.niriViewportState(for: workspaceId),
-            workspaceId: workspaceId,
-            monitorFrame: controller.insetWorkingFrame(for: monitor),
-            gaps: (horizontal: gap, vertical: gap),
-            orientation: .horizontal
-        )
-
-        return Fixture(
-            controller: controller,
-            engine: engine,
-            workspaceId: workspaceId,
-            token: window.token,
-            windowFrame: try XCTUnwrap(frames[window.token])
-        )
-    }
-
     private func borderConfig(enabled: Bool = true, width: CGFloat) -> BorderConfig {
         BorderConfig(
             enabled: enabled,
@@ -478,7 +262,8 @@ final class MouseMoveModifierTests: NiriInteractionTestCase {
     }
 
     private func makeMonitor() -> Monitor {
-        Monitor(
+        let workingFrame = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        return Monitor(
             id: .init(displayId: 51_001),
             displayId: 51_001,
             frame: workingFrame,

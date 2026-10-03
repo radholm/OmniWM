@@ -181,7 +181,7 @@ extension AXEventHandler {
         let permitsTrackedEntry = switch trigger {
         case .ruleReevaluation:
             existingEntry?.token == expectedToken && existingEntry?.mode == .floating
-        case let .identityRebind(oldWindow, _, _, _, _):
+        case let .identityRebind(oldWindow, _, _, _):
             existingEntry?.token == oldWindow.token
         case .create,
              .candidate,
@@ -227,7 +227,7 @@ extension AXEventHandler {
         }
         let effectiveTrigger = preservesPriorTrigger ? state?.trigger ?? trigger : trigger
         let identityRebindSource: ManagedWindowIdentityRebindSource?
-        if case let .identityRebind(oldWindow, _, _, _, _) = effectiveTrigger {
+        if case let .identityRebind(oldWindow, _, _, _) = effectiveTrigger {
             identityRebindSource = state?.identityRebindSource
                 ?? controller?.workspaceManager.handle(for: oldWindow.token).map {
                     let source = ManagedWindowIdentityRebindSource(
@@ -370,15 +370,6 @@ extension AXEventHandler {
                 axRef: schedule.axRef
             )
         )
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .admissionRejected(
-                    windowId: windowId,
-                    pid: schedule.expectedToken?.pid,
-                    reason: .retryExhausted
-                )
-            )
-        )
         rejectDeferredReplacement(windowId: windowId)
         if let source = schedule.identityRebindSource {
             resumeQueuedIdentityRebind(for: source.handle)
@@ -446,16 +437,6 @@ extension AXEventHandler {
                 attempt: attempt,
                 retryGeneration: generation,
                 axRef: schedule.axRef
-            )
-        )
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .createRetryScheduled(
-                    windowId: windowId,
-                    pid: schedule.expectedToken?.pid,
-                    reason: schedule.reason,
-                    attempt: attempt
-                )
             )
         )
     }

@@ -10,7 +10,6 @@ extension AXEventHandler {
         let token: WindowToken
         let axRef: AXWindowRef
         let ruleEffects: ManagedWindowRuleEffects
-        let admissionHints: ManagedWindowAdmissionHints
         let appFullscreen: Bool
         var isMinimized = false
         let replacementMetadata: ManagedReplacementMetadata

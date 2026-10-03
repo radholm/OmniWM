@@ -22,7 +22,6 @@ Confirm the binding and any registration warning in **Settings > Hotkeys**, then
 ## Layout legend
 
 - `Shared` works in any active layout.
-- `Niri` works only when the active workspace uses the Niri layout.
 - `Dwindle` works only when the active workspace uses the Dwindle layout.
 
 ## Workspace
@@ -38,11 +37,8 @@ Confirm the binding and any registration warning in **Settings > Hotkeys**, then
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
 | Move Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
 | Move Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
-| Move Column to Workspace 1-9 | `Unassigned` | `Niri` |
-| Move Column to Workspace Up | `Control + Option + Shift + Page Up` | `Niri` |
-| Move Column to Workspace Down | `Control + Option + Shift + Page Down` | `Niri` |
 
-Creating workspace 10 or higher adds its Switch, Move, and Move Column actions to **Settings > Hotkeys** as `Unassigned`. The rows disappear when the workspace is removed.
+Creating workspace 10 or higher adds its Switch and Move actions to **Settings > Hotkeys** as `Unassigned`. The rows disappear when the workspace is removed.
 
 ## Focus
 
@@ -50,15 +46,7 @@ Creating workspace 10 or higher adds its Switch, Move, and Move Column actions t
 |--------|------------------|--------|
 | Focus Left / Right / Up / Down | `Option + Arrow Keys` | `Shared` |
 | Focus Down or Top / Up or Bottom | `Unassigned` | `Shared` |
-| Focus Top Window / Bottom Window | `Unassigned` | `Niri` |
-| Focus Window or Workspace Down / Up | `Unassigned` | `Niri` |
 | Focus Previous Window | `Option + Tab` | `Shared` |
-| Traverse Backward | `Unassigned` | `Niri` |
-| Traverse Forward | `Unassigned` | `Niri` |
-| Focus First Column | `Option + Home` | `Niri` |
-| Focus Last Column | `Option + End` | `Niri` |
-| Focus Column 1-9 | `Control + Option + 1-9` | `Niri` |
-| Focus Window 1-9 in Column | `Unassigned` | `Niri` |
 | Toggle Command Palette | `Control + Option + Space` | `Shared` |
 | Open Menu Anywhere | `Control + Option + M` | `Shared` |
 | Set Mark on Focused Window | `Unassigned` | `Shared` |
@@ -89,8 +77,6 @@ These shortcuts are local to the open Palette and yield to conflicting enabled g
 |--------|------------------|--------|
 | Move Left / Right / Up / Down | `Option + Shift + Arrow Keys` | `Shared` |
 | Reorder Window Up / Down | `Unassigned` | `Shared` |
-| Move Window Down or to Workspace Down / Up or to Workspace Up | `Unassigned` | `Niri` |
-| Consume Window into Column / Expel Window from Column | `Unassigned` | `Niri` |
 
 ## Monitor
 
@@ -128,33 +114,6 @@ The window-to-monitor actions send the focused window directly to the current wo
 | Toggle Focused Window Floating | `Unassigned` | `Shared` |
 | Assign Focused Window to Scratchpad 1-10 | `Unassigned` | `Shared` |
 | Toggle Scratchpad 1-10 | `Unassigned` | `Shared` |
-| Toggle Workspace Layout | `Option + Shift + L` | `Shared` |
-
-## Container and Column
-
-| Action | Default Shortcut | Layout |
-|--------|------------------|--------|
-| Move Container Left / Right | `Control + Option + Shift + Left / Right Arrow` | `Shared` |
-| Move Container Up / Down | `Unassigned` | `Dwindle` |
-| Toggle Column Tabbed | `Option + T` | `Niri` |
-| Toggle Container Full Primary Span | `Option + Shift + F` | `Niri` |
-| Expand Container to Available Primary Span | `Control + Option + F` | `Niri` |
-| Move Column to First / Last | `Control + Option + Home / End` | `Niri` |
-| Move Column to Index 1-9 | `Unassigned` | `Niri` |
-| Shrink / Grow Container Primary Span | `Option + -` / `Option + =` | `Niri` |
-| Shrink / Grow Window Secondary Span | `Option + Shift + -` / `Option + Shift + =` | `Niri` |
-| Shrink / Grow Window Primary Span | `Unassigned` | `Niri` |
-| Reset Window Secondary Span | `Control + Option + R` | `Niri` |
-| Cycle Window Primary Span Forward / Backward | `Unassigned` | `Niri` |
-| Cycle Window Secondary Span Forward / Backward | `Unassigned` | `Niri` |
-| Center Column | `Unassigned` | `Niri` |
-| Center Visible Columns | `Unassigned` | `Niri` |
-
-Niri grow/shrink actions use a configurable increment, defaulting to 5% instead of 10%. Change **Resize Increment** in Niri settings or `[niri].resizeStepPercent` in TOML (1–100). Explicit `omniwmctl` size arguments keep their specified amounts.
-
-`Consume or Expel Window Left / Right` exist as automation-only actions. They are reachable from `omniwmctl` but never appear in Settings > Hotkeys, because they intentionally cannot be bound to a shortcut.
-
-The daily `Focus` and `Move` shortcuts adapt to the active layout and Niri orientation. In horizontal Niri orientation, `Move Left / Right` consumes or expels across columns while `Move Up / Down` reorders within a column. Vertical orientation rotates those roles: `Move Up / Down` consumes or expels across rows while `Move Left / Right` reorders within a row.
 
 ## Dwindle Groups
 
@@ -171,7 +130,7 @@ Dwindle groups use the existing Focus and Move bindings, so there are no separat
 
 Moving a tab directly from one existing group into another is intentionally a two-step operation: extract it first, then move the resulting singleton toward the destination group. A singleton at a genuine workspace edge can still use the normal cross-monitor Move behavior; a rejected group mutation does not fall through to tile swapping or monitor movement.
 
-The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Niri column or Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
+The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
 
 ## Quake Terminal (Inside Terminal)
 

@@ -277,7 +277,7 @@ final class MonitorSetupModelTests: XCTestCase {
     func testWorkspaceReassignmentChangesDraftCoverageWithoutChangingConfigurationIdentity() {
         let monitors = sideBySideMonitors()
         let configurations = [
-            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri),
+            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .dwindle),
             WorkspaceConfiguration(name: "2", monitorAssignment: .main, layoutType: .dwindle)
         ]
         var draft = MonitorSetupDraft(

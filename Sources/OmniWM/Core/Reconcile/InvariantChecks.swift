@@ -40,38 +40,24 @@ enum InvariantChecks {
         violations: inout [ReconcileInvariantViolation]
     ) {
         for (workspaceId, layout) in snapshot.layouts {
-            for column in layout.columns {
-                for tile in column.tiles {
-                    guard let window = windowByToken[tile.token] else {
-                        violations.append(
-                            .init(
-                                code: "layout_token_missing",
-                                message: "Layout token \(tile.token) in workspace \(workspaceId.uuidString) is missing from the window registry."
-                            )
+            for token in layout.dwindleFullscreenTokens {
+                guard let window = windowByToken[token] else {
+                    violations.append(
+                        .init(
+                            code: "layout_token_missing",
+                            message: "Layout token \(token) in workspace \(workspaceId.uuidString) is missing from the window registry."
                         )
-                        continue
-                    }
-                    if window.workspaceId != workspaceId {
-                        violations.append(
-                            .init(
-                                code: "layout_token_wrong_workspace",
-                                message: "Layout token \(tile.token) is laid out in workspace \(workspaceId.uuidString) but the window registry has it in \(window.workspaceId.uuidString)."
-                            )
-                        )
-                    }
-                }
-            }
-
-            if let selectedNodeId = snapshot.viewports[workspaceId]?.selectedNodeId,
-               layout.hasColumns,
-               layout.token(for: selectedNodeId) == nil
-            {
-                violations.append(
-                    .init(
-                        code: "selection_unresolved",
-                        message: "Selected node \(selectedNodeId) in workspace \(workspaceId.uuidString) does not resolve to any laid-out window."
                     )
-                )
+                    continue
+                }
+                if window.workspaceId != workspaceId {
+                    violations.append(
+                        .init(
+                            code: "layout_token_wrong_workspace",
+                            message: "Layout token \(token) is laid out in workspace \(workspaceId.uuidString) but the window registry has it in \(window.workspaceId.uuidString)."
+                        )
+                    )
+                }
             }
         }
     }

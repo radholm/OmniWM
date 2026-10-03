@@ -46,7 +46,6 @@ final class OverviewViewportProjection {
 
     func rebuildProjectedLayouts(
         preservingSelectedAnchors anchors: [Monitor.ID: SelectedViewportAnchor] = [:],
-        preservingStripViewportOrigins stripViewportOrigins: [WorkspaceDescriptor.ID: CGFloat] = [:],
         revealingSelection: Bool = true
     ) {
         guard let wmController else { return }
@@ -62,16 +61,8 @@ final class OverviewViewportProjection {
 
         layoutsByMonitor = [:]
         for monitor in monitors {
-            var stripPans = previousLayouts[monitor.id]?.stripPanByWorkspace ?? [:]
-            for (workspaceId, origin) in stripViewportOrigins {
-                if let strip = overviewSnapshot.niriSnapshotsByWorkspace[workspaceId]?.strip {
-                    stripPans[workspaceId] = strip.viewportPosition - origin
-                }
-            }
             var layout = projectedLayout(
-                for: monitor,
-                niriSnapshotsByWorkspace: overviewSnapshot.niriSnapshotsByWorkspace,
-                stripPans: stripPans
+                for: monitor
             )
             let viewportFrame = OverviewLayoutCalculator.viewportFrame(for: monitor.frame)
             let previousOffset = previousLayouts[monitor.id]?.scrollOffset ?? 0
@@ -100,8 +91,6 @@ final class OverviewViewportProjection {
         restoreSelectedViewportAnchors(anchors)
         if revealingSelection {
             revealSelectedWindow(on: activeInteractionMonitorId)
-        } else if !stripViewportOrigins.isEmpty, let selectedWindowHandle, let activeInteractionMonitorId {
-            mutateLayout(for: activeInteractionMonitorId) { $0.revealTab(selectedWindowHandle) }
         }
         settleRestFrames(targetWindow: nil)
     }
@@ -120,9 +109,7 @@ final class OverviewViewportProjection {
     }
 
     private func projectedLayout(
-        for monitor: Monitor,
-        niriSnapshotsByWorkspace: [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot],
-        stripPans: [WorkspaceDescriptor.ID: CGFloat]
+        for monitor: Monitor
     ) -> OverviewLayout {
         let workspaces = overviewSnapshot.workspaces.filter { $0.displayId == monitor.displayId }
         let workspaceIds = Set(workspaces.map(\.id))
@@ -153,10 +140,8 @@ final class OverviewViewportProjection {
         ).calculateLayout(
             workspaces: workspaces,
             windows: localizedWindowData,
-            niriSnapshotsByWorkspace: niriSnapshotsByWorkspace,
             dwindleGroupsByWorkspace: overviewSnapshot.dwindleGroupsByWorkspace,
             searchQuery: searchQuery,
-            stripPans: stripPans,
             monitorId: monitor.id
         )
         return layout
@@ -172,21 +157,6 @@ final class OverviewViewportProjection {
             return layout
         }
         return layoutsByMonitor.values.first
-    }
-
-    func captureStripViewportOrigins(
-        in workspaceIds: Set<WorkspaceDescriptor.ID>
-    ) -> [WorkspaceDescriptor.ID: CGFloat] {
-        var origins: [WorkspaceDescriptor.ID: CGFloat] = [:]
-        for layout in layoutsByMonitor.values {
-            for section in layout.workspaceSections where workspaceIds.contains(section.workspaceId) {
-                guard let strip = overviewSnapshot.niriSnapshotsByWorkspace[section.workspaceId]?.strip
-                else { continue }
-                origins[section.workspaceId] = strip.viewportPosition
-                    - (layout.stripPanByWorkspace[section.workspaceId] ?? 0)
-            }
-        }
-        return origins
     }
 
     func captureSelectedViewportAnchors() -> [Monitor.ID: SelectedViewportAnchor] {
@@ -247,7 +217,6 @@ final class OverviewViewportProjection {
         }
         let revealedTab = !window.isDisplayed
         layout.revealTab(selectedWindowHandle)
-        let panned = layout.panStrip(window.workspaceId, by: layout.stripPanRevealing(selectedWindowHandle))
         let revealedFrame = layout.window(for: selectedWindowHandle)?.overviewFrame ?? window.overviewFrame
         let scrollOffset = OverviewLayoutCalculator.scrollOffsetRevealing(
             targetFrame: revealedFrame,
@@ -255,7 +224,7 @@ final class OverviewViewportProjection {
             layout: layout,
             screenFrame: viewportFrame(for: monitorId)
         )
-        guard revealedTab || panned || scrollOffset != layout.scrollOffset else { return false }
+        guard revealedTab || scrollOffset != layout.scrollOffset else { return false }
         layout.scrollOffset = scrollOffset
         layoutsByMonitor[monitorId] = layout
         return true
@@ -359,50 +328,6 @@ extension OverviewViewportProjection {
         }
     }
 
-    @discardableResult
-    func panStrip(_ workspaceId: WorkspaceDescriptor.ID, by delta: CGFloat, on monitorId: Monitor.ID) -> Bool {
-        activeInteractionMonitorId = monitorId
-        var panned = false
-        mutateLayout(for: monitorId) { layout in
-            panned = layout.panStrip(workspaceId, by: delta)
-        }
-        return panned
-    }
-
-    func pageStrip(_ pill: OverviewOverflowPill, on monitorId: Monitor.ID) -> Bool {
-        guard let layout = layoutsByMonitor[monitorId],
-              let section = layout.workspaceSections.first(where: { $0.workspaceId == pill.workspaceId })
-        else { return false }
-        let axis = OverviewRibbonAxis(section.orientation)
-        let delta: CGFloat
-        switch pill.edge {
-        case .leading:
-            guard let column = section.windows
-                .filter({
-                    $0.isTiled && $0.isDisplayed && axis.maximum($0.overviewFrame) <= axis.minimum(section.ribbonFrame)
-                })
-                .max(by: { axis.maximum($0.overviewFrame) < axis.maximum($1.overviewFrame) }) else { return false }
-            delta = axis.minimum(section.ribbonFrame) - axis.minimum(column.overviewFrame)
-        case .trailing:
-            guard let column = section.windows
-                .filter({
-                    $0.isTiled && $0.isDisplayed && axis.minimum($0.overviewFrame) >= axis.maximum(section.ribbonFrame)
-                })
-                .min(by: { axis.minimum($0.overviewFrame) < axis.minimum($1.overviewFrame) }) else { return false }
-            delta = axis.maximum(section.ribbonFrame) - axis.maximum(column.overviewFrame)
-        }
-        return panStrip(pill.workspaceId, by: delta, on: monitorId)
-    }
-
-    func drainStripPans() -> [WorkspaceDescriptor.ID: CGFloat] {
-        var pans: [WorkspaceDescriptor.ID: CGFloat] = [:]
-        for monitorId in layoutsByMonitor.keys {
-            pans.merge(layoutsByMonitor[monitorId]?.stripPanByWorkspace ?? [:]) { _, new in new }
-            layoutsByMonitor[monitorId]?.clearPendingStripPans()
-        }
-        return pans
-    }
-
     func performSelectionNavigation(
         on monitorId: Monitor.ID?,
         resolveNextSelection: (OverviewLayout, OverviewSelection?) -> OverviewSelection?
@@ -461,8 +386,7 @@ extension OverviewViewportProjection {
             * CGFloat(OverviewSettings.validatedMouseScrollSpeed(settings?.mouseScrollSpeed ?? 1))
         let scrollDelta = delta * multiplier * (settings?.invertScrollDirection == true ? -1 : 1)
         if event.dominantAxis == .horizontal {
-            guard let section = layoutsByMonitor[monitorId]?.ribbonSection(at: event.location) else { return false }
-            return panStrip(section.workspaceId, by: scrollDelta, on: monitorId)
+            return false
         }
         return adjustScrollOffset(by: scrollDelta, on: monitorId)
     }

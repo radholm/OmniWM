@@ -8,12 +8,7 @@ import QuartzCore
 extension WorkspaceManager {
     @discardableResult
     func recordReconcileEvent(_ event: WMEvent) -> ReconcileTxn {
-        if case let .viewportForgotten(workspaceIds, _) = event {
-            removeAnimationMotions(for: workspaceIds)
-        }
         let previousFocus = focusSessionSnapshot
-        let viewportWorkspaceId = viewportWorkspaceId(for: event)
-        let previousViewport = viewportWorkspaceId.flatMap { recordedViewportStates[$0] }
         let txn = commitWorldEvent(
             event,
             monitors: monitors,
@@ -26,21 +21,6 @@ extension WorkspaceManager {
             noteInvalidation(for: event)
         }
         noteAuxiliaryFocusInvalidationIfNeeded(for: event, previousFocus: previousFocus, plan: txn.plan)
-        if let viewportWorkspaceId {
-            noteViewportInvalidationIfNeeded(
-                for: viewportWorkspaceId,
-                previousViewport: previousViewport,
-                pendingOffsetAnimation: viewportEventState(for: event)?.hasPendingOffsetAnimation == true
-            )
-            if let eventState = viewportEventState(for: event) {
-                animationDriver.reconcileViewportCommit(
-                    workspaceId: viewportWorkspaceId,
-                    previous: previousViewport,
-                    next: recordedViewportStates[viewportWorkspaceId] ?? eventState,
-                    transition: eventState.offsetTransition
-                )
-            }
-        }
         return txn
     }
 

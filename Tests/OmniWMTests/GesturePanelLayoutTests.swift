@@ -16,8 +16,6 @@ final class GesturePanelLayoutTests: XCTestCase {
             runtimeState: RuntimeStateStore(directory: directory, deferSaves: false),
             autosaveEnabled: false
         )
-        settings.gestures.scrollEnabled = true
-        settings.gestures.fingerCount = .three
         settings.gestures.workspaceSwipeEnabled = false
         settings.gestures.overviewGestureEnabled = true
         settings.gestures.overviewGestureFingerCount = .four
@@ -35,14 +33,14 @@ final class GesturePanelLayoutTests: XCTestCase {
         )
         let editor = GestureAssignmentEditor()
         try checkLayout(settings: settings, monitor: monitor, editor: editor, name: "gesture-panel")
-        editor.submit(.init(action: .move, change: .enabled(true)), settings: settings, monitors: [monitor])
+        editor.submit(.init(action: .move, change: .enabled(true)), settings: settings)
         XCTAssertNotNil(editor.proposal)
         try checkLayout(settings: settings, monitor: monitor, editor: editor, name: "gesture-panel-conflict")
         XCTAssertEqual(settings.gestures.export(), original)
         editor.cancel()
         settings.gestures.workspaceSwipeEnabled = true
         settings.gestures.windowMoveFingerCount = .three
-        editor.submit(.init(action: .move, change: .enabled(true)), settings: settings, monitors: [monitor])
+        editor.submit(.init(action: .move, change: .enabled(true)), settings: settings)
         try checkLayout(settings: settings, monitor: monitor, editor: editor, name: "gesture-panel-multiple-conflicts")
     }
 

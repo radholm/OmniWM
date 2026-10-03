@@ -123,90 +123,6 @@ final class WorkspaceMonitorMoveStateTests: XCTestCase {
         XCTAssertEqual(manager.monitorForWorkspace(movedWorkspaceId)?.id, fixture.center.id)
     }
 
-    func testConfirmedFocusAndPendingRequestTransferWithAllWindowProjections() throws {
-        let fixture = makeFixture(assignments: [("1", 0), ("2", 0), ("3", 2)])
-        let manager = fixture.manager
-        let workspaceId = try XCTUnwrap(manager.workspaceId(named: "1"))
-        let replacementWorkspaceId = try XCTUnwrap(manager.workspaceId(named: "2"))
-        let focusedToken = addWindow(
-            pid: 962_001,
-            windowId: 962_101,
-            workspaceId: workspaceId,
-            manager: manager
-        )
-        let pendingToken = addWindow(
-            pid: 962_002,
-            windowId: 962_102,
-            workspaceId: workspaceId,
-            mode: .floating,
-            manager: manager
-        )
-        manager.setFloatingState(
-            FloatingState(
-                lastFrame: CGRect(x: 80, y: 70, width: 240, height: 180),
-                normalizedOrigin: CGPoint(x: 0.4, y: 0.3),
-                referenceMonitorId: fixture.left.id,
-                restoreToFloating: true
-            ),
-            for: pendingToken
-        )
-        XCTAssertTrue(
-            manager.setActiveWorkspace(
-                replacementWorkspaceId,
-                on: fixture.left.id,
-                updateInteractionMonitor: false
-            )
-        )
-        XCTAssertTrue(
-            manager.setActiveWorkspace(
-                workspaceId,
-                on: fixture.left.id,
-                updateInteractionMonitor: false
-            )
-        )
-        XCTAssertTrue(manager.setManagedFocus(focusedToken, in: workspaceId, onMonitor: fixture.left.id))
-        XCTAssertTrue(
-            manager.beginManagedFocusRequest(
-                pendingToken,
-                in: workspaceId,
-                onMonitor: fixture.left.id,
-                requestId: 42
-            )
-        )
-
-        let engine = NiriLayoutEngine()
-        manager.niriEngine = engine
-        manager.withEngineMutationScope(in: workspaceId) {
-            engine.moveWorkspace(workspaceId, to: fixture.left.id, monitor: fixture.left)
-        }
-        let originalRoot = try XCTUnwrap(engine.root(for: workspaceId))
-
-        let outcome = manager.moveWorkspaceToMonitor(
-            workspaceId,
-            to: fixture.center.id,
-            force: true
-        )
-
-        XCTAssertEqual(outcome.status, .executed)
-        XCTAssertEqual(outcome.affectedWorkspaces, [workspaceId, replacementWorkspaceId])
-        XCTAssertEqual(manager.selectedManagedToken, focusedToken)
-        XCTAssertEqual(manager.pendingFocusedToken, pendingToken)
-        XCTAssertEqual(manager.pendingFocusedWorkspaceId, workspaceId)
-        XCTAssertEqual(manager.pendingFocusedMonitorId, fixture.center.id)
-        XCTAssertEqual(manager.interactionMonitorId, fixture.center.id)
-        XCTAssertEqual(manager.previousInteractionMonitorId, fixture.left.id)
-        XCTAssertTrue(engine.root(for: workspaceId) === originalRoot)
-        XCTAssertEqual(engine.monitorContaining(workspace: workspaceId), fixture.center.id)
-
-        for token in [focusedToken, pendingToken] {
-            let entry = try XCTUnwrap(manager.entry(for: token))
-            XCTAssertEqual(entry.observedState.monitorId, fixture.center.id)
-            XCTAssertEqual(entry.desiredState.monitorId, fixture.center.id)
-            XCTAssertEqual(entry.restoreIntent?.workspaceId, workspaceId)
-            XCTAssertEqual(entry.restoreIntent?.preferredMonitor?.displayId, fixture.center.displayId)
-        }
-    }
-
     func testConfirmedFocusMoveRejectsDifferentPendingWorkspaceWithoutMutation() throws {
         let fixture = makeFixture(assignments: [("1", 0), ("2", 1), ("3", 2)])
         let manager = fixture.manager
@@ -379,34 +295,6 @@ final class WorkspaceMonitorMoveStateTests: XCTestCase {
         XCTAssertEqual(outcome.status, .executed)
         XCTAssertEqual(manager.activeWorkspace(on: fixture.left.id)?.id, sourceWorkspaceId)
         XCTAssertNotEqual(manager.previousWorkspace(on: fixture.left.id)?.id, movedWorkspaceId)
-    }
-
-    func testEmptyNonInteractionDestinationActivatesMovedWorkspaceAndPreservesRootIdentity() throws {
-        let fixture = makeFixture(assignments: [("1", 0), ("2", 2)])
-        let manager = fixture.manager
-        let workspaceId = try XCTUnwrap(manager.workspaceId(named: "1"))
-        _ = manager.setInteractionMonitor(fixture.right.id)
-        let engine = NiriLayoutEngine()
-        manager.niriEngine = engine
-        manager.withEngineMutationScope(in: workspaceId) {
-            engine.moveWorkspace(workspaceId, to: fixture.left.id, monitor: fixture.left)
-        }
-        let originalRoot = try XCTUnwrap(engine.root(for: workspaceId))
-        let initialSeq = manager.worldSeq
-
-        let outcome = manager.moveWorkspaceToMonitor(
-            workspaceId,
-            to: fixture.center.id,
-            force: true
-        )
-
-        XCTAssertEqual(outcome.status, .executed)
-        XCTAssertEqual(outcome.affectedWorkspaces, [workspaceId])
-        XCTAssertEqual(manager.activeWorkspace(on: fixture.center.id)?.id, workspaceId)
-        XCTAssertEqual(manager.interactionMonitorId, fixture.right.id)
-        XCTAssertEqual(manager.worldSeq, initialSeq + 2)
-        XCTAssertTrue(engine.root(for: workspaceId) === originalRoot)
-        XCTAssertEqual(engine.monitorContaining(workspace: workspaceId), fixture.center.id)
     }
 
     func testFloatingTranslationPreservesNormalizedOriginAndExcludesHiddenAndScratchpadWindows() throws {
@@ -1781,7 +1669,7 @@ final class WorkspaceMonitorMoveStateTests: XCTestCase {
             WorkspaceConfiguration(
                 name: name,
                 monitorAssignment: .specificDisplay(OutputId(from: monitors[monitorIndex])),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         }
         let manager = WorkspaceManager(settings: settings)

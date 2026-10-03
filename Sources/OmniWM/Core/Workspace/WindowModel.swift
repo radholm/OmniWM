@@ -127,7 +127,6 @@ final class WindowModel {
         workspace: WorkspaceDescriptor.ID,
         mode: TrackedWindowMode = .tiling,
         ruleEffects: ManagedWindowRuleEffects = .none,
-        admissionHints: ManagedWindowAdmissionHints = .none,
         lifetimeAuthority: ManagedWindowLifetimeAuthority = .axTopLevelInventory,
         managedReplacementMetadata: ManagedReplacementMetadata? = nil
     ) -> WindowToken {
@@ -149,7 +148,6 @@ final class WindowModel {
                 entries[token]?.ruleEffects = ruleEffects
                 constraintsCacheByToken.removeValue(forKey: token)
             }
-            entries[token]?.admissionHints = admissionHints
             entries[token]?.lifetimeAuthority = lifetimeAuthority
             return token
         }
@@ -161,7 +159,6 @@ final class WindowModel {
             mode: mode,
             managedReplacementMetadata: managedReplacementMetadata,
             ruleEffects: ruleEffects,
-            admissionHints: admissionHints,
             lifetimeAuthority: lifetimeAuthority
         )
         entries[token] = entry
@@ -350,14 +347,6 @@ extension WindowModel {
         entries[token]?.manualLayoutOverride = override
     }
 
-    func admissionHints(for token: WindowToken) -> ManagedWindowAdmissionHints? {
-        entries[token]?.admissionHints
-    }
-
-    func setAdmissionHints(_ hints: ManagedWindowAdmissionHints, for token: WindowToken) {
-        entries[token]?.admissionHints = hints
-    }
-
     func lifecyclePhase(for token: WindowToken) -> WindowLifecyclePhase? {
         entries[token]?.lifecyclePhase
     }
@@ -388,17 +377,6 @@ extension WindowModel {
 
     func setRestoreIntent(_ intent: RestoreIntent?, for token: WindowToken) {
         entries[token]?.restoreIntent = intent
-    }
-
-    func applyNiriPlacements(_ placements: [WindowToken: PersistedNiriPlacement], monitors: [Monitor]) {
-        for (token, placement) in placements {
-            guard let entry = self.entry(for: token), entry.mode == .tiling else { continue }
-            var restoreIntent = StateReducer.restoreIntent(for: entry, monitors: monitors)
-            restoreIntent.niriPlacement = placement
-            restoreIntent.detachedNiriContainerSizingState = nil
-            guard entry.restoreIntent != restoreIntent else { continue }
-            self.setRestoreIntent(restoreIntent, for: token)
-        }
     }
 
     func applyDwindlePlacements(_ placements: [WindowToken: PersistedDwindlePlacement], monitors: [Monitor]) {

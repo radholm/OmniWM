@@ -264,14 +264,6 @@ extension AXEventHandler {
         causalGeneration: UInt64?,
         controller: WMController
     ) -> UInt64 {
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .activationSourceObserved(
-                    pid: pid,
-                    source: source
-                )
-            )
-        )
         controller.scratchpadStacking.noteScratchpadStackingAppActivation(pid: pid, source: source)
         let observationGeneration: UInt64
         if let causalGeneration {
@@ -328,11 +320,6 @@ extension AXEventHandler {
         pendingManagedReplacementTasks.removeAll()
         pendingManagedReplacementBursts.removeAll()
         releasePreparedWindowSubscriptions(preparedWindowIds)
-        if let controller {
-            for intent in controller.intentLedger.openReplacementFocusIntents() {
-                _ = controller.intentLedger.cancel(id: intent.id)
-            }
-        }
         nextManagedReplacementEventSequence = 0
     }
 
@@ -356,10 +343,6 @@ extension AXEventHandler {
         guard let policy = managedReplacementCorrelationPolicy(for: candidate.replacementMetadata) else { return }
         recordDeferredManagedReplacementCreate(candidate)
         let key = ManagedReplacementKey(pid: candidate.token.pid, workspaceId: candidate.workspaceId)
-        armManagedReplacementFocusTransaction(
-            token: candidate.token,
-            workspaceId: candidate.workspaceId
-        )
         let isNewBurst = pendingManagedReplacementBursts[key] == nil
         var burst = pendingManagedReplacementBursts[key] ?? PendingManagedReplacementBurst(
             policy: policy,
@@ -381,10 +364,6 @@ extension AXEventHandler {
     func enqueueManagedReplacementDestroy(_ candidate: PreparedDestroy) {
         guard let policy = managedReplacementCorrelationPolicy(for: candidate.replacementMetadata) else { return }
         let key = ManagedReplacementKey(pid: candidate.token.pid, workspaceId: candidate.workspaceId)
-        armManagedReplacementFocusTransaction(
-            token: candidate.token,
-            workspaceId: candidate.workspaceId
-        )
         let isNewBurst = pendingManagedReplacementBursts[key] == nil
         var burst = pendingManagedReplacementBursts[key] ?? PendingManagedReplacementBurst(
             policy: policy,
@@ -463,14 +442,6 @@ extension AXEventHandler {
     func isCurrentActivationFacts(_ facts: ActivationFacts, controller: WMController) -> Bool {
         guard facts.observationGeneration == latestActivationObservationGeneration else { return false }
         return areActivationFactsApplicable(facts, controller: controller)
-    }
-
-    func recordNiriCreateFocusTrace(_ event: NiriCreateFocusTraceEvent) {
-        diagnostics.recordNiriCreateFocusTrace(event)
-    }
-
-    func createFocusTraceDump() -> String {
-        diagnostics.createFocusTraceDump()
     }
 
     func managedReplacementTraceDump() -> String {

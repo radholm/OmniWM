@@ -12,12 +12,10 @@ extension AXEventHandler {
     ) {
         let oldWindow = rebind.oldWindow
         let newWindow = rebind.newWindow
-        let managedReplacementMetadata = rebind.managedReplacementMetadata
-        let admissionHints = rebind.admissionHints
         guard let controller else { return }
         let completesPendingManagedReplacement = admissionRetryStateByWindowId[windowId].map { state in
             guard !state.exhausted,
-                  case let .identityRebind(retryOld, retryNew, metadata, _, _) = state.trigger
+                  case let .identityRebind(retryOld, retryNew, metadata, _) = state.trigger
             else {
                 return false
             }
@@ -25,16 +23,6 @@ extension AXEventHandler {
                 && retryNew.token == newWindow.token
                 && metadata != nil
         } ?? false
-        if let admissionHints {
-            _ = controller.workspaceManager.updateAdmissionHints(admissionHints, for: newWindow.token)
-        }
-        if let workspaceId = managedReplacementMetadata?.workspaceId {
-            rekeyManagedReplacementFocusTransaction(
-                from: oldWindow.token,
-                to: newWindow.token,
-                workspaceId: workspaceId
-            )
-        }
 
         completeReboundWindowAdmission(
             windowId: windowId, directPreparedSubscriptionRetainCount: directPreparedSubscriptionRetainCount

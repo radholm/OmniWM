@@ -10,7 +10,7 @@ extension StateReducer {
         let currentSnapshot = context.currentSnapshot
         let windowExistedBeforeMutation = context.windowExistedBeforeMutation
         switch event {
-        case let .windowAdmitted(token, workspaceId, monitorId, mode, _, _, _, _, adoptNativeFocus, _, _):
+        case let .windowAdmitted(token, workspaceId, monitorId, mode, _, _, _, adoptNativeFocus, _, _):
             plan.lifecyclePhase = lifecyclePhase(for: mode)
             plan.observedState = baseObservedState(
                 from: existingEntry,
@@ -148,8 +148,6 @@ extension StateReducer {
             plan.notes = ["floating_state=\(state != nil)"]
         case let .manualLayoutOverrideChanged(_, _, layoutOverride, _):
             plan.notes = ["manual_layout_override=\(layoutOverride.map(\.rawValue) ?? "cleared")"]
-        case .windowAdmissionHintsChanged:
-            break
         case .topLevelInventoryObserved:
             break
         default:

@@ -105,10 +105,6 @@ extension WMController {
     func preferredKeyboardFocusFrame(for token: WindowToken) -> CGRect? {
         if let workspaceId = workspaceManager.entry(for: token)?.workspaceId {
             switch workspaceManager.activeLayoutKind(for: workspaceId) {
-            case .niri:
-                if let node = niriEngine?.findNode(for: token, in: workspaceId) {
-                    return node.renderedFrame ?? node.frame
-                }
             case .dwindle:
                 if let engine = dwindleEngine {
                     return engine.contentFrame(for: token, in: workspaceId)
@@ -120,10 +116,6 @@ extension WMController {
             return floatingState.lastFrame
         }
         return nil
-    }
-
-    func recordNiriCreateFocusTrace(_ kind: NiriCreateFocusTraceEvent.Kind) {
-        axEventHandler.recordNiriCreateFocusTrace(.init(kind: kind))
     }
 
     var isDiscoveryInProgress: Bool {

@@ -71,7 +71,6 @@ enum EventIntakeTrace {
         case .ipcCommand: Identity(kind: "ipc-command")
         case .mouseDragged: Identity(kind: "mouse-drag")
         case .mouseMoved: Identity(kind: "mouse-move")
-        case .mouseScroll: Identity(kind: "mouse-scroll")
         case let .nativeFullscreenTransitionExpired(token, _):
             Identity(kind: "fullscreen-expired", pid: token.pid, windowId: token.windowId)
         case .systemSleep: Identity(kind: "sleep")

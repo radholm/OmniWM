@@ -259,20 +259,17 @@ final class OverviewSelectionUXTests: XCTestCase {
         XCTAssertEqual(view.layout.workspaceSections.map(\.workspaceId), Array(fixture.workspaceIds.prefix(3)))
     }
 
-    func testTypingAndClearingPreserveRibbonsStackOffsetAndStripPan() throws {
+    func testTypingAndClearingPreserveRibbonsStackOffset() throws {
         let fixture = try makeFixture(localWindowCount: 5, remoteWindowCount: 2)
         let monitorId = fixture.monitors[0].id
-        XCTAssertTrue(fixture.projection.panStrip(fixture.workspaceIds[0], by: -200, on: monitorId))
         fixture.projection.adjustScrollOffset(by: -175, on: monitorId)
         let before = try XCTUnwrap(fixture.projection.layoutsByMonitor[monitorId])
         XCTAssertNotEqual(before.scrollOffset, 0)
-        XCTAssertNotEqual(before.stripPanByWorkspace[fixture.workspaceIds[0]], 0)
         let last = try XCTUnwrap(fixture.localHandles.last)
         for query in ["Document \(last.id.windowId)", "No matching title", ""] {
             fixture.input.updateSearchQuery(query)
             let after = try XCTUnwrap(fixture.projection.layoutsByMonitor[monitorId])
             XCTAssertEqual(after.scrollOffset, before.scrollOffset)
-            XCTAssertEqual(after.stripPanByWorkspace, before.stripPanByWorkspace)
             XCTAssertEqual(after.workspaceSections.map(\.workspaceId), before.workspaceSections.map(\.workspaceId))
             XCTAssertEqual(after.workspaceSections.map(\.visibleFrame), before.workspaceSections.map(\.visibleFrame))
             XCTAssertEqual(after.workspaceSections.map(\.ribbonFrame), before.workspaceSections.map(\.ribbonFrame))
@@ -282,24 +279,16 @@ final class OverviewSelectionUXTests: XCTestCase {
         }
     }
 
-    func testScrollSpeedAndDirectionApplyToBothAxesAndPreservePreciseInput() throws {
+    func testScrollSpeedAndDirectionApplyVerticallyAndPreservePreciseInput() throws {
         for precise in [false, true] {
             for inverted in [false, true] {
                 for speed in [0.05, 1.0, 2.0] {
                     let fixture = try makeFixture(localWindowCount: 8)
                     let projection = fixture.projection
                     let monitorId = fixture.monitors[0].id
-                    let workspaceId = fixture.workspaceIds[0]
                     fixture.controller.settings.overview.invertScrollDirection = inverted
                     fixture.controller.settings.overview.mouseScrollSpeed = speed
                     projection.adjustScrollOffset(by: -175, on: monitorId)
-                    let section = try XCTUnwrap(projection.layoutsByMonitor[monitorId]?.workspaceSections.first)
-                    let content = section.windows.reduce(CGRect.null) { $0.union($1.overviewFrame) }
-                    XCTAssertTrue(projection.panStrip(
-                        workspaceId,
-                        by: section.ribbonFrame.midX - content.midX,
-                        on: monitorId
-                    ))
                     let before = try XCTUnwrap(projection.layoutsByMonitor[monitorId])
                     let remote = try XCTUnwrap(projection.layoutsByMonitor[fixture.monitors[1].id])
                     let expected = (precise ? 3.5 : 40 * speed) * (inverted ? -1.0 : 1.0)
@@ -308,10 +297,6 @@ final class OverviewSelectionUXTests: XCTestCase {
                     ), on: monitorId)
                     let vertical = try XCTUnwrap(projection.layoutsByMonitor[monitorId])
                     XCTAssertEqual(vertical.scrollOffset - before.scrollOffset, expected, accuracy: 0.0001)
-                    XCTAssertTrue(
-                        vertical.stripPanRange(for: workspaceId).contains(expected),
-                        "range \(vertical.stripPanRange(for: workspaceId)), expected \(expected), before \(before.stripPanRange(for: workspaceId))"
-                    )
                     let ribbon = try XCTUnwrap(vertical.workspaceSections.first?.ribbonFrame)
                     let location = CGPoint(x: ribbon.midX, y: ribbon.midY - vertical.scrollOffset)
                     fixture.input.handleScroll(.init(
@@ -320,16 +305,12 @@ final class OverviewSelectionUXTests: XCTestCase {
                     let horizontal = try XCTUnwrap(projection.layoutsByMonitor[monitorId])
                     XCTAssertEqual(
                         try XCTUnwrap(horizontal.allWindows.first).overviewFrame.minX
-                            - XCTUnwrap(before.allWindows.first).overviewFrame.minX, expected, accuracy: 0.0001
+                            - XCTUnwrap(before.allWindows.first).overviewFrame.minX, 0, accuracy: 0.0001
                     )
                     XCTAssertEqual(horizontal.scrollOffset, vertical.scrollOffset)
                     XCTAssertEqual(
                         projection.layoutsByMonitor[fixture.monitors[1].id]?.scrollOffset,
                         remote.scrollOffset
-                    )
-                    XCTAssertEqual(
-                        projection.layoutsByMonitor[fixture.monitors[1].id]?.stripPanByWorkspace,
-                        remote.stripPanByWorkspace
                     )
                 }
             }
@@ -359,11 +340,9 @@ final class OverviewSelectionUXTests: XCTestCase {
             fixture.input.handleScroll(.init(
                 deltaX: delta, deltaY: 0, modifiers: [], isPrecise: false, location: location
             ), on: monitorId)
-            let before = projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace
             fixture.input.handleScroll(.init(
                 deltaX: delta, deltaY: 0, modifiers: [], isPrecise: false, location: location
             ), on: monitorId)
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace, before)
         }
         for precise in [false, true] {
             projection.scale = 1
@@ -371,54 +350,6 @@ final class OverviewSelectionUXTests: XCTestCase {
                 deltaX: 0, deltaY: 1, modifiers: [.option, .shift], isPrecise: precise, location: .zero
             ), on: monitorId)
             XCTAssertEqual(projection.scale, 1.05, accuracy: 0.0001)
-        }
-    }
-
-    func testEndpointInputLeavesSelectionAndViewportUnchanged() throws {
-        for orientation in [Monitor.Orientation.horizontal, .vertical] {
-            let fixture = try makeFixture(localWindowCount: 5, orientation: orientation)
-            let projection = fixture.projection
-            let monitorId = fixture.monitors[0].id
-            let first = try XCTUnwrap(fixture.localHandles.first)
-            projection.selection = .window(first)
-            projection.adjustScrollOffset(by: -175, on: monitorId)
-            XCTAssertTrue(projection.panStrip(fixture.workspaceIds[0], by: -200, on: monitorId))
-            let before = try XCTUnwrap(projection.layoutsByMonitor[monitorId])
-            fixture.input.cycleSelection(forward: false, on: monitorId)
-            XCTAssertEqual(fixture.input.handleHotkeyCommand(.focus(.left)), .handled)
-            XCTAssertEqual(projection.selection, .window(first))
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.scrollOffset, before.scrollOffset)
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace, before.stripPanByWorkspace)
-            projection.selection = .newWorkspace(monitorId)
-            fixture.input.cycleSelection(forward: true, on: monitorId)
-            fixture.input.navigateSelection(.down, on: monitorId)
-            XCTAssertEqual(projection.selection, .newWorkspace(monitorId))
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.scrollOffset, before.scrollOffset)
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace, before.stripPanByWorkspace)
-            fixture.input.updateSearchQuery("Document")
-            let last = try XCTUnwrap(fixture.localHandles.last)
-            projection.selection = .window(last)
-            fixture.input.cycleSelection(forward: true, on: monitorId)
-            XCTAssertEqual(
-                fixture.input.handleHotkeyCommand(.focus(.right)),
-                .handled
-            )
-            XCTAssertEqual(projection.selection, .window(last))
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.scrollOffset, before.scrollOffset)
-            XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace, before.stripPanByWorkspace)
-            let windows = try XCTUnwrap(projection.layoutsByMonitor[monitorId]).allWindows
-            for direction in [Direction.up, .down] {
-                let endpoint = try XCTUnwrap(windows.max {
-                    direction == .up
-                        ? $0.overviewFrame.midY < $1.overviewFrame.midY
-                        : $0.overviewFrame.midY > $1.overviewFrame.midY
-                })
-                projection.selection = .window(endpoint.handle)
-                XCTAssertEqual(fixture.input.handleHotkeyCommand(.focus(direction)), .handled)
-                XCTAssertEqual(projection.selection, .window(endpoint.handle))
-                XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.scrollOffset, before.scrollOffset)
-                XCTAssertEqual(projection.layoutsByMonitor[monitorId]?.stripPanByWorkspace, before.stripPanByWorkspace)
-            }
         }
     }
 
@@ -467,82 +398,6 @@ final class OverviewSelectionUXTests: XCTestCase {
         ), on: fixture.monitors[1].id)
         XCTAssertFalse(local.isReflowing)
         XCTAssertNil(local.content.animation(forKey: "overview.position"))
-    }
-
-    func testPillPagingAnimatesBothOrientationsAndZoomCancelsEasing() throws {
-        for orientation in [Monitor.Orientation.horizontal, .vertical] {
-            let fixture = try makeFixture(localWindowCount: 8, orientation: orientation)
-            let views = try makeViews(in: fixture)
-            defer { fixture.windowSession.closeWindows() }
-            let monitorId = fixture.monitors[0].id
-            let layout = try XCTUnwrap(fixture.projection.layoutsByMonitor[monitorId])
-            let section = try XCTUnwrap(layout.workspaceSections.first)
-            let pill = try XCTUnwrap(layout.overflowPills(for: section).first)
-            fixture.input.pageStrip(pill, on: monitorId)
-            let renderer = views[0].layerRenderer
-            XCTAssertTrue(renderer.isReflowing)
-            XCTAssertTrue(renderer.windowLayers.values
-                .contains { $0.root.animation(forKey: "overview.position") != nil })
-            fixture.input.handleScroll(.init(
-                deltaX: 0, deltaY: 1, modifiers: [.option, .shift], isPrecise: false, location: .zero
-            ), on: monitorId)
-            XCTAssertFalse(renderer.isReflowing)
-        }
-    }
-
-    func testKeyboardRevealUsesPillSpringWithoutRestartingUnchangedViewports() throws {
-        for orientation in [Monitor.Orientation.horizontal, .vertical] {
-            for route in 0 ... 2 {
-                let fixture = try makeFixture(localWindowCount: 8, remoteWindowCount: 8, orientation: orientation)
-                fixture.input.updateSearchQuery("Document")
-                let monitorId = fixture.monitors[0].id
-                fixture.projection.selection = .window(fixture.localHandles[0])
-                fixture.projection.revealSelectedWindow(on: monitorId)
-                let views = try makeViews(in: fixture)
-                defer { fixture.windowSession.closeWindows() }
-                let remoteId = fixture.monitors[1].id
-                let remoteLayout = try XCTUnwrap(fixture.projection.layoutsByMonitor[remoteId])
-                let section = try XCTUnwrap(remoteLayout.workspaceSections.first)
-                fixture.input.pageStrip(try XCTUnwrap(remoteLayout.overflowPills(for: section).first), on: remoteId)
-                let remoteCard = try XCTUnwrap(views[1].layerRenderer.windowLayers.values.first {
-                    $0.root.animation(forKey: "overview.position") != nil
-                })
-                let remoteStart = try XCTUnwrap(remoteCard.root.animation(forKey: "overview.position")).beginTime
-                fixture.projection.activeInteractionMonitorId = monitorId
-
-                for handle in fixture.localHandles.dropFirst() {
-                    switch route {
-                    case 0:
-                        XCTAssertTrue(fixture.input.handleKeyDown(try keyEvent(kVK_Tab)))
-                    case 1:
-                        XCTAssertTrue(fixture.input.handleKeyDown(try keyEvent(
-                            orientation == .horizontal ? kVK_RightArrow : kVK_UpArrow
-                        )))
-                    default:
-                        XCTAssertEqual(fixture.input.handleHotkeyCommand(.focus(
-                            orientation == .horizontal ? .right : .up
-                        )), .handled)
-                    }
-                    XCTAssertEqual(
-                        fixture.projection.selectedWindowHandle?.windowId, handle.windowId,
-                        "\(orientation), route \(route)"
-                    )
-                }
-
-                let card = try XCTUnwrap(views[0].layerRenderer.windowLayers.values.first {
-                    $0.root.animation(forKey: "overview.position") != nil
-                })
-                let spring = try XCTUnwrap(card.root.animation(forKey: "overview.position") as? CASpringAnimation)
-                XCTAssertEqual(spring.stiffness, pow(2 * .pi / 0.25, 2), accuracy: 0.0001)
-                XCTAssertEqual(spring.damping, 2 * sqrt(spring.stiffness * spring.mass), accuracy: 0.0001)
-                fixture.input.cycleSelection(forward: true, on: monitorId)
-                XCTAssertEqual(card.root.animation(forKey: "overview.position")?.beginTime, spring.beginTime)
-                fixture.input.cycleSelection(forward: false, on: monitorId)
-                XCTAssertEqual(fixture.projection.selection, .window(fixture.localHandles[6]))
-                XCTAssertEqual(card.root.animation(forKey: "overview.position")?.beginTime, spring.beginTime)
-                XCTAssertEqual(remoteCard.root.animation(forKey: "overview.position")?.beginTime, remoteStart)
-            }
-        }
     }
 
     func testKeyboardWorkspaceRevealAnimatesOnlyWhenMotionIsEnabled() throws {
@@ -622,7 +477,7 @@ final class OverviewSelectionUXTests: XCTestCase {
             WorkspaceConfiguration(
                 name: String(index + 1),
                 monitorAssignment: .specificDisplay(OutputId(from: monitors[index == 3 ? 1 : 0])),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         }
         for monitor in monitors {
@@ -640,9 +495,7 @@ final class OverviewSelectionUXTests: XCTestCase {
         XCTAssertTrue(manager.setActiveWorkspace(workspaceIds[0], on: monitors[0].id))
         XCTAssertTrue(manager.setActiveWorkspace(workspaceIds[3], on: monitors[1].id))
         _ = manager.setInteractionMonitor(monitors[0].id)
-        let engine = NiriLayoutEngine()
-        controller.niriEngine = engine
-        controller.syncMonitorsToNiriEngine()
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         let localHandles = addWindows(localWindowCount, to: workspaceIds[0], startingAt: 98_310, controller: controller)
         let remoteHandles = addWindows(
             remoteWindowCount,
@@ -696,15 +549,17 @@ final class OverviewSelectionUXTests: XCTestCase {
         controller: WMController
     ) -> [WindowHandle] {
         let manager = controller.workspaceManager
-        var lastNode: NiriWindow?
         return (0 ..< count).compactMap { offset in
             let number = seed + offset
             let token = manager.addWindow(
                 AXWindowRef(element: AXUIElementCreateApplication(pid_t(number)), windowId: number),
                 pid: pid_t(number), windowId: number, to: workspaceId
             )
-            lastNode = manager.withEngineMutationScope {
-                controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: lastNode?.id)
+            manager.withEngineMutationScope(in: workspaceId) {
+                _ = controller.dwindleEngine?.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
+                if let monitor = manager.monitorForWorkspace(workspaceId) {
+                    _ = controller.dwindleEngine?.calculateLayout(for: workspaceId, screen: monitor.visibleFrame)
+                }
             }
             return manager.handle(for: token)
         }

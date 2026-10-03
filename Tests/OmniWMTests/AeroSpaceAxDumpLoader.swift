@@ -124,7 +124,6 @@ enum AeroSpaceAxDumpLoader {
         layoutDecisionKind: .fallbackLayout,
         workspaceName: nil,
         ruleEffects: .none,
-        admissionHints: .none,
         heuristicReasons: [],
         deferredReason: nil
     )

@@ -17,7 +17,6 @@ enum WorkspaceAction: Equatable, Hashable {
     case moveWorkspaceToMonitor(Direction)
     case swapWithMonitor(Direction)
     case backAndForth
-    case toggleLayout
 }
 
 extension WorkspaceAction {
@@ -59,10 +58,6 @@ extension WorkspaceAction {
         case let .swapWithMonitor(direction): Self.swapWithMonitorTitle(direction)
         case .backAndForth: LocalizedStringResource(
                 "command.workspace.backAndForth", defaultValue: "Switch to Last Active Workspace", table: "Commands",
-                bundle: .omniWM
-            )
-        case .toggleLayout: LocalizedStringResource(
-                "command.workspace.toggleLayout", defaultValue: "Toggle Workspace Layout", table: "Commands",
                 bundle: .omniWM
             )
         }
@@ -157,8 +152,6 @@ extension WorkspaceAction {
             nil
         case .swapWithMonitor:
             .swapWorkspaceWithMonitor
-        case .toggleLayout:
-            .workspaceLayout(.toggle)
         }
     }
 
@@ -175,8 +168,7 @@ extension WorkspaceAction {
              .previous,
              .moveWorkspaceToMonitor,
              .swapWithMonitor,
-             .backAndForth,
-             .toggleLayout:
+             .backAndForth:
             .shared
         }
     }

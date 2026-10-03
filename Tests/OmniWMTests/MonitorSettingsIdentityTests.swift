@@ -11,96 +11,6 @@ final class MonitorSettingsIdentityTests: XCTestCase {
     private let displayUUIDB = "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB"
 
     @MainActor
-    func testStableUUIDsKeepIdenticalNamesDistinctAfterDisplayIdsSwap() {
-        let first = makeMonitor(displayId: 3, name: "Identical Panel", displayUUID: displayUUIDA)
-        let second = makeMonitor(displayId: 2, name: "Identical Panel", displayUUID: displayUUIDB)
-        var export = SettingsExport.defaults()
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: first.name,
-                monitorDisplayUUID: displayUUIDA,
-                monitorDisplayId: 2,
-                visibleContainerCount: 1
-            ),
-            MonitorNiriSettings(
-                monitorName: second.name,
-                monitorDisplayUUID: displayUUIDB,
-                monitorDisplayId: 3,
-                visibleContainerCount: 4
-            )
-        ]
-        let settings = makeSettingsStore()
-
-        settings.applyExport(export)
-
-        XCTAssertEqual(settings.niri.settings(for: first)?.visibleContainerCount, 1)
-        XCTAssertEqual(settings.niri.settings(for: second)?.visibleContainerCount, 4)
-        XCTAssertEqual(settings.niri.monitorOverrides, export.monitorNiriSettings)
-    }
-
-    @MainActor
-    func testLegacyRowsRemainUnchangedAndUnbound() {
-        let monitor = makeMonitor(displayId: 2, name: "Display", displayUUID: displayUUIDA)
-        var export = SettingsExport.defaults()
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: monitor.name,
-                monitorDisplayId: monitor.displayId,
-                visibleContainerCount: 1
-            )
-        ]
-        let settings = makeSettingsStore()
-
-        settings.applyExport(export)
-
-        XCTAssertNil(settings.niri.settings(for: monitor))
-        XCTAssertEqual(settings.niri.monitorOverrides, export.monitorNiriSettings)
-    }
-
-    @MainActor
-    func testTopologyChangesDoNotPromoteOrPersistLegacyRows() throws {
-        let primary = makeMonitor(displayId: 2, name: "Primary", displayUUID: displayUUIDA)
-        let secondary = makeMonitor(displayId: 3, name: "Secondary", displayUUID: displayUUIDB)
-        var export = SettingsExport.defaults()
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: secondary.name,
-                monitorDisplayId: primary.displayId,
-                visibleContainerCount: 2
-            )
-        ]
-        let root = makeTemporaryRoot()
-        let persistence = SettingsFilePersistence(
-            directory: root.appendingPathComponent("config", isDirectory: true),
-            startWatching: false,
-            deferSaves: false
-        )
-        try persistence.saveImmediately(export)
-        let settings = SettingsStore(
-            persistence: persistence,
-            runtimeState: RuntimeStateStore(
-                directory: root.appendingPathComponent("state", isDirectory: true),
-                deferSaves: false
-            ),
-            autosaveEnabled: true
-        )
-        settings.applyExport(export)
-        let before = try Data(contentsOf: settings.settingsFileURL)
-        let controller = WMController(settings: settings)
-
-        controller.serviceLifecycleManager.monitorConfiguration.applyMonitorConfigurationChanged(
-            currentMonitors: [primary, secondary],
-            performPostUpdateActions: false
-        )
-
-        let after = try Data(contentsOf: settings.settingsFileURL)
-        XCTAssertEqual(after, before)
-        XCTAssertEqual(settings.niri.monitorOverrides, export.monitorNiriSettings)
-        XCTAssertNil(settings.niri.settings(for: primary))
-        XCTAssertNil(settings.niri.settings(for: secondary))
-    }
-
-    @MainActor
     func testServiceStartRefreshesStaleBootMonitorSnapshotBeforeServicesBecomeActive() {
         let stale = makeMonitor(displayId: 2, name: "Stale", displayUUID: displayUUIDA)
         let current = makeMonitor(displayId: 3, name: "Current", displayUUID: displayUUIDB)
@@ -391,14 +301,6 @@ final class MonitorSettingsIdentityTests: XCTestCase {
                 orientation: .horizontal
             )
         ]
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(
-                monitorName: "Display",
-                monitorDisplayUUID: displayUUIDA,
-                monitorDisplayId: 7,
-                visibleContainerCount: 2
-            )
-        ]
         export.monitorDwindleSettings = [
             MonitorDwindleSettings(
                 monitorName: "Display",
@@ -420,18 +322,16 @@ final class MonitorSettingsIdentityTests: XCTestCase {
         let toml = String(decoding: data, as: UTF8.self)
         let decoded = try SettingsTOMLCodec.decode(data)
 
-        XCTAssertEqual(toml.components(separatedBy: "monitorDisplayUUID =").count - 1, 6)
+        XCTAssertEqual(toml.components(separatedBy: "monitorDisplayUUID =").count - 1, 5)
         XCTAssertFalse(toml.contains("monitorDisplayId ="))
         XCTAssertEqual(decoded.routing.arrangements.first?.monitors.first?.monitorDisplayUUID, displayUUIDA)
         XCTAssertEqual(decoded.monitorBarSettings.first?.monitorDisplayUUID, displayUUIDA)
         XCTAssertEqual(decoded.monitorOrientationSettings.first?.monitorDisplayUUID, displayUUIDA)
-        XCTAssertEqual(decoded.monitorNiriSettings.first?.monitorDisplayUUID, displayUUIDA)
         XCTAssertEqual(decoded.monitorDwindleSettings.first?.monitorDisplayUUID, displayUUIDA)
         XCTAssertEqual(decoded.monitorGapSettings.first?.monitorDisplayUUID, displayUUIDA)
         XCTAssertNil(decoded.routing.arrangements.first?.monitors.first?.monitorDisplayId)
         XCTAssertNil(decoded.monitorBarSettings.first?.monitorDisplayId)
         XCTAssertNil(decoded.monitorOrientationSettings.first?.monitorDisplayId)
-        XCTAssertNil(decoded.monitorNiriSettings.first?.monitorDisplayId)
         XCTAssertNil(decoded.monitorDwindleSettings.first?.monitorDisplayId)
         XCTAssertNil(decoded.monitorGapSettings.first?.monitorDisplayId)
     }
@@ -459,15 +359,6 @@ final class MonitorSettingsIdentityTests: XCTestCase {
             ),
             for: monitor
         )
-        settings.niri.update(
-            MonitorNiriSettings(
-                monitorName: "Wrong",
-                monitorDisplayUUID: displayUUIDB,
-                monitorDisplayId: 7,
-                visibleContainerCount: 1
-            ),
-            for: monitor
-        )
         settings.dwindle.update(
             MonitorDwindleSettings(
                 monitorName: "Wrong",
@@ -490,7 +381,6 @@ final class MonitorSettingsIdentityTests: XCTestCase {
 
         assertIdentity(try XCTUnwrap(settings.workspaceBar.monitorOverrides.first), monitor: monitor)
         assertIdentity(try XCTUnwrap(settings.monitors.orientationOverrides.first), monitor: monitor)
-        assertIdentity(try XCTUnwrap(settings.niri.monitorOverrides.first), monitor: monitor)
         assertIdentity(try XCTUnwrap(settings.dwindle.monitorOverrides.first), monitor: monitor)
         assertIdentity(try XCTUnwrap(settings.gaps.monitorOverrides.first), monitor: monitor)
         XCTAssertEqual(settings.gaps.monitorOverrides.first?.fullscreenUsesOuterGaps, false)
@@ -507,9 +397,6 @@ final class MonitorSettingsIdentityTests: XCTestCase {
         export.monitorOrientationSettings = [
             MonitorOrientationSettings(monitorName: "Display", monitorDisplayId: 7, orientation: .horizontal)
         ]
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(monitorName: "Display", monitorDisplayId: 7, visibleContainerCount: 2)
-        ]
         export.monitorDwindleSettings = [
             MonitorDwindleSettings(monitorName: "Display", monitorDisplayId: 7, smartSplit: true)
         ]
@@ -521,46 +408,13 @@ final class MonitorSettingsIdentityTests: XCTestCase {
         let toml = String(decoding: data, as: UTF8.self)
         let decoded = try SettingsTOMLCodec.decode(data)
 
-        XCTAssertEqual(toml.components(separatedBy: "monitorDisplayId =").count - 1, 6)
+        XCTAssertEqual(toml.components(separatedBy: "monitorDisplayId =").count - 1, 5)
         XCTAssertFalse(toml.contains("monitorDisplayUUID ="))
         XCTAssertEqual(decoded.routing.arrangements.first?.monitors.first?.monitorDisplayId, 7)
         XCTAssertEqual(decoded.monitorBarSettings.first?.monitorDisplayId, 7)
         XCTAssertEqual(decoded.monitorOrientationSettings.first?.monitorDisplayId, 7)
-        XCTAssertEqual(decoded.monitorNiriSettings.first?.monitorDisplayId, 7)
         XCTAssertEqual(decoded.monitorDwindleSettings.first?.monitorDisplayId, 7)
         XCTAssertEqual(decoded.monitorGapSettings.first?.monitorDisplayId, 7)
-    }
-
-    func testPreservingEncodeDoesNotResurrectLegacyRuntimeDisplayId() throws {
-        let recordId = UUID()
-        var legacy = SettingsExport.defaults()
-        legacy.monitorNiriSettings = [
-            MonitorNiriSettings(
-                id: recordId,
-                monitorName: "Display",
-                monitorDisplayId: 7,
-                visibleContainerCount: 2
-            )
-        ]
-        var stable = legacy
-        stable.monitorNiriSettings = [
-            MonitorNiriSettings(
-                id: recordId,
-                monitorName: "Display",
-                monitorDisplayUUID: displayUUIDA,
-                monitorDisplayId: 7,
-                visibleContainerCount: 2
-            )
-        ]
-
-        let data = try SettingsTOMLCodec.encode(
-            stable,
-            preservingUnknownKeysFrom: SettingsTOMLCodec.encode(legacy)
-        )
-        let toml = String(decoding: data, as: UTF8.self)
-
-        XCTAssertTrue(toml.contains("monitorDisplayUUID = \"\(displayUUIDA)\""))
-        XCTAssertFalse(toml.contains("monitorDisplayId ="))
     }
 
     func testCustomRoutingSeedsOnlyWhenNoArrangementCoversConnectedSet() {

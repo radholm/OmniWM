@@ -18,8 +18,6 @@ struct PersistedWindowRestoreCatalogBuildEntry: Sendable {
     let normalizedFloatingOrigin: CGPoint?
     let restoreToFloating: Bool
     let rescueEligible: Bool
-    let niriPlacement: PersistedNiriPlacement?
-    let detachedNiriContainerSizingState: NiriContainerSizingState?
     let dwindlePlacement: PersistedDwindlePlacement?
 
     func persistedEntry() -> PersistedWindowRestoreEntry? {
@@ -38,8 +36,6 @@ struct PersistedWindowRestoreCatalogBuildEntry: Sendable {
                 normalizedFloatingOrigin: normalizedFloatingOrigin,
                 restoreToFloating: restoreToFloating,
                 rescueEligible: rescueEligible,
-                niriPlacement: niriPlacement,
-                detachedNiriContainerSizingState: detachedNiriContainerSizingState,
                 dwindlePlacement: dwindlePlacement
             )
         )

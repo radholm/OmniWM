@@ -4,7 +4,7 @@
 import AppKit
 import Foundation
 
-private let niriTouchpadGestureRecognitionThreshold: CGFloat = 16.0
+private let gestureRecognitionThreshold: CGFloat = 16.0
 
 extension MouseEventHandler {
     struct GestureFrameMetrics {
@@ -216,35 +216,16 @@ extension MouseEventHandler {
               let workspace = controller.workspaceManager.activeWorkspaceOrFirst(on: monitor.id)
         else { return nil }
         let layoutType = controller.settings.workspaces.layoutType(for: workspace.name)
-        let supportsColumnScroll = switch layoutType {
-        case .niri,
-             .defaultLayout:
-            controller.niriEngine != nil
-        case .dwindle:
-            false
-        }
         let target = TrackpadGestureIntent.windowGestureMode(config, fingerCount: fingerCount) != nil
             ? windowGestureTarget(at: location, wsId: workspace.id, layoutType: layoutType) : nil
         guard TrackpadGestureIntent.hasCandidateMode(
             config,
             fingerCount: fingerCount,
-            columnContextAvailable: supportsColumnScroll,
             windowContextAvailable: target != nil
         ) else { return nil }
-        let columnScrollCandidate = config.columnScrollEnabled
-            && fingerCount == config.columnScrollFingerCount
-            && supportsColumnScroll
         let isWorkspaceCandidate = config.workspaceSwipeEnabled && fingerCount == config.workspaceSwipeFingerCount
-        let columnScrollAxis = gestureColumnScrollAxis(
-            workspaceId: workspace.id,
-            monitor: monitor,
-            supportsColumnScroll: supportsColumnScroll
-        )
         let workspaceAxis: WorkspaceSwipeAxis? = if isWorkspaceCandidate {
-            TrackpadGestureIntent.effectiveWorkspaceSwipeAxis(
-                config,
-                columnScrollAxis: supportsColumnScroll ? columnScrollAxis : nil
-            )
+            config.workspaceSwipeAxis
         } else {
             nil
         }
@@ -252,8 +233,6 @@ extension MouseEventHandler {
             workspaceId: workspace.id,
             monitorId: monitor.id,
             fingerCount: fingerCount,
-            columnScrollCandidate: columnScrollCandidate,
-            columnScrollAxis: columnScrollAxis,
             workspaceAxis: workspaceAxis,
             overviewAction: fingerCount == config.overviewFingerCount ? config.overviewAction : nil,
             windowGestureTarget: target,
@@ -293,7 +272,7 @@ extension MouseEventHandler {
         if state.gesturePhase == .armed {
             let distanceSquared = metrics.cumulativeX * metrics.cumulativeX
                 + metrics.cumulativeY * metrics.cumulativeY
-            let thresholdSquared = niriTouchpadGestureRecognitionThreshold * niriTouchpadGestureRecognitionThreshold
+            let thresholdSquared = gestureRecognitionThreshold * gestureRecognitionThreshold
             guard distanceSquared >= thresholdSquared else {
                 state.gestureLastAverageX = average.x
                 state.gestureLastAverageY = average.y

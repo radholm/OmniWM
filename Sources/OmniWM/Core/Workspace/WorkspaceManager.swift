@@ -19,7 +19,6 @@ final class WorkspaceManager {
 
     private(set) var gaps: Double = 8
     private let world = WorldStore()
-    let animationDriver = AnimationDriver()
     var nativeFullscreenRecordsByOriginalToken: [WindowToken: NativeFullscreenRecord] = [:]
     var nativeFullscreenOriginalTokenByCurrentToken: [WindowToken: WindowToken] = [:]
     var nativeFullscreenTransitionGenerationCounter = 0
@@ -67,10 +66,6 @@ final class WorkspaceManager {
         removeAnimationMotions(for: ids)
     }
 
-    func captureLiveNiriPlacements(containing tokens: [WindowToken], in workspaceId: WorkspaceDescriptor.ID) {
-        _ = world.captureLiveNiriPlacements(containing: tokens, in: workspaceId, monitors: monitors)
-    }
-
     var windowQueries: WindowModel.ReadView {
         world.windows
     }
@@ -85,10 +80,6 @@ final class WorkspaceManager {
 
     var focusSessionSnapshot: FocusSessionSnapshot {
         world.focus
-    }
-
-    var recordedViewportStates: [WorkspaceDescriptor.ID: ViewportState] {
-        world.viewports
     }
 
     var monitorSessionSnapshots: [Monitor.ID: MonitorSession] {
@@ -136,7 +127,6 @@ final class WorkspaceManager {
 extension WorkspaceManager {
     func applyPlannedFocusAndViewport(_ plan: ActionPlan) {
         if let focusSession = plan.focusSession { world.applyFocusSession(focusSession) }
-        if let viewport = plan.viewport { world.applyViewportPlan(viewport) }
     }
 
     func applyPlannedWindowState(_ plan: ActionPlan, to token: WindowToken) -> RestoreIntent? {
@@ -226,8 +216,6 @@ extension WorkspaceManager {
             monitorId: hydrationPlan.preferredMonitorId ?? effectiveMonitor(for: hydrationPlan.workspaceId)?.id,
             targetMode: hydrationPlan.targetMode,
             floatingFrame: hydrationPlan.floatingFrame,
-            niriPlacement: hydrationPlan.niriPlacement,
-            detachedNiriContainerSizingState: hydrationPlan.detachedNiriContainerSizingState,
             dwindlePlacement: hydrationPlan.dwindlePlacement,
             consumedKey: hydrationPlan.consumedKey,
             consumedEntry: hydrationPlan.consumedEntry
@@ -255,8 +243,6 @@ extension WorkspaceManager {
 
         if let entry = windowQueries.entry(for: token) {
             var restoreIntent = StateReducer.restoreIntent(for: entry, monitors: monitors)
-            restoreIntent.niriPlacement = hydration.niriPlacement
-            restoreIntent.detachedNiriContainerSizingState = hydration.detachedNiriContainerSizingState
             restoreIntent.dwindlePlacement = hydration.dwindlePlacement
             world.setRestoreIntent(restoreIntent, for: token)
         }
@@ -378,7 +364,6 @@ extension WorkspaceManager {
         let clamped = max(0, min(64, size))
         guard clamped != gaps else { return }
         gaps = clamped
-        invalidateNiriCachedPrimarySpans()
         noteInvalidation(workspaceId: nil, domains: [.workspace, .layout])
         onGapsChanged?()
     }
@@ -405,40 +390,6 @@ extension WorkspaceManager {
             transferInteraction: transferInteraction,
             monitors: monitors
         )
-        world.niriEngine?.moveWorkspace(move.workspaceId, to: move.targetMonitor.id, monitor: move.targetMonitor)
-    }
-
-    var niriEngine: NiriLayoutEngine? {
-        get { world.niriEngine }
-        set {
-            let captured: Bool
-            if let current = world.niriEngine, current !== newValue {
-                captured = withEngineMutationScope(label: "niri_engine_replaced", source: .workspaceManager) {
-                    world.installNiriEngine(newValue, monitors: monitors)
-                }
-            } else {
-                captured = world.installNiriEngine(newValue, monitors: monitors)
-            }
-            if captured {
-                schedulePersistedWindowRestoreCatalogSave()
-            }
-        }
-    }
-
-    @discardableResult
-    func captureDetachedNiriPlacement(
-        for token: WindowToken,
-        in workspaceId: WorkspaceDescriptor.ID
-    ) -> Bool {
-        let captured = world.captureDetachedNiriPlacement(
-            for: token,
-            in: workspaceId,
-            monitors: monitors
-        )
-        if captured {
-            schedulePersistedWindowRestoreCatalogSave()
-        }
-        return captured
     }
 
     var dwindleEngine: DwindleLayoutEngine? {
@@ -448,26 +399,6 @@ extension WorkspaceManager {
 
     func layoutTopology(for workspaceId: WorkspaceDescriptor.ID) -> LayoutTopology {
         world.layoutTopology(for: workspaceId)
-    }
-
-    func applyViewportInBatch(_ state: ViewportState, for workspaceId: WorkspaceDescriptor.ID) {
-        let previous = recordedViewportStates[workspaceId]
-        var committed = state
-        committed.clearOffsetTransition()
-        if previous != committed {
-            world.applyViewportPlan(.set(workspaceId: workspaceId, state: committed))
-        }
-        noteViewportInvalidationIfNeeded(
-            for: workspaceId,
-            previousViewport: previous,
-            pendingOffsetAnimation: state.hasPendingOffsetAnimation
-        )
-        animationDriver.reconcileViewportCommit(
-            workspaceId: workspaceId,
-            previous: previous,
-            next: recordedViewportStates[workspaceId] ?? committed,
-            transition: state.offsetTransition
-        )
     }
 
     var spaceTopology: SpaceTopology {

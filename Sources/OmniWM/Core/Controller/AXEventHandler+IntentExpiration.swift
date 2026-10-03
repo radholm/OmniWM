@@ -22,8 +22,7 @@ extension AXEventHandler {
 
         switch intent.kind {
         case .activateApp,
-             .appRevealFocus,
-             .replacementFocus:
+             .appRevealFocus:
             _ = controller.intentLedger.markExpired(id: intentId)
 
         case let .appTerminationFocusRecovery(payload):

@@ -21,91 +21,7 @@ final class AppTerminationFocusRecoveryTests: XCTestCase {
         let departingToken: WindowToken
         let finderRef: AXWindowRef
         let fallbackRef: AXWindowRef
-        let finderNode: NiriWindow
-        let fallbackNode: NiriWindow
         let recorder: OperationRecorder
-    }
-
-    func testTerminationFirstSuppressesNativeFallbackAndPreservesNiriViewport() throws {
-        let fixture = try makeFixture(suffix: 1)
-        defer { stop(fixture) }
-        let settledViewport = fixture.controller.workspaceManager.niriViewportState(
-            for: fixture.workspaceId
-        )
-
-        fixture.controller.axEventHandler.handleAppTerminated(
-            pid: fixture.departingToken.pid,
-            frontmostPID: fixture.finderToken.pid
-        )
-
-        XCTAssertNil(fixture.controller.workspaceManager.entry(for: fixture.departingToken))
-        XCTAssertEqual(
-            fixture.controller.intentLedger.activeManagedRequest?.token,
-            fixture.fallbackToken
-        )
-        let operationsAfterRecovery = fixture.recorder.operations
-
-        XCTAssertFalse(
-            fixture.controller.axEventHandler.handleAppActivation(
-                pid: fixture.finderToken.pid,
-                source: .workspaceDidActivateApplication
-            )
-        )
-        XCTAssertFalse(fixture.recorder.factPIDs.contains(fixture.finderToken.pid))
-        XCTAssertEqual(fixture.recorder.operations, operationsAfterRecovery)
-
-        XCTAssertTrue(
-            fixture.controller.eventIntake.enqueue(
-                .axWindow(.focusedWindowChanged(
-                    pid: fixture.fallbackToken.pid,
-                    callbackGeneration: nil
-                ))
-            )
-        )
-        XCTAssertTrue(
-            fixture.controller.eventIntake.enqueue(
-                .application(.activated(pid: fixture.finderToken.pid))
-            )
-        )
-        fixture.controller.eventIntake.drainNow()
-        XCTAssertNotEqual(fixture.controller.workspaceManager.selectedManagedToken, fixture.finderToken)
-        fixture.controller.eventIntake.drainNow()
-
-        XCTAssertEqual(fixture.controller.workspaceManager.selectedManagedToken, fixture.fallbackToken)
-        let recoveredViewport = fixture.controller.workspaceManager.niriViewportState(
-            for: fixture.workspaceId
-        )
-        XCTAssertEqual(recoveredViewport.selectedNodeId, settledViewport.selectedNodeId)
-        XCTAssertEqual(recoveredViewport.activeColumnIndex, settledViewport.activeColumnIndex)
-        XCTAssertEqual(recoveredViewport.viewOffset, settledViewport.viewOffset, accuracy: 0.5)
-
-        let retiring = try XCTUnwrap(
-            fixture.controller.intentLedger.openAppTerminationFocusRecovery()
-        )
-        XCTAssertFalse(
-            fixture.controller.axEventHandler.handleAppActivation(
-                pid: fixture.finderToken.pid,
-                source: .cgsFrontAppChanged
-            )
-        )
-        fixture.controller.axEventHandler.handleAppTerminated(
-            pid: fixture.departingToken.pid,
-            frontmostPID: fixture.finderToken.pid
-        )
-        XCTAssertEqual(fixture.recorder.operations, operationsAfterRecovery)
-
-        fixture.controller.deadlineWheel.cancel(intentId: retiring.intent.id)
-        fixture.controller.axEventHandler.handleIntentExpired(retiring.intent.id)
-        XCTAssertNil(fixture.controller.intentLedger.openAppTerminationFocusRecovery())
-
-        XCTAssertTrue(
-            fixture.controller.axEventHandler.handleAppActivation(
-                pid: fixture.finderToken.pid,
-                source: .workspaceDidActivateApplication
-            )
-        )
-        fixture.controller.eventIntake.drainNow()
-        XCTAssertEqual(fixture.controller.workspaceManager.selectedManagedToken, fixture.finderToken)
     }
 
     func testActivationFirstTerminationRecoversBeforeAcceptingFallback() throws {
@@ -485,7 +401,7 @@ final class AppTerminationFocusRecoveryTests: XCTestCase {
             controller.workspaceManager.workspaceId(for: "1", createIfMissing: true)
         )
         _ = controller.workspaceManager.focusWorkspace(named: "1")
-        controller.niriLayoutHandler.enableNiriLayout()
+        controller.dwindleLayoutHandler.enableDwindleLayout()
 
         let finderToken = WindowToken(pid: pid_t(780_000 + suffix * 10), windowId: 780_001 + suffix * 10)
         let fallbackToken = WindowToken(pid: pid_t(780_002 + suffix * 10), windowId: 780_003 + suffix * 10)
@@ -504,23 +420,12 @@ final class AppTerminationFocusRecoveryTests: XCTestCase {
             controller: controller
         )
 
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let finderNode = engine.addWindow(token: finderToken, to: workspaceId, afterSelection: nil)
-        let fallbackNode = engine.addWindow(
-            token: fallbackToken,
-            to: workspaceId,
-            afterSelection: finderNode.id,
-            focusedToken: finderToken
-        )
-        engine.column(of: finderNode)?.cachedWidth = 700
-        engine.column(of: fallbackNode)?.cachedWidth = 700
-        let monitorId = controller.workspaceManager.monitorId(for: workspaceId)
-        _ = controller.workspaceManager.commitWorkspaceSelection(
-            nodeId: fallbackNode.id,
-            focusedToken: fallbackToken,
-            in: workspaceId,
-            onMonitor: monitorId
-        )
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
+            _ = engine.addWindow(token: finderToken, to: workspaceId, activeWindowFrame: nil)
+            _ = engine.addWindow(token: fallbackToken, to: workspaceId, activeWindowFrame: nil)
+        }
+        _ = controller.workspaceManager.rememberFocus(fallbackToken, in: workspaceId)
         XCTAssertTrue(
             controller.workspaceManager.confirmManagedFocus(
                 fallbackToken,
@@ -535,18 +440,9 @@ final class AppTerminationFocusRecoveryTests: XCTestCase {
                 activateWorkspaceOnMonitor: false
             )
         )
-        var viewport = controller.workspaceManager.niriViewportState(for: workspaceId)
-        controller.niriLayoutHandler.activateNode(
-            fallbackNode,
-            in: workspaceId,
-            state: &viewport,
-            options: .init(
-                layoutRefresh: false,
-                axFocus: false,
-                startAnimation: false
-            )
-        )
-        controller.workspaceManager.updateNiriViewportState(viewport, for: workspaceId)
+        controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
+            _ = engine.activateWindowOutcome(fallbackToken, in: workspaceId)
+        }
 
         controller.factResolver.factProvider = { pid in
             recorder.factPIDs.append(pid)
@@ -579,8 +475,6 @@ final class AppTerminationFocusRecoveryTests: XCTestCase {
             departingToken: departingToken,
             finderRef: finderRef,
             fallbackRef: fallbackRef,
-            finderNode: finderNode,
-            fallbackNode: fallbackNode,
             recorder: recorder
         )
     }

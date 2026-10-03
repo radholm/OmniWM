@@ -6,8 +6,6 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
     case windowMovement(IPCWindowMovementCommandName)
     case workspace(IPCWorkspaceCommandName)
     case monitorFocus(IPCMonitorFocusCommand)
-    case column(IPCColumnCommandName)
-    case sizing(IPCSizingCommandName)
     case swapWorkspaceWithMonitor
     case dwindle(IPCDwindleCommandName)
     case openCommandPalette
@@ -29,10 +27,6 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
         case let .workspace(name):
             name.rawValue
         case let .monitorFocus(name):
-            name.rawValue
-        case let .column(name):
-            name.rawValue
-        case let .sizing(name):
             name.rawValue
         case .swapWorkspaceWithMonitor:
             "swap-workspace-with-monitor"
@@ -76,8 +70,6 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
             name = name ?? IPCWindowMovementCommandName(rawValue: rawValue).map(Self.windowMovement)
             name = name ?? IPCWorkspaceCommandName(rawValue: rawValue).map(Self.workspace)
             name = name ?? IPCMonitorFocusCommand(rawValue: rawValue).map(Self.monitorFocus)
-            name = name ?? IPCColumnCommandName(rawValue: rawValue).map(Self.column)
-            name = name ?? IPCSizingCommandName(rawValue: rawValue).map(Self.sizing)
             name = name ?? IPCDwindleCommandName(rawValue: rawValue).map(Self.dwindle)
             name = name ?? IPCWorkspaceLayoutCommandName(rawValue: rawValue).map(Self.workspaceLayout)
             name = name ?? IPCFullscreenCommand(rawValue: rawValue).map(Self.fullscreen)
@@ -95,8 +87,6 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
         names.append(contentsOf: IPCWindowMovementCommandName.allCases.map(Self.windowMovement))
         names.append(contentsOf: IPCWorkspaceCommandName.allCases.map(Self.workspace))
         names.append(contentsOf: IPCMonitorFocusCommand.allCases.map(Self.monitorFocus))
-        names.append(contentsOf: IPCColumnCommandName.allCases.map(Self.column))
-        names.append(contentsOf: IPCSizingCommandName.allCases.map(Self.sizing))
         names.append(.swapWorkspaceWithMonitor)
         names.append(contentsOf: IPCDwindleCommandName.allCases.map(Self.dwindle))
         names.append(.openCommandPalette)

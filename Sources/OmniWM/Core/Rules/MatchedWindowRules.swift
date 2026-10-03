@@ -92,9 +92,6 @@ struct MatchedWindowRules {
                 minHeight: userRule?.rule.minHeight,
                 matchedRuleId: userRule?.rule.id
             ),
-            admissionHints: ManagedWindowAdmissionHints(
-                initialNiriContainerPrimarySpan: userRule?.rule.validInitialContainerPrimarySpan
-            ),
             heuristicReasons: heuristicReasons,
             deferredReason: deferredReason
         )

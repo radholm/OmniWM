@@ -33,7 +33,6 @@ enum RuntimeDiagnosticsReport {
             section("Hidden Window Physical State", hiddenWindowPhysicalSection(controller)),
             section("Recent AX Notifications", RawAXNotificationTrace.shared.recentDump()),
             section("Layout Build Metrics", controller.layoutRefreshController.layoutBuildMetricsDump()),
-            section("Create-Focus Trace", controller.axEventHandler.createFocusTraceDump()),
             section("Managed Replacement Trace", controller.axEventHandler.managedReplacementTraceDump()),
             settingsSection(controller)
         ]
@@ -60,7 +59,6 @@ enum RuntimeDiagnosticsReport {
         }
         lines.append(contentsOf: projectionSnapshots.map {
             "projection workspace=\($0.workspaceId.uuidString) expectedExcluded=\($0.expectedExcludedCount)"
-                + " niri=\(formatProjectionEngine($0.niri))"
                 + " dwindle=\(formatProjectionEngine($0.dwindle))"
         })
         return lines.joined(separator: "\n")

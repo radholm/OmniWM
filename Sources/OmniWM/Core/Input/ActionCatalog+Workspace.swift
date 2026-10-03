@@ -7,7 +7,6 @@ import OmniWMIPC
 enum WorkspaceNumberActionKind: String, CaseIterable {
     case switchWorkspace
     case moveToWorkspace
-    case moveColumnToWorkspace
 
     var rowGroup: WorkspaceNumberActionKind {
         self == .moveToWorkspace ? .switchWorkspace : self
@@ -58,7 +57,6 @@ extension ActionCatalog {
         switch command {
         case let .workspace(.switchTo(index)): workspaceNumberSpec(kind: .switchWorkspace, index: index)
         case let .workspace(.moveTo(index)): workspaceNumberSpec(kind: .moveToWorkspace, index: index)
-        case let .column(.moveToWorkspace(index)): workspaceNumberSpec(kind: .moveColumnToWorkspace, index: index)
         default: nil
         }
     }
@@ -71,14 +69,6 @@ extension ActionCatalog {
             action(id: id, command: .workspace(.switchTo(index)), category: .workspace, binding: .unassigned)
         case .moveToWorkspace:
             action(id: id, command: .workspace(.moveTo(index)), category: .workspace, binding: .unassigned)
-        case .moveColumnToWorkspace:
-            action(
-                id: id,
-                command: .column(.moveToWorkspace(index)),
-                category: .workspace,
-                binding: .unassigned,
-                visibility: .advanced
-            )
         }
     }
 
@@ -148,18 +138,6 @@ extension ActionCatalog {
                     keyCode: UInt32(kVK_DownArrow),
                     modifiers: UInt32(optionKey | controlKey | shiftKey)
                 )
-            ),
-            action(
-                id: "moveColumnToWorkspaceUp",
-                command: .column(.moveToWorkspaceUp),
-                category: .workspace,
-                binding: KeyBinding(keyCode: UInt32(kVK_PageUp), modifiers: UInt32(optionKey | controlKey | shiftKey))
-            ),
-            action(
-                id: "moveColumnToWorkspaceDown",
-                command: .column(.moveToWorkspaceDown),
-                category: .workspace,
-                binding: KeyBinding(keyCode: UInt32(kVK_PageDown), modifiers: UInt32(optionKey | controlKey | shiftKey))
             )
         ])
     }

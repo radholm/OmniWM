@@ -16,39 +16,8 @@ final class WindowMarkNavigationIntegrationTests: XCTestCase {
         let monitor: Monitor
     }
 
-    func testMarkFocusNavigatesAcrossWorkspacesInNiri() throws {
-        let fixture = try makeFixture(layoutType: .niri, displayId: 77_101)
-        let controller = fixture.controller
-        controller.niriLayoutHandler.enableNiriLayout()
-
-        let targetToken = WindowToken(pid: 77_201, windowId: 77_301)
-        _ = WindowAdmissionTestSupport.track(
-            targetToken,
-            in: fixture.targetWorkspaceId,
-            controller: controller
-        )
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let node = engine.addWindow(token: targetToken, to: fixture.targetWorkspaceId, afterSelection: nil)
-        XCTAssertEqual(controller.windowMarkRegistry.set("niri-target", for: targetToken), .inserted)
-
-        let response = IPCWindowMarkRequestExecutor(controller: controller).response(
-            for: .focus(name: "niri-target"),
-            id: "niri-mark-focus"
-        )
-
-        XCTAssertTrue(response.ok, "unexpected IPC error: \(response.code?.rawValue ?? "none")")
-        XCTAssertEqual(
-            controller.workspaceManager.activeWorkspace(on: fixture.monitor.id)?.id,
-            fixture.targetWorkspaceId
-        )
-        XCTAssertEqual(
-            controller.workspaceManager.niriViewportState(for: fixture.targetWorkspaceId).selectedNodeId,
-            node.id
-        )
-    }
-
     func testHiddenMarkUsesExplicitAppRevealAndRetainsItsIdentity() throws {
-        let fixture = try makeFixture(layoutType: .niri, displayId: 77_103)
+        let fixture = try makeFixture(layoutType: .dwindle, displayId: 77_103)
         let controller = fixture.controller
         let hiddenToken = WindowToken(pid: 77_401, windowId: 77_501)
         _ = WindowAdmissionTestSupport.track(hiddenToken, in: fixture.sourceWorkspaceId, controller: controller)
@@ -119,7 +88,7 @@ final class WindowMarkNavigationIntegrationTests: XCTestCase {
     }
 
     func testConfigurableMarkHotkeysSetAndRemoveMarksOnFocusedWindow() throws {
-        let fixture = try makeFixture(layoutType: .niri, displayId: 77_104)
+        let fixture = try makeFixture(layoutType: .dwindle, displayId: 77_104)
         let controller = fixture.controller
         let token = WindowToken(pid: 77_601, windowId: 77_701)
         _ = WindowAdmissionTestSupport.track(token, in: fixture.sourceWorkspaceId, controller: controller)

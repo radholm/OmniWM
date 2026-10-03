@@ -20,56 +20,6 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
         let anchorToken: WindowToken
     }
 
-    func testSummonMarkedWindowRightInNiriPreservesSizingAndSelection() throws {
-        let fixture = try makeFixture(layoutType: .niri, displayId: 78_301)
-        let controller = fixture.controller
-        let manager = controller.workspaceManager
-        let engine = try XCTUnwrap(controller.niriEngine)
-
-        _ = manager.focusWorkspace(named: fixture.sourceWorkspaceName)
-        _ = manager.setManagedFocus(fixture.markedToken, in: fixture.sourceWorkspaceId, onMonitor: fixture.monitor.id)
-        _ = manager.confirmManagedFocus(
-            fixture.markedToken,
-            in: fixture.sourceWorkspaceId,
-            onMonitor: fixture.monitor.id,
-            activateWorkspaceOnMonitor: true
-        )
-        XCTAssertEqual(
-            controller.commandHandler.performCommand(.sizing(.setContainerPrimarySpan(.setProportion(50)))),
-            .executed
-        )
-        let sourceNode = try XCTUnwrap(engine.findNode(for: fixture.markedToken, in: fixture.sourceWorkspaceId))
-        let sourceColumn = try XCTUnwrap(engine.findColumn(containing: sourceNode, in: fixture.sourceWorkspaceId))
-        XCTAssertEqual(sourceColumn.width, .proportion(0.5))
-        XCTAssertTrue(sourceColumn.hasManualSingleWindowWidthOverride)
-
-        focusAnchor(fixture)
-        XCTAssertEqual(controller.windowMarkRegistry.set("niri-mark", for: fixture.markedToken), .inserted)
-        let response = summonResponse(fixture, mark: "niri-mark")
-
-        XCTAssertTrue(response.ok, "unexpected IPC error: \(response.code?.rawValue ?? "none")")
-        XCTAssertEqual(response.kind, .windowMark)
-        XCTAssertEqual(response.status, .executed)
-        XCTAssertEqual(controller.workspaceManager.workspace(for: fixture.markedToken), fixture.targetWorkspaceId)
-        XCTAssertEqual(controller.windowMarkRegistry.lookup("niri-mark"), .found(fixture.markedToken))
-
-        let movedNode = try XCTUnwrap(engine.findNode(for: fixture.markedToken, in: fixture.targetWorkspaceId))
-        let movedColumn = try XCTUnwrap(engine.findColumn(containing: movedNode, in: fixture.targetWorkspaceId))
-        let anchorColumn = try XCTUnwrap(engine.findColumn(
-            containing: try XCTUnwrap(engine.findNode(for: fixture.anchorToken, in: fixture.targetWorkspaceId)),
-            in: fixture.targetWorkspaceId
-        ))
-        let columns = engine.columns(in: fixture.targetWorkspaceId)
-        XCTAssertEqual(columns.firstIndex(where: { $0.id == movedColumn.id }), 1)
-        XCTAssertNotEqual(movedColumn.id, anchorColumn.id)
-        XCTAssertEqual(movedColumn.width, .proportion(0.5))
-        XCTAssertTrue(movedColumn.hasManualSingleWindowWidthOverride)
-        XCTAssertEqual(
-            manager.niriViewportState(for: fixture.targetWorkspaceId).selectedNodeId,
-            movedNode.id
-        )
-    }
-
     func testSummonMarkedWindowRightInDwindleMovesAndSelectsTheMarkedWindow() async throws {
         let fixture = try makeFixture(layoutType: .dwindle, displayId: 78_302)
         let controller = fixture.controller
@@ -115,19 +65,10 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
     }
 
     func testMarkedFloatingWindowCannotBeSummonedOrMoved() throws {
-        for (layoutType, displayId) in [(LayoutType.niri, UInt32(78_308)), (.dwindle, 78_309)] {
+        for (layoutType, displayId) in [(LayoutType.dwindle, CGDirectDisplayID(78_309))] {
             let fixture = try makeFixture(layoutType: layoutType, displayId: displayId)
             let controller = fixture.controller
             let manager = controller.workspaceManager
-            manager.withEngineMutationScope {
-                switch layoutType {
-                case .dwindle:
-                    controller.dwindleEngine?.removeWindow(token: fixture.markedToken, from: fixture.sourceWorkspaceId)
-                case .niri,
-                     .defaultLayout:
-                    controller.niriEngine?.removeWindow(token: fixture.markedToken, in: fixture.sourceWorkspaceId)
-                }
-            }
             XCTAssertTrue(manager.setWindowMode(.floating, for: fixture.markedToken))
             XCTAssertEqual(controller.windowMarkRegistry.set("floating", for: fixture.markedToken), .inserted)
 
@@ -165,7 +106,7 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
     }
 
     func testSummonRefusalsAreTypedAndDoNotMoveTheMarkedWindow() throws {
-        let noAnchorFixture = try makeFixture(layoutType: .niri, displayId: 78_303, shouldFocusAnchor: false)
+        let noAnchorFixture = try makeFixture(layoutType: .dwindle, displayId: 78_303, shouldFocusAnchor: false)
         let noAnchorController = noAnchorFixture.controller
         XCTAssertEqual(noAnchorController.windowMarkRegistry.set("known", for: noAnchorFixture.markedToken), .inserted)
         let noAnchor = summonResponse(noAnchorFixture, mark: "known")
@@ -181,7 +122,7 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
         XCTAssertEqual(noAnchorController.windowMarkRegistry.lookup("stale"), .unknown)
         XCTAssertEqual(summonResponse(noAnchorFixture, mark: "missing").code, .unknownMark)
 
-        let focusedFixture = try makeFixture(layoutType: .niri, displayId: 78_304)
+        let focusedFixture = try makeFixture(layoutType: .dwindle, displayId: 78_304)
         let controller = focusedFixture.controller
         XCTAssertEqual(controller.windowMarkRegistry.set("hidden", for: focusedFixture.markedToken), .inserted)
         controller.workspaceManager.setAppHidden(true, pid: focusedFixture.markedToken.pid, source: .service)
@@ -216,19 +157,6 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
         )
     }
 
-    func testSummonRefusesWhenTheTargetLayoutEngineIsUnavailable() throws {
-        let fixture = try makeFixture(layoutType: .niri, displayId: 78_305)
-        let controller = fixture.controller
-        XCTAssertEqual(controller.windowMarkRegistry.set("unsupported", for: fixture.markedToken), .inserted)
-        controller.niriEngine = nil
-
-        let response = summonResponse(fixture, mark: "unsupported")
-
-        XCTAssertEqual(response.code, .unsupportedLayout)
-        XCTAssertEqual(controller.workspaceManager.workspace(for: fixture.markedToken), fixture.sourceWorkspaceId)
-        XCTAssertEqual(controller.windowMarkRegistry.lookup("unsupported"), .found(fixture.markedToken))
-    }
-
     private func makeFixture(
         layoutType: LayoutType,
         displayId: UInt32,
@@ -260,12 +188,7 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
                 controller: controller
             )
         )
-
-        if layoutType == .dwindle {
-            controller.dwindleLayoutHandler.enableDwindleLayout()
-        } else {
-            controller.niriLayoutHandler.enableNiriLayout()
-        }
+        controller.dwindleLayoutHandler.enableDwindleLayout()
 
         let markedToken = WindowToken(pid: pid_t(displayId) + 1, windowId: Int(displayId) + 101)
         let anchorToken = WindowToken(pid: pid_t(displayId) + 2, windowId: Int(displayId) + 102)
@@ -273,18 +196,12 @@ final class WindowMarkSummonIntegrationTests: XCTestCase {
         _ = WindowAdmissionTestSupport.track(anchorToken, in: targetWorkspaceId, controller: controller)
 
         switch layoutType {
-        case .dwindle:
+        case .dwindle,
+             .defaultLayout:
             let engine = try XCTUnwrap(controller.dwindleEngine)
             controller.workspaceManager.withEngineMutationScope {
                 _ = engine.addWindow(token: markedToken, to: sourceWorkspaceId, activeWindowFrame: nil)
                 _ = engine.addWindow(token: anchorToken, to: targetWorkspaceId, activeWindowFrame: nil)
-            }
-        case .defaultLayout,
-             .niri:
-            let engine = try XCTUnwrap(controller.niriEngine)
-            controller.workspaceManager.withEngineMutationScope {
-                _ = engine.addWindow(token: markedToken, to: sourceWorkspaceId, afterSelection: nil)
-                _ = engine.addWindow(token: anchorToken, to: targetWorkspaceId, afterSelection: nil)
             }
         }
 

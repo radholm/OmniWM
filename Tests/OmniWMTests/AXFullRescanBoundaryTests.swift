@@ -2267,8 +2267,7 @@ final class AXFullRescanBoundaryTests: XCTestCase {
             workspaceId: UUID(),
             mode: .tiling,
             managedReplacementMetadata: nil,
-            ruleEffects: .none,
-            admissionHints: .none
+            ruleEffects: .none
         )
         let retries = expectation(description: "bounded binding retries")
         retries.expectedFulfillmentCount = 3

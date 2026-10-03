@@ -37,15 +37,10 @@ extension WorkspaceManager {
         if !rememberedIds.isEmpty {
             recordReconcileEvent(.focusForgotten(workspaceIds: rememberedIds, source: .workspaceManager))
         }
-        let viewportIds = toRemove.filter { recordedViewportStates[$0] != nil }
-        if !viewportIds.isEmpty {
-            recordReconcileEvent(.viewportForgotten(workspaceIds: viewportIds, source: .workspaceManager))
-        }
         workspaceCatalog.removeDescriptors(ids)
         pendingRuntimeMonitorOverrideClearWorkspaceIds.subtract(toRemove)
         withEngineMutationScope(label: "workspace_removed_engine_cleanup", source: .workspaceManager) {
             for id in toRemove {
-                niriEngine?.removeWorkspaceState(id)
                 dwindleEngine?.removeLayout(for: id)
             }
         }

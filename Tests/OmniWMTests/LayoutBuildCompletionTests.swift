@@ -19,11 +19,8 @@ final class LayoutBuildCompletionTests: XCTestCase {
             invalidatedAction: { invalidations += 1 }
         )
         XCTAssertTrue(action.isCurrent(using: manager))
-        XCTAssertEqual(manager.niriViewportState(for: workspaceId).viewOffset, 120)
 
         XCTAssertTrue(executeRelayout(controller, workspaceId: workspaceId, action: action))
-
-        XCTAssertEqual(manager.niriViewportState(for: workspaceId).viewOffset, 0)
         XCTAssertFalse(action.isCurrent(using: manager))
         XCTAssertEqual(completions, 1)
         XCTAssertEqual(invalidations, 0)
@@ -40,36 +37,13 @@ final class LayoutBuildCompletionTests: XCTestCase {
             action: { completions += 1 },
             invalidatedAction: { invalidations += 1 }
         )
-        manager.withNiriViewportState(for: workspaceId) { $0.jumpOffset(to: 240) }
+        manager.recordLayoutOperation(.splitRatioChanged, in: workspaceId)
         XCTAssertFalse(action.isCurrent(using: manager))
-        XCTAssertEqual(manager.niriViewportState(for: workspaceId).viewOffset, 240)
 
         XCTAssertTrue(executeRelayout(controller, workspaceId: workspaceId, action: action))
-
-        XCTAssertEqual(manager.niriViewportState(for: workspaceId).viewOffset, 0)
         XCTAssertFalse(action.isCurrent(using: manager))
         XCTAssertEqual(completions, 0)
         XCTAssertEqual(invalidations, 1)
-    }
-
-    private func executeRelayout(
-        _ controller: WMController,
-        workspaceId: WorkspaceDescriptor.ID,
-        action: RefreshPostLayoutAction
-    ) -> Bool {
-        let refreshController = controller.layoutRefreshController
-        return refreshController.executeRelayout(
-            refresh: .init(
-                kind: .relayout,
-                reason: .interactiveGesture,
-                affectedWorkspaceIds: [workspaceId],
-                postLayout: action,
-                suppressesWindowActivation: true
-            ),
-            useScrollAnimationPath: false,
-            recoverFocus: false,
-            generation: refreshController.layoutState.refreshGeneration
-        )
     }
 
     private func fixture() throws -> (WMController, WorkspaceDescriptor.ID) {
@@ -94,7 +68,7 @@ final class LayoutBuildCompletionTests: XCTestCase {
         manager.applyMonitorConfigurationChange([monitor])
         let workspaceId = try XCTUnwrap(manager.workspaceId(for: "1", createIfMissing: true))
         XCTAssertTrue(manager.setActiveWorkspace(workspaceId, on: monitor.id))
-        controller.niriLayoutHandler.enableNiriLayout()
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         let pid: pid_t = 764_931
         let windowId = 764_932
         let token = manager.addWindow(
@@ -102,15 +76,31 @@ final class LayoutBuildCompletionTests: XCTestCase {
             pid: pid, windowId: windowId, to: workspaceId
         )
         manager.setCachedConstraints(.unconstrained, for: token)
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let node = engine.addWindow(token: token, to: workspaceId, afterSelection: nil)
-        XCTAssertNotNil(engine.singleWindowLayoutContext(in: workspaceId))
-        manager.withNiriViewportState(for: workspaceId) { state in
-            state.selectedNodeId = node.id
-            state.jumpOffset(to: 120)
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        _ = manager.withEngineMutationScope(in: workspaceId, label: "completion_fixture") {
+            engine.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
         }
         controller.layoutRefreshController.fastFrameProvider = { _, _ in frame }
         controller.axManager.confirmFrameWrite(for: windowId, frame: frame)
         return (controller, workspaceId)
+    }
+
+    private func executeRelayout(
+        _ controller: WMController,
+        workspaceId: WorkspaceDescriptor.ID,
+        action: RefreshPostLayoutAction
+    ) -> Bool {
+        let refreshController = controller.layoutRefreshController
+        return refreshController.executeRelayout(
+            refresh: .init(
+                kind: .relayout,
+                reason: .interactiveGesture,
+                affectedWorkspaceIds: [workspaceId],
+                postLayout: action,
+                suppressesWindowActivation: true
+            ),
+            recoverFocus: false,
+            generation: refreshController.layoutState.refreshGeneration
+        )
     }
 }

@@ -24,7 +24,6 @@ extension WorkspaceNavigationHandler {
             let name = String(candidate)
             guard manager.workspaceId(named: name) == nil else { continue }
             guard let workspace = manager.createDynamicWorkspace(named: name, on: monitorId) else { return nil }
-            controller.syncMonitorsToNiriEngine()
             return workspace
         }
     }

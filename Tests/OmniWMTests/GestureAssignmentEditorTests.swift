@@ -17,16 +17,16 @@ final class GestureAssignmentEditorTests: XCTestCase {
         withSettings { settings in
             settings.gestures.overviewGestureEnabled = true
             let editor = GestureAssignmentEditor()
-            XCTAssertNotNil(GestureAssignmentEditor.conflict(enabling: .move, settings: settings, monitors: []))
+            XCTAssertNotNil(GestureAssignmentEditor.conflict(enabling: .move, settings: settings))
 
-            editor.submit(.init(action: .move, change: .fingers(2)), settings: settings, monitors: [])
+            editor.submit(.init(action: .move, change: .fingers(2)), settings: settings)
 
             XCTAssertEqual(settings.gestures.windowMoveFingerCount, .two)
             XCTAssertFalse(settings.gestures.windowMoveEnabled)
             XCTAssertNil(editor.proposal)
-            XCTAssertNil(GestureAssignmentEditor.conflict(enabling: .move, settings: settings, monitors: []))
+            XCTAssertNil(GestureAssignmentEditor.conflict(enabling: .move, settings: settings))
 
-            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings, monitors: [])
+            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings)
             XCTAssertTrue(settings.gestures.windowMoveEnabled)
             XCTAssertNil(editor.proposal)
         }
@@ -40,7 +40,7 @@ final class GestureAssignmentEditorTests: XCTestCase {
             settings.gestures.onChange = { changes += 1 }
             let editor = GestureAssignmentEditor()
 
-            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings, monitors: [])
+            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings)
 
             XCTAssertEqual(settings.gestures.export(), original)
             XCTAssertEqual(editor.proposal?.resolutions.map(\.disabledActions), [[.overview]])
@@ -53,92 +53,28 @@ final class GestureAssignmentEditorTests: XCTestCase {
         }
     }
 
-    func testMultipleBlockersAreAllIncludedAndMouseWheelConsequenceIsExplicit() {
+    func testConflictingWorkspaceGestureIsIncludedInResolution() {
         withSettings { settings in
             settings.gestures.workspaceSwipeEnabled = true
             settings.gestures.windowMoveFingerCount = .three
-            let monitors = [makeMonitor(orientation: .horizontal)]
             let editor = GestureAssignmentEditor()
             let edit = GestureAssignmentEdit(action: .move, change: .enabled(true))
 
-            editor.submit(edit, settings: settings, monitors: monitors)
+            editor.submit(edit, settings: settings)
 
             XCTAssertEqual(editor.proposal?.resolutions.count, 1)
             guard let resolution = editor.proposal?.resolutions.first else {
                 return XCTFail("Expected a guided replacement")
             }
-            XCTAssertEqual(resolution.disabledActions, [.columns, .workspaces])
-            XCTAssertTrue(resolution.disablesMouseWheelScrolling)
-            XCTAssertEqual(
-                resolution.title(for: edit),
-                "Turn off Scroll columns and Switch workspaces and enable Move windows"
-            )
-            editor.confirm(resolution, settings: settings, monitors: monitors)
+            editor.confirm(resolution, settings: settings)
             XCTAssertTrue(settings.gestures.windowMoveEnabled)
-            XCTAssertFalse(settings.gestures.scrollEnabled)
             XCTAssertFalse(settings.gestures.workspaceSwipeEnabled)
             XCTAssertNil(editor.proposal)
         }
     }
 
-    func testIndirectWorkspaceAxisConflictOffersBothMinimalChoices() {
-        withSettings { settings in
-            configureIndirectConflict(settings)
-            let monitors = [makeMonitor(orientation: .horizontal)]
-            let original = settings.gestures.export()
-            let editor = GestureAssignmentEditor()
-
-            editor.submit(.init(action: .columns, change: .enabled(true)), settings: settings, monitors: monitors)
-
-            XCTAssertEqual(editor.proposal?.resolutions.map(\.disabledActions), [[.workspaces], [.overview]])
-            XCTAssertEqual(settings.gestures.export(), original)
-            guard let resolution = editor.proposal?.resolutions.first(where: { $0.disabledActions == [.overview] })
-            else {
-                return XCTFail("Expected the Overview replacement choice")
-            }
-            editor.confirm(resolution, settings: settings, monitors: monitors)
-            XCTAssertTrue(settings.gestures.scrollEnabled)
-            XCTAssertTrue(settings.gestures.workspaceSwipeEnabled)
-            XCTAssertFalse(settings.gestures.overviewGestureEnabled)
-            XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
-        }
-    }
-
-    func testHorizontalColumnAndOverviewSharingAppliesImmediately() {
-        withSettings { settings in
-            settings.gestures.fingerCount = .four
-            let monitors = [makeMonitor(orientation: .horizontal)]
-            let editor = GestureAssignmentEditor()
-
-            XCTAssertNil(GestureAssignmentEditor.conflict(enabling: .overview, settings: settings, monitors: monitors))
-            editor.submit(.init(action: .overview, change: .enabled(true)), settings: settings, monitors: monitors)
-
-            XCTAssertTrue(settings.gestures.scrollEnabled)
-            XCTAssertTrue(settings.gestures.overviewGestureEnabled)
-            XCTAssertNil(editor.proposal)
-        }
-    }
-
-    func testMonitorOverrideChangesAvailabilityAndMinimalResolution() {
-        withSettings { settings in
-            configureIndirectConflict(settings)
-            let monitor = makeMonitor(orientation: .horizontal)
-            settings.monitors.updateOrientationSettings(
-                MonitorOrientationSettings(monitorName: monitor.name, orientation: .vertical),
-                for: monitor
-            )
-            let editor = GestureAssignmentEditor()
-
-            editor.submit(.init(action: .columns, change: .enabled(true)), settings: settings, monitors: [monitor])
-
-            XCTAssertEqual(editor.proposal?.resolutions.map(\.disabledActions), [[.overview]])
-            XCTAssertFalse(settings.gestures.scrollEnabled)
-        }
-    }
-
     func testConfirmedFingerEditPreservesRequestedValueAndUnrelatedFields() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             settings.gestures.windowMoveEnabled = true
             settings.gestures.windowMoveFingerCount = .two
             settings.gestures.overviewGestureEnabled = true
@@ -148,14 +84,14 @@ final class GestureAssignmentEditorTests: XCTestCase {
             let editor = GestureAssignmentEditor()
             let edit = GestureAssignmentEdit(action: .move, change: .fingers(4))
 
-            editor.submit(edit, settings: settings, monitors: [])
+            editor.submit(edit, settings: settings)
 
             XCTAssertEqual(settings.gestures.export(), original)
             XCTAssertEqual(editor.proposal?.edit, edit)
             guard let resolution = editor.proposal?.resolutions.first else {
                 return XCTFail("Expected a finger reassignment proposal")
             }
-            editor.confirm(resolution, settings: settings, monitors: [])
+            editor.confirm(resolution, settings: settings)
             var expected = original
             expected.windowMoveFingerCount = .four
             expected.overviewGestureEnabled = false
@@ -165,7 +101,6 @@ final class GestureAssignmentEditorTests: XCTestCase {
 
     func testAxisEditUsesValidationAndRetainsOriginalUntilConfirmed() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             settings.gestures.workspaceSwipeEnabled = true
             settings.gestures.workspaceSwipeFingerCount = .four
             settings.gestures.workspaceSwipeAxis = .horizontal
@@ -174,8 +109,7 @@ final class GestureAssignmentEditorTests: XCTestCase {
 
             editor.submit(
                 .init(action: .workspaces, change: .workspaceAxis(.vertical)),
-                settings: settings,
-                monitors: []
+                settings: settings
             )
 
             XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
@@ -183,7 +117,7 @@ final class GestureAssignmentEditorTests: XCTestCase {
             guard let resolution = editor.proposal?.resolutions.first else {
                 return XCTFail("Expected a direction proposal")
             }
-            editor.confirm(resolution, settings: settings, monitors: [])
+            editor.confirm(resolution, settings: settings)
             XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .vertical)
             XCTAssertFalse(settings.gestures.overviewGestureEnabled)
         }
@@ -193,14 +127,14 @@ final class GestureAssignmentEditorTests: XCTestCase {
         withSettings { settings in
             settings.gestures.overviewGestureEnabled = true
             let editor = GestureAssignmentEditor()
-            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings, monitors: [])
+            editor.submit(.init(action: .move, change: .enabled(true)), settings: settings)
             guard let resolution = editor.proposal?.resolutions.first else {
                 return XCTFail("Expected a replacement proposal")
             }
             settings.gestures.windowGestureSensitivity = 3.2
             settings.gestures.windowMoveFingerCount = .two
 
-            editor.confirm(resolution, settings: settings, monitors: [])
+            editor.confirm(resolution, settings: settings)
 
             XCTAssertFalse(settings.gestures.windowMoveEnabled)
             XCTAssertTrue(settings.gestures.overviewGestureEnabled)
@@ -210,7 +144,7 @@ final class GestureAssignmentEditorTests: XCTestCase {
             guard let refreshedResolution = editor.proposal?.resolutions.first else {
                 return XCTFail("Expected an explicit apply choice")
             }
-            editor.confirm(refreshedResolution, settings: settings, monitors: [])
+            editor.confirm(refreshedResolution, settings: settings)
             XCTAssertTrue(settings.gestures.windowMoveEnabled)
             XCTAssertTrue(settings.gestures.overviewGestureEnabled)
             XCTAssertEqual(settings.gestures.windowMoveFingerCount, .two)
@@ -219,81 +153,28 @@ final class GestureAssignmentEditorTests: XCTestCase {
         }
     }
 
-    func testChangedMonitorContextRequiresFreshConfirmation() {
-        withSettings { settings in
-            settings.gestures.fingerCount = .four
-            let editor = GestureAssignmentEditor()
-            editor.submit(
-                .init(action: .overview, change: .enabled(true)),
-                settings: settings,
-                monitors: [makeMonitor(orientation: .vertical)]
-            )
-            guard let resolution = editor.proposal?.resolutions.first else {
-                return XCTFail("Expected a replacement proposal")
-            }
-
-            editor.confirm(resolution, settings: settings, monitors: [makeMonitor(orientation: .horizontal)])
-
-            XCTAssertFalse(settings.gestures.overviewGestureEnabled)
-            XCTAssertTrue(settings.gestures.scrollEnabled)
-            XCTAssertEqual(editor.proposal?.refreshed, true)
-            XCTAssertEqual(editor.proposal?.resolutions.map(\.disabledActions), [[]])
-        }
-    }
-
-    func testRefreshAfterOverrideChangeDoesNotApplyNowValidProposal() {
-        withSettings { settings in
-            settings.gestures.fingerCount = .four
-            let monitor = makeMonitor(orientation: .vertical)
-            let editor = GestureAssignmentEditor()
-            editor.submit(.init(action: .overview, change: .enabled(true)), settings: settings, monitors: [monitor])
-            editor.refresh(settings: settings, monitors: [monitor])
-            XCTAssertEqual(editor.proposal?.refreshed, false)
-            settings.monitors.updateOrientationSettings(
-                MonitorOrientationSettings(monitorName: monitor.name, orientation: .horizontal),
-                for: monitor
-            )
-
-            editor.refresh(settings: settings, monitors: [monitor])
-
-            XCTAssertFalse(settings.gestures.overviewGestureEnabled)
-            XCTAssertTrue(settings.gestures.scrollEnabled)
-            XCTAssertEqual(editor.proposal?.refreshed, true)
-            XCTAssertNil(editor.proposal?.conflict)
-            XCTAssertEqual(editor.proposal?.resolutions.map(\.disabledActions), [[]])
-        }
-    }
-
     func testNewSubmissionReplacesPendingEditAndDisableOnlyRecoveryRemainsAvailable() {
         withSettings { settings in
+            settings.gestures.workspaceSwipeEnabled = true
+            settings.gestures.workspaceSwipeFingerCount = .three
+            settings.gestures.workspaceSwipeAxis = .vertical
             settings.gestures.windowMoveEnabled = true
             settings.gestures.windowMoveFingerCount = .three
             settings.gestures.overviewGestureEnabled = true
             settings.gestures.overviewGestureFingerCount = .three
-            let monitors = [makeMonitor(orientation: .vertical)]
             let editor = GestureAssignmentEditor()
-            editor.submit(.init(action: .resize, change: .enabled(true)), settings: settings, monitors: monitors)
+            editor.submit(.init(action: .resize, change: .enabled(true)), settings: settings)
             XCTAssertEqual(editor.proposal?.edit.action, .resize)
 
-            editor.submit(.init(action: .move, change: .enabled(false)), settings: settings, monitors: monitors)
+            editor.submit(.init(action: .move, change: .enabled(false)), settings: settings)
 
             XCTAssertFalse(settings.gestures.windowMoveEnabled)
             XCTAssertFalse(settings.gestures.windowResizeEnabled)
             XCTAssertNil(editor.proposal)
             XCTAssertNotNil(GestureSettingsValidation.conflict(
-                gestures: settings.gestures.export(), orientationOverrides: [], monitors: monitors
+                gestures: settings.gestures.export()
             ))
         }
-    }
-
-    private func configureIndirectConflict(_ settings: SettingsStore) {
-        settings.gestures.scrollEnabled = false
-        settings.gestures.fingerCount = .four
-        settings.gestures.workspaceSwipeEnabled = true
-        settings.gestures.workspaceSwipeFingerCount = .four
-        settings.gestures.workspaceSwipeAxis = .horizontal
-        settings.gestures.overviewGestureEnabled = true
-        settings.gestures.overviewGestureFingerCount = .four
     }
 
     private func withSettings(_ body: (SettingsStore) -> Void) {

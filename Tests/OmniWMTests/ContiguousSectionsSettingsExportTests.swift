@@ -12,9 +12,12 @@ final class ContiguousSectionsSettingsExportTests: XCTestCase {
             "borders": ["enabled", "width"],
             "borders.color": ["red", "green", "blue", "alpha"],
             "gestures": [
-                "scrollEnabled", "scrollSensitivity", "scrollModifierKey", "mouseMoveModifierKey",
-                "mouseResizeModifierKey", "fingerCount", "invertDirection", "trackpadScrollStyle",
-                "workspaceSwipeEnabled", "workspaceSwipeFingerCount", "workspaceSwipeAxis"
+                "mouseMoveModifierKey",
+                "mouseResizeModifierKey",
+                "invertDirection",
+                "workspaceSwipeEnabled",
+                "workspaceSwipeFingerCount",
+                "workspaceSwipeAxis"
             ],
             "statusBar": ["showWorkspaceName", "showAppNames", "useWorkspaceId"],
             "hiddenBar": ["enabled", "hiddenBundleIDs", "rehideIntervalSeconds"]

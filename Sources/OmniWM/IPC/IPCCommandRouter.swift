@@ -25,11 +25,6 @@ final class IPCCommandRouter {
             return handle(command)
         case let .monitorFocus(command):
             return handle(command)
-        case let .column(command):
-            guard let hotkey = HotkeyCommand(ipc: command) else { return .invalidArguments }
-            return controller.commandHandler.performCommand(hotkey)
-        case let .sizing(command):
-            return controller.commandHandler.performCommand(HotkeyCommand(ipc: command))
         case let .swapWorkspaceWithMonitor(ipcDirection):
             return swapWorkspaceWithMonitor(direction: Direction(ipc: ipcDirection))
         case let .dwindle(command):
@@ -112,8 +107,6 @@ final class IPCCommandRouter {
 
     private func handle(_ command: IPCWorkspaceLayoutCommand) -> ExternalCommandResult {
         switch command {
-        case .toggle:
-            return controller.commandHandler.performCommand(.workspace(.toggleLayout))
         case let .set(layout):
             if let guardResult = IPCCommandValidation.controllerState(controller) {
                 return guardResult

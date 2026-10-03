@@ -20,9 +20,6 @@ final class OverviewDwindleLayoutTests: XCTestCase {
         ])
         XCTAssertEqual(layout.searchResultCount, 6)
         XCTAssertEqual(layout.tabMembers(for: fixture.handles[0]).map(\.handle), Array(fixture.handles.prefix(3)))
-        XCTAssertTrue(layout.niriColumnsByWorkspace.isEmpty)
-        XCTAssertTrue(layout.niriColumnDropZonesByWorkspace.isEmpty)
-        XCTAssertTrue(section.windows.allSatisfy { !$0.isTiled })
     }
 
     func testInactiveTitleMatchUsesGroupGeometryAndHitTarget() throws {
@@ -72,7 +69,6 @@ final class OverviewDwindleLayoutTests: XCTestCase {
         XCTAssertEqual(layout.window(for: fixture.handles[4])?.isDisplayed, true)
         XCTAssertEqual(layout.window(for: fixture.handles[4])?.overviewFrame, firstFrame)
         XCTAssertEqual(layout.window(for: fixture.handles[0])?.isDisplayed, true)
-        XCTAssertEqual(layout.stripPanByWorkspace, [:])
     }
 
     func testNoMatchesRetainsWorkspaceGeometryWithoutSelectableResults() throws {

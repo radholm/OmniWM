@@ -1321,7 +1321,6 @@ final class FocusWithoutRaiseTests: XCTestCase {
                     axRef: replacementRef
                 ),
                 managedReplacementMetadata: nil,
-                admissionHints: nil,
                 sizeConstraints: nil
             ),
             execution: .init(

@@ -54,19 +54,12 @@ extension LayoutRefreshController {
     private func handleScreenParametersChanged() {
         workspaceSwipe.cancel(reason: "display-change")
         detectRefreshRates()
-        controller?.syncMonitorsToNiriEngine()
         controller?.surfaceReconciler.noteWorldChanged()
     }
 
-    func cleanupForMonitorDisconnect(displayId: CGDirectDisplayID, migrateAnimations: Bool) {
+    func cleanupForMonitorDisconnect(displayId: CGDirectDisplayID, migrateAnimations _: Bool) {
         if workspaceSwipe.flight?.preparation.monitor.displayId == displayId {
             workspaceSwipe.cancel(reason: "display-disconnected")
-        }
-        if let workspaceId = niriHandler.scrollAnimationByDisplay[displayId] {
-            niriHandler.terminateViewportGesture(
-                for: workspaceId,
-                disposition: .settleLiveOffset
-            )
         }
         invalidateDisplayLink(for: displayId, reason: .monitorDisconnect)
 
@@ -76,13 +69,6 @@ extension LayoutRefreshController {
             }
         }
 
-        if migrateAnimations {
-            if let workspaceId = niriHandler.scrollAnimationByDisplay.removeValue(forKey: displayId) {
-                startScrollAnimation(for: workspaceId)
-            }
-        } else if let workspaceId = niriHandler.scrollAnimationByDisplay.removeValue(forKey: displayId) {
-            niriHandler.cancelAnimationMotion(for: workspaceId)
-        }
         stopDwindleAnimation(for: displayId)
     }
 
@@ -136,8 +122,7 @@ extension LayoutRefreshController {
                 effectId: traceOrigin.effectId,
                 displayId: displayId,
                 timing: timing,
-                scrollMs: (phaseTiming.scrollEndTime - entryTime) * 1000,
-                dwindleMs: (phaseTiming.dwindleEndTime - phaseTiming.scrollEndTime) * 1000,
+                dwindleMs: (phaseTiming.dwindleEndTime - phaseTiming.dwindleStartTime) * 1000,
                 closingMs: (phaseTiming.closingEndTime - phaseTiming.dwindleEndTime) * 1000,
                 reconcileMs: (completionTime - phaseTiming.closingEndTime) * 1000,
                 surfaceMs: (phaseTiming.surfaceEndTime - phaseTiming.closingEndTime) * 1000,
@@ -147,43 +132,6 @@ extension LayoutRefreshController {
                 classification: classification
             )
         )
-    }
-
-    func startScrollAnimation(for workspaceId: WorkspaceDescriptor.ID, forGesture: Bool = false) {
-        guard forGesture || controller?.motionPolicy.animationsEnabled != false else { return }
-        guard let controller else { return }
-        guard let monitor = controller.workspaceManager.monitor(for: workspaceId),
-              controller.workspaceManager.activeWorkspaceOrFirst(on: monitor.id)?.id == workspaceId
-        else {
-            niriHandler.cancelActiveAnimations(for: workspaceId)
-            return
-        }
-        let targetDisplayId = monitor.displayId
-
-        let registrationChanged = niriHandler.registerScrollAnimation(workspaceId, on: targetDisplayId)
-        if displayLinkActivationForTests?(targetDisplayId) == true {
-            return
-        }
-        if !registrationChanged, layoutState.displayLinksByDisplay[targetDisplayId] != nil {
-            return
-        }
-        guard let displayLink = getOrCreateDisplayLink(for: targetDisplayId) else {
-            niriHandler.cancelAnimationMotion(for: workspaceId, gestureDisposition: .settleLiveOffset)
-            niriHandler.scrollAnimationByDisplay.removeValue(forKey: targetDisplayId)
-            return
-        }
-        displayLink.add(to: .main, forMode: .common)
-    }
-
-    func stopScrollAnimation(for displayId: CGDirectDisplayID) {
-        if let workspaceId = niriHandler.scrollAnimationByDisplay[displayId] {
-            niriHandler.terminateViewportGesture(
-                for: workspaceId,
-                disposition: .settleLiveOffset
-            )
-        }
-        niriHandler.scrollAnimationByDisplay.removeValue(forKey: displayId)
-        stopDisplayLinkIfIdle(for: displayId)
     }
 
     func acceptDwindleAnimationTarget(
@@ -302,18 +250,10 @@ extension LayoutRefreshController {
     }
 
     func resetDisplayLinkAndAnimationState() {
-        let niriWorkspaceIds = Set(niriHandler.scrollAnimationByDisplay.values)
         let removedDwindleState = dwindleHandler.removeAllAnimationState()
-        for workspaceId in niriWorkspaceIds {
-            niriHandler.cancelAnimationMotion(
-                for: workspaceId,
-                gestureDisposition: .settleLiveOffsetWithoutRelayout
-            )
-        }
         for displayId in Array(layoutState.displayLinksByDisplay.keys) {
             invalidateDisplayLink(for: displayId, reason: .reset)
         }
-        niriHandler.scrollAnimationByDisplay.removeAll()
         for workspaceId in removedDwindleState.workspaceIds {
             controller?.dwindleEngine?.cancelAnimations(in: workspaceId)
         }
@@ -326,8 +266,7 @@ extension LayoutRefreshController {
         for displayId: CGDirectDisplayID,
         reason: DisplayLinkStopReason = .idle
     ) {
-        if niriHandler.scrollAnimationByDisplay[displayId] == nil,
-           !workspaceSwipe.hasDisplayWork(displayId),
+        if !workspaceSwipe.hasDisplayWork(displayId),
            dwindleHandler.dwindleAnimationByDisplay[displayId] == nil,
            layoutState.closingAnimationsByDisplay[displayId].map({ $0.isEmpty }) ?? true
         {
@@ -359,7 +298,6 @@ extension LayoutRefreshController {
 
     private func hasDisplayLinkWork(for displayId: CGDirectDisplayID) -> Bool {
         workspaceSwipe.hasDisplayWork(displayId)
-            || niriHandler.scrollAnimationByDisplay[displayId] != nil
             || dwindleHandler.dwindleAnimationByDisplay[displayId] != nil
             || !(layoutState.closingAnimationsByDisplay[displayId]?.isEmpty ?? true)
     }
@@ -377,7 +315,7 @@ extension LayoutRefreshController {
     }
 
     private struct DisplayAnimationPhaseTiming {
-        let scrollEndTime: CFTimeInterval
+        let dwindleStartTime: CFTimeInterval
         let dwindleEndTime: CFTimeInterval
         let closingEndTime: CFTimeInterval
         let surfaceEndTime: CFTimeInterval
@@ -388,15 +326,13 @@ extension LayoutRefreshController {
         displayId: CGDirectDisplayID,
         traceActive: Bool
     ) -> DisplayAnimationPhaseTiming {
-        var scrollEndTime: CFTimeInterval = 0
+        var dwindleStartTime: CFTimeInterval = 0
         var dwindleEndTime: CFTimeInterval = 0
         var closingEndTime: CFTimeInterval = 0
         var surfaceEndTime: CFTimeInterval = 0
-
         SkyLight.shared.withTransactionScope {
             workspaceSwipe.tick(displayId: displayId, timestamp: displayLink.targetTimestamp)
-            niriHandler.tickScrollAnimation(targetTime: displayLink.targetTimestamp, displayId: displayId)
-            scrollEndTime = traceActive ? CACurrentMediaTime() : 0
+            dwindleStartTime = traceActive ? CACurrentMediaTime() : 0
             dwindleHandler.tickDwindleAnimation(targetTime: displayLink.targetTimestamp, displayId: displayId)
             dwindleEndTime = traceActive ? CACurrentMediaTime() : 0
             tickClosingAnimations(targetTime: displayLink.targetTimestamp, displayId: displayId)
@@ -405,7 +341,7 @@ extension LayoutRefreshController {
             surfaceEndTime = traceActive ? CACurrentMediaTime() : 0
         }
         return DisplayAnimationPhaseTiming(
-            scrollEndTime: scrollEndTime,
+            dwindleStartTime: dwindleStartTime,
             dwindleEndTime: dwindleEndTime,
             closingEndTime: closingEndTime,
             surfaceEndTime: surfaceEndTime

@@ -192,23 +192,6 @@ final class OverviewDwindleProjectionTests: XCTestCase {
     }
 
     @MainActor
-    func testSnapshotRefreshRemovesGroupsWhenWorkspaceChangesLayout() throws {
-        let fixture = try makeOverviewFixture()
-        let snapshot = OverviewSnapshot(
-            wmController: fixture.controller,
-            facts: OverviewWindowFacts(wmController: fixture.controller, environment: fixture.environment)
-        )
-        snapshot.build()
-        XCTAssertNotNil(snapshot.dwindleGroupsByWorkspace[fixture.workspaceId])
-
-        fixture.controller.settings.workspaces.configurations = [WorkspaceConfiguration(name: "97", layoutType: .niri)]
-        snapshot.refresh(affectedWorkspaceIds: [fixture.workspaceId])
-
-        XCTAssertNil(snapshot.dwindleGroupsByWorkspace[fixture.workspaceId])
-        XCTAssertEqual(snapshot.windows.count, 2)
-    }
-
-    @MainActor
     func testDwindleSearchCountsAndTraversalRemainMonitorLocal() throws {
         let fixture = try makeOverviewFixture()
         let controller = fixture.controller

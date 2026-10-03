@@ -31,7 +31,7 @@ Clicking OmniWM's status bar icon opens a menu of toggle tiles for the behaviors
 | **Focus Mouse** | Focus follows mouse — a managed window gains focus when the pointer enters it, no click needed. |
 | **Focus Edge** | At the last window in any direction, focus continues onto the adjacent display in OmniWM's Routing Arrangement. |
 | **Mouse to Focused** | Moves the pointer into a window after OmniWM navigation changes focus; it stays put if already inside or if the pointer caused the focus. |
-| **Follow Monitor** | After moving a window or column to another workspace, switches there and keeps it focused. |
+| **Follow Monitor** | After moving a window to another workspace, switches there and keeps it focused. |
 | **Move Edge** | At a workspace edge, Move Window sends the focused window to the adjacent routed display and follows it. |
 | **Mouse Warp** | Moves the pointer across matching display edges using OmniWM's Routing Arrangement. On by default; available only with multiple displays. |
 | **Hide Menu Icons** | Hides the menu-bar items selected in Settings (shown only where Hidden Bar concealment is available). |

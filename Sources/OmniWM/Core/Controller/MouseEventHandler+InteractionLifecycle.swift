@@ -9,63 +9,8 @@ extension MouseEventHandler {
         state.gesturePhase != .idle
     }
 
-    var isViewportGestureActive: Bool {
-        switch state.gesturePhase {
-        case .idle:
-            false
-        case .armed:
-            state.lockedGestureContext?.columnScrollCandidate == true
-        case .committed:
-            state.activeGestureMode == .columnScroll
-        }
-    }
-
     var isInteractiveGestureActive: Bool {
-        state.isMoving || state.isResizing || isViewportGestureActive
-    }
-
-    func handleExpiredViewportGesture(
-        in workspaceId: WorkspaceDescriptor.ID,
-        sessionID: AnimationDriver.GestureSessionID
-    ) {
-        terminateViewportGesture(
-            in: workspaceId,
-            sessionID: sessionID,
-            disposition: .viewportAlreadySettled
-        )
-    }
-
-    @discardableResult
-    func terminateViewportGesture(
-        in workspaceId: WorkspaceDescriptor.ID,
-        sessionID: AnimationDriver.GestureSessionID,
-        disposition: ViewportGestureTerminationDisposition
-    ) -> Bool {
-        guard state.gesturePhase == .committed,
-              state.lockedGestureContext?.workspaceId == workspaceId,
-              state.activeGestureMode == .columnScroll,
-              state.viewportGestureSessionID == sessionID
-        else { return false }
-        let liveSessionID = controller?.workspaceManager.animationDriver.gestureSessionID(in: workspaceId)
-        guard liveSessionID == sessionID || disposition == .viewportAlreadySettled && liveSessionID == nil else {
-            return false
-        }
-        retainConsumedTrackpadSession()
-        switch disposition {
-        case .settleLiveOffset:
-            cancelCommittedGestureViewportState(for: workspaceId)
-        case .settleLiveOffsetWithoutRelayout:
-            cancelCommittedGestureViewportState(for: workspaceId, requestRelayout: false)
-        case .viewportAlreadySettled:
-            break
-        }
-        if disposition != .viewportAlreadySettled {
-            state.suppressGestureStartUntilAllTouchesLift = true
-            state.consumeTrackpadScrollUntilAllTouchesLift = true
-            state.suppressTrackpadMomentumScroll = true
-        }
-        resetGestureState(settleViewportGesture: false)
-        return true
+        state.isMoving || state.isResizing
     }
 
     func handleInputSuppressionBegan() {
@@ -73,7 +18,6 @@ extension MouseEventHandler {
         clearNativeTitleBarDrag()
         cancelActiveMouseInteraction()
         dropPendingTapEvents()
-        resetMouseWheelTrackers()
         abortActiveGestureIfNeeded()
         clearGestureLatches()
         clearConsumedTrackpadSessions()
@@ -84,14 +28,8 @@ extension MouseEventHandler {
         clearNativeTitleBarDrag()
         cancelActiveMouseInteraction()
         dropPendingTapEvents()
-        resetMouseWheelTrackers()
         abortActiveGestureIfNeeded()
         clearGestureLatches()
-    }
-
-    func resetMouseWheelTrackers() {
-        state.horizontalWheelTracker.reset()
-        state.verticalWheelTracker.reset()
     }
 
     func cancelActiveMouseInteraction() {
@@ -99,7 +37,6 @@ extension MouseEventHandler {
         let wasActive = state.isMoving || state.isResizing
 
         if state.isMoving {
-            controller.niriEngine?.interactiveMoveCancel()
             controller.dwindleEngine?.interactiveMoveCancel()
             clearMoveInteractionState()
         }
@@ -133,7 +70,6 @@ extension MouseEventHandler {
         if state.resizeLayout == .dwindle {
             finishDwindleResize()
         } else {
-            finishNiriResize()
         }
     }
 
@@ -149,35 +85,6 @@ extension MouseEventHandler {
             controller.layoutRefreshController.requestImmediateRelayout(reason: .interactiveGesture)
         }
         controller.dwindleLayoutHandler.endInteractiveSnapshotResize(workspaceId: workspaceId)
-    }
-
-    private func finishNiriResize() {
-        guard let controller, let engine = controller.niriEngine, let resize = engine.interactiveResize else { return }
-        let workspaceId = resize.workspaceId
-        let resizedToken = (engine.findNode(by: resize.windowId, in: workspaceId) as? NiriWindow)?.token
-        guard let monitor = controller.workspaceManager.monitor(for: workspaceId), let resizedToken else {
-            engine.clearInteractiveResize()
-            return
-        }
-        let geometry = controller.niriInteractionGeometry(for: monitor)
-        controller.workspaceManager.withNiriViewportState(for: workspaceId) { viewportState in
-            engine.interactiveResizeEnd(
-                motion: controller.motionPolicy.snapshot(),
-                state: &viewportState,
-                workingFrame: geometry.workingFrame,
-                gaps: geometry.innerGap
-            )
-        }
-        controller.workspaceManager.recordLayoutOperation(
-            .interactiveResizeEnded(token: resizedToken),
-            in: workspaceId,
-            source: .mouse
-        )
-        if controller.workspaceManager.animationDriver.hasMotion(in: workspaceId) {
-            controller.layoutRefreshController.startScrollAnimation(for: workspaceId)
-        } else if controller.hasStartedServices {
-            controller.layoutRefreshController.requestImmediateRelayout(reason: .interactiveGesture)
-        }
     }
 
     func resetHoveredEdgesIfNeeded() {
@@ -222,7 +129,6 @@ extension MouseEventHandler {
         if state.moveLayout == .dwindle {
             finishDwindleMove()
         } else {
-            finishNiriMove(at: location)
         }
         clearMoveInteractionState()
         NSCursor.arrow.set()

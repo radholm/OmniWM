@@ -91,15 +91,13 @@ final class WindowModelTests: XCTestCase {
             minHeight: 480,
             matchedRuleId: nil
         )
-        let existingAdmissionHints = ManagedWindowAdmissionHints(initialNiriContainerPrimarySpan: 0.5)
         let existingToken = model.upsert(
             window: existingAXRef,
             pid: existingPid,
             windowId: windowId,
             workspace: existingWorkspaceId,
             mode: .floating,
-            ruleEffects: existingRuleEffects,
-            admissionHints: existingAdmissionHints
+            ruleEffects: existingRuleEffects
         )
         let existingHandle = try XCTUnwrap(model.handle(for: existingToken))
         let existingConstraints = WindowSizeConstraints(
@@ -130,7 +128,6 @@ final class WindowModelTests: XCTestCase {
         XCTAssertTrue(model.windows(in: proposedWorkspaceId).isEmpty)
         XCTAssertEqual(model.mode(for: existingToken), .floating)
         XCTAssertEqual(model.entry(for: existingToken)?.ruleEffects, existingRuleEffects)
-        XCTAssertEqual(model.admissionHints(for: existingToken), existingAdmissionHints)
         XCTAssertEqual(model.cachedConstraints(for: existingToken), existingConstraints.normalized())
         XCTAssertTrue(model.handle(for: existingToken) === existingHandle)
 

@@ -61,7 +61,6 @@ extension WMController {
             workspaceName: evaluation.decision.workspaceName,
             minWidth: evaluation.decision.ruleEffects.minWidth,
             minHeight: evaluation.decision.ruleEffects.minHeight,
-            initialNiriContainerPrimarySpan: evaluation.decision.admissionHints.initialNiriContainerPrimarySpan,
             matchedRuleId: evaluation.decision.ruleEffects.matchedRuleId,
             heuristicReasons: evaluation.decision.heuristicReasons,
             attributeFetchSucceeded: evaluation.facts.ax.attributeFetchSucceeded

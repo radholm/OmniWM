@@ -47,16 +47,12 @@ extension WorkspaceNavigationHandler {
     func commitWorkspaceTransitionFocusHandoff(
         targetWorkspaceId: WorkspaceDescriptor.ID,
         monitor: Monitor?,
-        startScrollAnimation: Bool,
         affectedWorkspaces: Set<WorkspaceDescriptor.ID> = [],
         placementSubmitted: LayoutRefreshController.PostLayoutAction? = nil,
         placementInvalidated: LayoutRefreshController.PostLayoutAction? = nil
     ) {
         guard let controller else { return }
         let handoff = resolveWorkspaceTransitionFocusHandoff(for: targetWorkspaceId)
-        if let monitor {
-            controller.layoutRefreshController.stopScrollAnimation(for: monitor.displayId)
-        }
         let newestFocusIntentId = controller.intentLedger.newestFocusIntentId()
         let focusEpochSeq = controller.workspaceManager.worldSeq
         let handoffAction: LayoutRefreshController.PostLayoutAction = { [weak self, weak controller] in
@@ -68,9 +64,6 @@ extension WorkspaceNavigationHandler {
                 self?.focusAfterRevealWrites(focusToken, workspaceId: targetWorkspaceId)
             } else if handoff.shouldClearManagedFocus {
                 self?.clearManagedFocusAfterEmptyWorkspaceSwitch()
-            }
-            if startScrollAnimation {
-                controller.layoutRefreshController.startScrollAnimation(for: targetWorkspaceId)
             }
         }
         controller.layoutRefreshController.commitWorkspaceTransition(

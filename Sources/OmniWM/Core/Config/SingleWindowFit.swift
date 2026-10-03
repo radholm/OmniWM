@@ -8,7 +8,6 @@ struct SingleWindowFit: Equatable {
     enum Mode: String, CaseIterable, Identifiable, Equatable {
         case fill
         case custom
-        case containerPrimarySpan
 
         var id: String {
             rawValue
@@ -18,7 +17,6 @@ struct SingleWindowFit: Equatable {
             switch self {
             case .fill: "Full Screen"
             case .custom: "Custom (W:H)"
-            case .containerPrimarySpan: "Container Primary Span"
             }
         }
     }
@@ -42,7 +40,6 @@ struct SingleWindowFit: Equatable {
     static let fullScreen = SingleWindowFit(mode: .fill)
 
     static let dwindleModes: [Mode] = [.fill, .custom]
-    static let niriModes: [Mode] = [.fill, .custom, .containerPrimarySpan]
 
     var hasValidCustomSize: Bool {
         width > 0 && height > 0 && width.isFinite && height.isFinite
@@ -54,8 +51,7 @@ struct SingleWindowFit: Equatable {
 
     func frame(in workingFrame: CGRect) -> CGRect {
         switch mode {
-        case .fill,
-             .containerPrimarySpan:
+        case .fill:
             return workingFrame
         case .custom:
             guard hasValidCustomSize else { return workingFrame }
@@ -75,7 +71,6 @@ extension SingleWindowFit {
     var serialized: String {
         switch mode {
         case .fill: "fill"
-        case .containerPrimarySpan: "container_primary_span"
         case .custom: hasValidCustomSize ? "\(Self.format(width))x\(Self.format(height))" : "fill"
         }
     }
@@ -85,8 +80,6 @@ extension SingleWindowFit {
         switch token {
         case "fill":
             self = .fullScreen
-        case "container_primary_span":
-            self = SingleWindowFit(mode: .containerPrimarySpan)
         default:
             guard token.contains("x"), let fit = Self.parseCustom(token) else { return nil }
             self = fit

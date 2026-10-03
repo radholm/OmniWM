@@ -450,54 +450,6 @@ final class EventIntakeReplayTests: XCTestCase {
     }
 
     @MainActor
-    func testScrollAccumulatesSameAxisAndSplitsOnFlip() {
-        let intake = EventIntake()
-        let sink = RecordingSink()
-        intake.open(sink: sink)
-        defer { intake.close() }
-
-        intake.enqueue(.mouseScroll(scroll(deltaY: 5)))
-        intake.enqueue(.mouseScroll(scroll(deltaY: 3)))
-        intake.enqueue(.mouseScroll(scroll(deltaY: -2)))
-        intake.drainNow()
-
-        let deltas = sink.received.compactMap { stamped -> CGFloat? in
-            if case let .mouseScroll(payload) = stamped.event {
-                return payload.deltaY
-            }
-            return nil
-        }
-        XCTAssertEqual(deltas, [8, -2])
-    }
-
-    @MainActor
-    func testScrollCoalescingPreservesSourceAndContinuity() {
-        let intake = EventIntake()
-        let sink = RecordingSink()
-        intake.open(sink: sink)
-        defer { intake.close() }
-        var payload = scroll(deltaY: 5)
-        payload.isContinuous = true
-        payload.senderId = 101
-        intake.enqueue(.mouseScroll(payload))
-        intake.enqueue(.mouseScroll(payload))
-        payload.senderId = 202
-        intake.enqueue(.mouseScroll(payload))
-        payload.isContinuous = false
-        intake.enqueue(.mouseScroll(payload))
-        payload.senderId = nil
-        intake.enqueue(.mouseScroll(payload))
-        intake.drainNow()
-        let payloads = sink.received.compactMap { stamped -> MouseScrollIntake? in
-            guard case let .mouseScroll(payload) = stamped.event else { return nil }
-            return payload
-        }
-        XCTAssertEqual(payloads.map(\.deltaY), [10, 5, 5, 5])
-        XCTAssertEqual(payloads.map(\.senderId), [101, 202, 202, nil])
-        XCTAssertEqual(payloads.map(\.isContinuous), [true, true, false, false])
-    }
-
-    @MainActor
     func testNativeFullscreenTimeoutPostsBeforeApplyingExpiry() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMNativeFullscreenExpiryPostingTests")
         let sink = RecordingSink()
@@ -671,17 +623,6 @@ final class EventIntakeReplayTests: XCTestCase {
         XCTAssertEqual(controller.workspaceManager.externalFocusToken, liveToken)
         XCTAssertEqual(controller.workspaceManager.activeNativeFullscreenFocusOwnerToken, liveToken)
         XCTAssertFalse(controller.eventIntake.hasPendingEvents)
-    }
-
-    private func scroll(deltaY: CGFloat) -> MouseScrollIntake {
-        MouseScrollIntake(
-            location: .zero,
-            deltaX: 0,
-            deltaY: deltaY,
-            momentumPhase: 0,
-            phase: 0,
-            modifiersRawValue: 0
-        )
     }
 
     private final class FakeWindowSystem {
@@ -984,10 +925,10 @@ final class EventIntakeReplayTests: XCTestCase {
         )
         let workspaceId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
         _ = controller.workspaceManager.focusWorkspace(named: "1")
-        controller.niriLayoutHandler.enableNiriLayout()
 
-        let tokenA = try addNiriWindow(controller, pid: pid, windowId: 42, workspaceId: workspaceId)
-        let tokenB = try addNiriWindow(controller, pid: pid, windowId: 43, workspaceId: workspaceId)
+        controller.dwindleLayoutHandler.enableDwindleLayout()
+        let tokenA = try addDwindleWindow(controller, pid: pid, windowId: 42, workspaceId: workspaceId)
+        let tokenB = try addDwindleWindow(controller, pid: pid, windowId: 43, workspaceId: workspaceId)
 
         controller.factResolver.factProvider = { pid in
             let windowId: Int?
@@ -1024,7 +965,7 @@ final class EventIntakeReplayTests: XCTestCase {
     }
 
     @MainActor
-    private func addNiriWindow(
+    private func addDwindleWindow(
         _ controller: WMController,
         pid: pid_t,
         windowId: Int,
@@ -1032,20 +973,15 @@ final class EventIntakeReplayTests: XCTestCase {
     ) throws -> WindowToken {
         let token = controller.workspaceManager.addWindow(
             AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
-            pid: pid,
-            windowId: windowId,
-            to: workspaceId
+            pid: pid, windowId: windowId, to: workspaceId
         )
-        let node = try XCTUnwrap(
-            controller.niriEngine?.addWindow(
-                token: token,
-                to: workspaceId,
-                afterSelection: nil
-            )
-        )
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        let node = controller.workspaceManager.withEngineMutationScope(in: workspaceId, label: "replay_fixture") {
+            engine.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
+        }
         let frame = CGRect(x: 0, y: 0, width: 200, height: 150)
-        node.frame = frame
-        node.renderedFrame = frame
+        node.cachedFrame = frame
+        node.cachedContentFrame = frame
         return token
     }
 

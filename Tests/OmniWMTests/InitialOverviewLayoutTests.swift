@@ -22,54 +22,6 @@ final class InitialOverviewLayoutTests: XCTestCase {
         let effects: Effects
     }
 
-    func testInitialFullRescanRestoresInactiveNiriColumnsBeforeFirstOverview() throws {
-        let fixture = try makeFixture(layoutType: .niri)
-        defer { cleanUp(fixture) }
-        let controller = fixture.controller
-        let manager = controller.workspaceManager
-        let engine = try XCTUnwrap(controller.niriEngine)
-        let column = PersistedNiriColumnState(
-            displayMode: .normal,
-            activeTileIndex: 0,
-            width: .fixed(540),
-            presetWidthIndex: nil,
-            isFullWidth: false,
-            savedWidth: nil,
-            hasManualSingleWindowWidthOverride: false
-        )
-        let window = PersistedNiriWindowState(
-            sizingMode: .normal,
-            height: .auto(weight: 1),
-            savedHeight: nil,
-            windowWidth: .auto(weight: 1)
-        )
-        let placements = Dictionary(uniqueKeysWithValues: fixture.inactiveTokens.enumerated().map { index, token in
-            (token, PersistedNiriPlacement(
-                columnIndex: index == 2 ? 1 : 0,
-                tileIndex: index == 1 ? 1 : 0,
-                column: column,
-                window: window
-            ))
-        })
-        manager.setNiriRestorePlacements(placements)
-        XCTAssertTrue(engine.columns(in: fixture.inactiveWorkspaceId).isEmpty)
-
-        try applyInitialPlan(fixture)
-
-        let columns = engine.columns(in: fixture.inactiveWorkspaceId)
-        XCTAssertEqual(columns.map { $0.windowNodes.map(\.token) }, [
-            Array(fixture.inactiveTokens.prefix(2)),
-            [fixture.inactiveTokens[2]]
-        ])
-        XCTAssertEqual(columns.map(\.width), [.fixed(540), .fixed(540)])
-        for token in fixture.inactiveTokens {
-            XCTAssertEqual(manager.restoreIntent(for: token)?.niriPlacement, placements[token])
-        }
-        let snapshot = try assertOverviewContainsInactiveCards(fixture)
-        XCTAssertEqual(snapshot.niriSnapshotsByWorkspace[fixture.inactiveWorkspaceId]?.columns.count, 2)
-        assertInactiveWorkspaceStayedInactive(fixture)
-    }
-
     func testInitialFullRescanRestoresInactiveDwindleGroupBeforeFirstOverview() throws {
         let fixture = try makeFixture(layoutType: .dwindle)
         defer { cleanUp(fixture) }
@@ -106,7 +58,7 @@ final class InitialOverviewLayoutTests: XCTestCase {
     }
 
     func testLaterFullRescansKeepInactiveWorkspacesOutsideImplicitLayoutScope() throws {
-        for layoutType in [LayoutType.niri, .dwindle] {
+        for layoutType in [LayoutType.dwindle] {
             let fixture = try makeFixture(layoutType: layoutType)
             defer { cleanUp(fixture) }
             fixture.controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = true
@@ -114,7 +66,6 @@ final class InitialOverviewLayoutTests: XCTestCase {
             let plan = fullRescanPlan(fixture)
 
             XCTAssertEqual(plan.workspacePlans.map(\.workspaceId), [fixture.activeWorkspaceId])
-            XCTAssertTrue(fixture.controller.niriEngine?.columns(in: fixture.inactiveWorkspaceId).isEmpty == true)
             XCTAssertTrue(fixture.controller.dwindleEngine?.currentFrames(in: fixture.inactiveWorkspaceId)
                 .isEmpty == true)
         }
@@ -153,7 +104,6 @@ final class InitialOverviewLayoutTests: XCTestCase {
         let activeWorkspaceId = try XCTUnwrap(manager.workspaceId(named: "1"))
         let inactiveWorkspaceId = try XCTUnwrap(manager.workspaceId(named: "2"))
         XCTAssertTrue(manager.setActiveWorkspace(activeWorkspaceId, on: monitor.id))
-        controller.enableNiriLayout()
         controller.enableDwindleLayout()
         controller.layoutRefreshController.resetState()
         controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = false
@@ -256,7 +206,6 @@ final class InitialOverviewLayoutTests: XCTestCase {
         XCTAssertEqual(controller.workspaceManager.nativeManagedFocusToken, fixture.activeToken)
         XCTAssertEqual(fixture.effects.focusCalls, 0)
         XCTAssertEqual(fixture.effects.displayLinkStarts, 0)
-        XCTAssertFalse(controller.niriLayoutHandler.hasScrollAnimation(for: fixture.inactiveWorkspaceId))
         XCTAssertFalse(controller.dwindleLayoutHandler.hasDwindleAnimationRunning(in: fixture.inactiveWorkspaceId))
         for token in fixture.inactiveTokens {
             XCTAssertTrue(controller.axManager.inactiveWorkspaceWindowIds.contains(token.windowId))

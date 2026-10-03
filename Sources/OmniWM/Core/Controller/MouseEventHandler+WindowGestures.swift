@@ -5,17 +5,6 @@ import AppKit
 import Foundation
 
 extension MouseEventHandler {
-    func gestureColumnScrollAxis(
-        workspaceId: WorkspaceDescriptor.ID,
-        monitor: Monitor,
-        supportsColumnScroll: Bool
-    ) -> WorkspaceSwipeAxis {
-        guard let engine = controller?.niriEngine, supportsColumnScroll else { return .horizontal }
-        return resolvedNiriOrientation(engine: engine, workspaceId: workspaceId, monitor: monitor) == .horizontal
-            ? .horizontal
-            : .vertical
-    }
-
     func windowGestureTarget(
         at location: CGPoint,
         wsId: WorkspaceDescriptor.ID,
@@ -23,10 +12,8 @@ extension MouseEventHandler {
     ) -> WindowToken? {
         guard let controller else { return nil }
         switch layoutType {
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            return controller.niriEngine?.hitTestTiled(point: location, in: wsId)?.token
-        case .dwindle:
             return controller.dwindleEngine?.hitTestFocusableWindow(
                 point: location,
                 in: wsId,
@@ -41,16 +28,16 @@ extension MouseEventHandler {
     ) -> Bool {
         guard let controller,
               let token = lockedContext.windowGestureTarget,
-              let workspace = controller.workspaceManager.descriptor(for: lockedContext.workspaceId)
+              controller.workspaceManager.descriptor(for: lockedContext.workspaceId) != nil
         else { return false }
         let wsId = lockedContext.workspaceId
         let location = lockedContext.startLocation
         let began: Bool
-        switch (controller.settings.workspaces.layoutType(for: workspace.name), mode) {
-        case (.dwindle, .windowMove):
+        switch mode {
+        case .windowMove:
             guard let engine = controller.dwindleEngine else { return false }
             began = beginDwindleMove(token: token, engine: engine, wsId: wsId, at: location, source: .trackpadGesture)
-        case (.dwindle, .windowResize):
+        case .windowResize:
             guard let engine = controller.dwindleEngine else { return false }
             began = beginDwindleResize(
                 token: token,
@@ -60,19 +47,8 @@ extension MouseEventHandler {
                 edgePolicy: .nearestMovable,
                 source: .trackpadGesture
             )
-        case (_, .windowMove):
-            guard let engine = controller.niriEngine, let window = engine.findNode(for: token, in: wsId) else {
-                return false
-            }
-            began = beginNiriMove(window: window, engine: engine, wsId: wsId, at: location, source: .trackpadGesture)
-        case (_, .windowResize):
-            guard let engine = controller.niriEngine, let window = engine.findNode(for: token, in: wsId) else {
-                return false
-            }
-            began = beginNiriResize(window: window, engine: engine, wsId: wsId, at: location, source: .trackpadGesture)
-        case (_, .overview),
-             (_, .columnScroll),
-             (_, .workspaceSwitch):
+        case .overview,
+             .workspaceSwitch:
             return false
         }
         guard began else {

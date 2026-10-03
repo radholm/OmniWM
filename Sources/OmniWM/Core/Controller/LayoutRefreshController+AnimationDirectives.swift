@@ -22,8 +22,6 @@ extension LayoutRefreshController {
             switch directive {
             case .none:
                 continue
-            case let .startNiriScroll(workspaceId):
-                startScrollAnimation(for: workspaceId)
             case let .startDwindleAnimation(workspaceId, monitorId):
                 guard let monitor = controller.workspaceManager.monitor(byId: monitorId) else { continue }
                 startDwindleAnimation(for: workspaceId, monitor: monitor)
@@ -39,20 +37,14 @@ extension LayoutRefreshController {
                 {
                     continue
                 }
-                if let workspaceId = controller.workspaceManager.workspace(for: token) {
-                    controller.recordNiriCreateFocusTrace(
-                        .relayoutActivatedWindow(
-                            token: token,
-                            workspaceId: workspaceId
-                        )
-                    )
-                }
                 controller.focusWindow(token)
             }
         }
     }
 
     func cancelActiveAnimations(for workspaceId: WorkspaceDescriptor.ID) {
-        niriHandler.cancelActiveAnimations(for: workspaceId)
+        for displayId in dwindleHandler.animationDisplayIds(for: workspaceId) {
+            stopDwindleAnimation(for: displayId)
+        }
     }
 }

@@ -46,26 +46,18 @@ final class OverviewDropResolutionTests: XCTestCase {
         }
     }
 
-    func testFloatingDropIgnoresTiledInsertionAndStripPanning() throws {
+    func testFloatingDropUsesPlacementWithExistingWindows() throws {
         var layout = makeLayout()
         var sections = layout.workspaceSections
         let frame = sections[0].visibleFrame
-        var window = makeWindow(frame: frame)
-        window.isTiled = true
+        let window = makeWindow(frame: frame)
         sections[0].windows = [window]
         layout.replaceWorkspaceSections(sections)
-        layout.niriColumnDropZonesByWorkspace[workspaceId] = [
-            OverviewColumnDropZone(workspaceId: workspaceId, insertIndex: 0, frame: frame)
-        ]
-        layout.niriColumnsByWorkspace[workspaceId] = [
-            OverviewNiriColumn(workspaceId: workspaceId, columnIndex: 0, frame: frame, windowHandles: [handle])
-        ]
         let point = frame.center
         let before = layout.resolveDrop(
             at: point, draggedHandle: handle, sourceWorkspaceId: workspaceId,
             floatingSize: CGSize(width: 400, height: 300), monitor: monitor
         )
-        layout.panStrip(workspaceId, by: 75)
         XCTAssertEqual(layout.resolveDrop(
             at: point, draggedHandle: handle, sourceWorkspaceId: workspaceId,
             floatingSize: CGSize(width: 400, height: 300), monitor: monitor
@@ -119,40 +111,6 @@ final class OverviewDropResolutionTests: XCTestCase {
             at: section.visibleFrame.center, draggedHandle: handle, sourceWorkspaceId: workspaceId,
             floatingSize: nil, monitor: monitor
         ), .invalid)
-    }
-
-    func testTiledDropLabelsMatchInsertionAxisAndWorkspaceDestination() throws {
-        var layout = makeLayout()
-        var sections = layout.workspaceSections
-        let frame = sections[0].visibleFrame
-        sections[0].windows = [makeWindow(frame: frame)]
-        layout.replaceWorkspaceSections(sections)
-        layout.niriColumnsByWorkspace[workspaceId] = [
-            OverviewNiriColumn(workspaceId: workspaceId, columnIndex: 0, frame: frame, windowHandles: [handle])
-        ]
-        let source = WindowHandle(id: WindowToken(pid: 492_101, windowId: 72))
-        for orientation: Monitor.Orientation in [.horizontal, .vertical] {
-            sections[0].orientation = orientation
-            layout.replaceWorkspaceSections(sections)
-            let point = CGPoint(x: frame.maxX - 3, y: frame.maxY - 3)
-            XCTAssertEqual(layout.resolveDrop(
-                at: point, draggedHandle: source, sourceWorkspaceId: sourceWorkspaceId,
-                floatingSize: nil, monitor: monitor
-            ).label, orientation == .horizontal ? "Stack above" : "Stack right")
-        }
-        layout.niriColumnDropZonesByWorkspace[workspaceId] = [
-            OverviewColumnDropZone(workspaceId: workspaceId, insertIndex: 0, frame: frame)
-        ]
-        XCTAssertEqual(layout.resolveDrop(
-            at: frame.center, draggedHandle: source, sourceWorkspaceId: sourceWorkspaceId,
-            floatingSize: nil, monitor: monitor
-        ).label, "New column")
-        layout.niriColumnDropZonesByWorkspace = [:]
-        layout.niriColumnsByWorkspace = [:]
-        XCTAssertEqual(layout.resolveDrop(
-            at: frame.center, draggedHandle: source, sourceWorkspaceId: sourceWorkspaceId,
-            floatingSize: nil, monitor: monitor
-        ).label, "Move to workspace Design")
     }
 
     private func makeLayout(scale: CGFloat = 1) -> OverviewLayout {

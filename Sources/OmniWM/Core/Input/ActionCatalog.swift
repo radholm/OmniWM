@@ -153,29 +153,16 @@ enum ActionCatalog {
         appendWorkspaceCycleBindings(&specs)
         appendDirectionalFocusBindings(&specs)
         appendFocusHistoryBinding(&specs)
-        appendTraversalFocusBindings(&specs)
         appendWindowFocusBindings(&specs)
-        appendWorkspaceEdgeFocusBindings(&specs)
-        appendCenteringBindings(&specs)
         appendWorkspaceTransferBindings(&specs)
-        appendColumnWorkspaceBindings(&specs)
         appendDirectionalMoveBindings(&specs)
+        appendGroupMoveBindings(&specs)
         appendWindowReorderBindings(&specs)
-        appendColumnMembershipBindings(&specs)
         appendMonitorFocusBindings(&specs)
         appendWorkspaceMonitorBindings(&specs)
         appendWindowMonitorBindings(&specs)
         appendFullscreenBindings(&specs)
-        appendDirectionalColumnBindings(&specs)
-        appendColumnOrderBindings(&specs)
-        appendColumnEdgeFocusBindings(&specs)
-        appendColumnIndexFocusBindings(&specs)
-        appendWindowIndexFocusBindings(&specs)
-        appendColumnIndexMoveBindings(&specs)
         appendSizeCycleBindings(&specs)
-        appendWindowSpanCycleBindings(&specs)
-        appendContainerSpanBindings(&specs)
-        appendSpanAdjustmentBindings(&specs)
         appendSplitStructureBindings(&specs)
         appendAxisResizeBindings(&specs)
         appendFocusedResizeBindings(&specs)
@@ -212,13 +199,8 @@ enum ActionCatalog {
 
     private static func compatibility(for command: HotkeyCommand) -> LayoutCompatibility {
         switch command {
-        case .moveColumn(.up),
-             .moveColumn(.down):
-            .dwindle
         case .focus,
              .move,
-             .moveColumn(.left),
-             .moveColumn(.right),
              .monitorFocus,
              .fullscreen,
              .openCommandPalette,
@@ -232,8 +214,6 @@ enum ActionCatalog {
         case let .focusNavigation(action):
             action.compatibility
         case let .windowMovement(action):
-            action.compatibility
-        case let .column(action):
             action.compatibility
         case let .workspace(action):
             action.compatibility
@@ -252,7 +232,6 @@ enum ActionCatalog {
         case let .move(direction): moveTitle(direction)
         case let .monitorFocus(command): command.actionDisplayName()
         case let .fullscreen(command): command.actionDisplayName()
-        case let .moveColumn(direction): moveContainerTitle(direction)
         case .openCommandPalette: LocalizedStringResource(
                 "command.palette.toggle", defaultValue: "Toggle Command Palette", table: "Commands", bundle: .omniWM
             )
@@ -281,8 +260,6 @@ enum ActionCatalog {
             action.actionDisplayName()
         case let .windowMovement(action):
             action.actionDisplayName()
-        case let .column(action):
-            action.actionDisplayName()
         case let .workspace(action):
             action.actionDisplayName()
         case let .sizing(action):
@@ -302,8 +279,6 @@ enum ActionCatalog {
             .windowMovement(.spatial)
         case let .monitorFocus(command):
             .monitorFocus(command)
-        case .moveColumn:
-            .column(.move)
         case .openCommandPalette:
             .openCommandPalette
         case .raiseAllFloatingWindows:
@@ -323,8 +298,6 @@ enum ActionCatalog {
         case let .focusNavigation(action):
             action.ipcCommandName()
         case let .windowMovement(action):
-            action.ipcCommandName()
-        case let .column(action):
             action.ipcCommandName()
         case let .workspace(action):
             action.ipcCommandName()
@@ -369,23 +342,6 @@ extension ActionCatalog {
             )
         case .down: LocalizedStringResource(
                 "command.move.down", defaultValue: "Move Down", table: "Commands", bundle: .omniWM
-            )
-        }
-    }
-
-    private static func moveContainerTitle(_ direction: Direction) -> LocalizedStringResource {
-        switch direction {
-        case .left: LocalizedStringResource(
-                "command.moveContainer.left", defaultValue: "Move Container Left", table: "Commands", bundle: .omniWM
-            )
-        case .right: LocalizedStringResource(
-                "command.moveContainer.right", defaultValue: "Move Container Right", table: "Commands", bundle: .omniWM
-            )
-        case .up: LocalizedStringResource(
-                "command.moveContainer.up", defaultValue: "Move Container Up", table: "Commands", bundle: .omniWM
-            )
-        case .down: LocalizedStringResource(
-                "command.moveContainer.down", defaultValue: "Move Container Down", table: "Commands", bundle: .omniWM
             )
         }
     }

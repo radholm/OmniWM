@@ -19,7 +19,6 @@ extension LayoutRefreshController {
         let existingEntry = window.identity.existingEntry
         let shouldPreservePreFullscreenState = window.decision.shouldPreservePreFullscreenState
         let refreshedEntry = admission.refreshedEntry
-        let admissionHints = admission.assignment.admissionHints
         guard admittedToken == token else {
             progress.seenKeys.insert(admittedToken)
             if let admittedEntry = controller.workspaceManager.entry(for: admittedToken) {
@@ -37,7 +36,6 @@ extension LayoutRefreshController {
             for: admittedToken
         )
         if refreshedEntry != nil {
-            _ = controller.workspaceManager.updateAdmissionHints(admissionHints, for: admittedToken)
         }
         if existingEntry == nil {
             controller.axEventHandler.discardCreatePlacementContext(for: winId)

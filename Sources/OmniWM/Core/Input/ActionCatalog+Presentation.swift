@@ -42,13 +42,6 @@ extension ActionCatalog {
             IPCPresentationCommand.workspaceBar.actionSpec(),
             IPCPresentationCommand.hiddenBar.actionSpec(),
             IPCPresentationCommand.quakeTerminal.actionSpec(),
-            action(
-                id: "toggleWorkspaceLayout",
-                command: .workspace(.toggleLayout),
-                category: .layout,
-                binding: KeyBinding(keyCode: UInt32(kVK_ANSI_L), modifiers: UInt32(optionKey | shiftKey)),
-                keywords: ["layout", "niri", "dwindle"]
-            ),
             IPCPresentationCommand.overview.actionSpec(),
             IPCPresentationCommand.systemStats.actionSpec()
         ])

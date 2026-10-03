@@ -96,9 +96,6 @@ final class OverviewWindowSession {
                 self?.projection.activeInteractionMonitorId = monitorId
                 controller?.activateWorkspace(workspaceId)
             }
-            window.onOverflowPillPressed = { [weak controller] monitorId, pill in
-                controller?.input.pageStrip(pill, on: monitorId)
-            }
             window.onDismiss = { [weak controller, weak self] monitorId in
                 self?.projection.activeInteractionMonitorId = monitorId
                 controller?.input.dismissToSelection(animated: true)
@@ -134,9 +131,6 @@ final class OverviewWindowSession {
         }
         window.onTabSelected = { [weak controller] monitorId, handle in
             controller?.input.selectTab(handle, on: monitorId)
-        }
-        window.onStripPan = { [weak controller] monitorId, point, delta in
-            controller?.input.panStrip(at: point, by: delta, on: monitorId)
         }
     }
 

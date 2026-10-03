@@ -42,11 +42,9 @@ Use the target's actual bundle ID and AX values. This escape hatch does not admi
 
 - **Layout (Automatic / Tile / Float)** — leave classification automatic, or force matching windows to tile or float.
 - **Assign to Workspace** — use a valid workspace assignment as the initial default whenever the matching app currently has no tracked windows. Additional windows open on the workspace active when creation began. Automatic rule reevaluation leaves managed windows in place, while explicit rule application can move them. Readmission, structural replacements, and unique persisted boot-restore matches preserve their existing placement continuity.
-- **Initial Container Primary Span (Niri)** — start matching resizable windows at 5–100% when they create or claim a new container; the container remains freely resizable afterward.
 - **Minimum Size** — prevent the layout engine from sizing windows below a threshold.
 
 :::note
-Initial container primary span is a one-time seed. It controls width in horizontal orientation and height in vertical orientation. Niri's Single Window Fit still takes visual precedence for a lone window, and physical minimum-size constraints can clamp the resolved pixel size without changing the stored initial proportion.
 :::
 
 ## TOML
@@ -56,7 +54,6 @@ Rules can also be written in `settings.toml` (see [Configuration](/config/config
 ```toml
 [[appRules]]
 bundleId = "net.kovidgoyal.kitty"
-initialContainerPrimarySpan = 0.5
 ```
 
 ## Default rules

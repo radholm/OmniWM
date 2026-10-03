@@ -52,10 +52,10 @@ final class IPCCommandBoundaryTests: XCTestCase {
     func testPayloadCommandsKeepMissingNullAndIncorrectArgumentPaths() throws {
         let payloads: [(name: String, firstField: String)] = [
             ("focus", "direction"), ("switch-workspace", "workspaceNumber"),
-            ("switch-workspace-slot", "slotNumber"), ("focus-column", "columnIndex"),
-            ("scratchpad-assign", "scratchpadIndex"), ("focus-window-in-column", "windowIndex"),
+            ("switch-workspace-slot", "slotNumber"), ("scratchpad-assign", "scratchpadIndex"),
+            ("move-group", "direction"),
             ("move-to-workspace-on-monitor", "workspaceNumber"), ("set-workspace-layout", "layout"),
-            ("resize", "axis"), ("resize-focused", "operation"), ("set-container-primary-span", "change")
+            ("resize", "axis"), ("resize-focused", "operation")
         ]
         for payload in payloads {
             try assertFailure(#"{"name":"\#(payload.name)"}"#, kind: "keyNotFound", subject: "arguments", path: [])
@@ -88,8 +88,8 @@ final class IPCCommandBoundaryTests: XCTestCase {
             kind: "dataCorrupted", path: ["arguments", "direction"]
         )
         try assertFailure(
-            #"{"name":"focus-column","arguments":{"columnIndex":"1"}}"#,
-            kind: "typeMismatch", subject: "Int", path: ["arguments", "columnIndex"]
+            #"{"name":"switch-workspace","arguments":{"workspaceNumber":"1"}}"#,
+            kind: "typeMismatch", subject: "Int", path: ["arguments", "workspaceNumber"]
         )
         try assertFailure(
             #"{"name":"resize","arguments":{"axis":"horizontal"}}"#,
@@ -98,10 +98,6 @@ final class IPCCommandBoundaryTests: XCTestCase {
         try assertFailure(
             #"{"name":"move-to-workspace-on-monitor","arguments":{"workspaceNumber":1}}"#,
             kind: "keyNotFound", subject: "direction", path: ["arguments"]
-        )
-        try assertFailure(
-            #"{"name":"set-container-primary-span","arguments":{"change":{"kind":"set-fixed"}}}"#,
-            kind: "keyNotFound", subject: "value", path: ["arguments", "change"]
         )
     }
 
@@ -152,18 +148,14 @@ final class IPCCommandBoundaryTests: XCTestCase {
         case .direction:
             .direction(.left)
         case .workspaceNumber,
-             .columnIndex,
-             .windowIndex,
              .scratchpadIndex:
             .integer(1)
         case .layout:
-            .layout(.niri)
+            .layout(.dwindle)
         case .resizeAxis:
             .resizeAxis(.horizontal)
         case .resizeOperation:
             .resizeOperation(.grow)
-        case .sizeChange:
-            .sizeChange(.setFixed(100))
         }
     }
 }

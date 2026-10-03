@@ -179,19 +179,6 @@ extension AXEventHandler {
             _ = activeWindowCloseFocusRecoveryWorkspaceId()
             closeRecoveryArmed = false
         }
-        let layoutType = controller.workspaceManager.descriptor(for: entry.workspaceId)
-            .map { controller.settings.workspaces.layoutType(for: $0.name) } ?? .defaultLayout
-        guard layoutType != .dwindle,
-              let monitor = controller.workspaceManager.monitor(for: entry.workspaceId),
-              controller.workspaceManager.activeWorkspace(on: monitor.id)?.id == entry.workspaceId
-        else {
-            return (shouldRecoverFocus, closeRecoveryArmed)
-        }
-        let shouldAnimate = controller.niriEngine?
-            .findNode(for: entry.token, in: entry.workspaceId)?.isHiddenInTabbedMode != true
-        if shouldAnimate {
-            controller.layoutRefreshController.startWindowCloseAnimation(entry: entry, monitor: monitor)
-        }
         return (shouldRecoverFocus, closeRecoveryArmed)
     }
 }

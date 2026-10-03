@@ -27,20 +27,17 @@ final class AutomationLayoutCompatibilityParityTests: XCTestCase {
             mismatches,
             [],
             "IPCAutomationManifest advertises a layout compatibility that CommandHandler does not enforce. "
-                + "ActionCatalog is the runtime authority, so update the manifest to match it. Commands whose "
-                + "enforced compatibility varies by argument, such as move-column, are exempt because one "
-                + "descriptor cannot express more than one value."
+                + "ActionCatalog is the runtime authority, so update the manifest to match it."
         )
     }
 
-    func testMoveColumnCompatibilityStillVariesByDirection() {
-        XCTAssertEqual(ActionCatalog.layoutCompatibility(for: .moveColumn(.left)), .shared)
-        XCTAssertEqual(ActionCatalog.layoutCompatibility(for: .moveColumn(.right)), .shared)
-        XCTAssertEqual(ActionCatalog.layoutCompatibility(for: .moveColumn(.up)), .dwindle)
-        XCTAssertEqual(ActionCatalog.layoutCompatibility(for: .moveColumn(.down)), .dwindle)
+    func testMoveGroupCompatibilityIsDwindleInEveryDirection() {
+        for direction in [Direction.left, .right, .up, .down] {
+            XCTAssertEqual(ActionCatalog.layoutCompatibility(for: .dwindle(.moveGroup(direction))), .dwindle)
+        }
         XCTAssertEqual(
-            IPCAutomationManifest.commandDescriptor(for: .column(.move))?.layoutCompatibility,
-            .shared
+            IPCAutomationManifest.commandDescriptor(for: .dwindle(.moveGroup))?.layoutCompatibility,
+            .dwindle
         )
     }
 
@@ -49,7 +46,6 @@ final class AutomationLayoutCompatibilityParityTests: XCTestCase {
     ) -> IPCAutomationLayoutCompatibility {
         switch compatibility {
         case .shared: .shared
-        case .niri: .niri
         case .dwindle: .dwindle
         }
     }

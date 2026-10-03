@@ -32,7 +32,6 @@ enum WMEvent: Equatable {
         mode: TrackedWindowMode,
         axRef: AXWindowRef,
         ruleEffects: ManagedWindowRuleEffects,
-        admissionHints: ManagedWindowAdmissionHints,
         lifetimeAuthority: ManagedWindowLifetimeAuthority,
         adoptNativeFocus: Bool,
         managedReplacementMetadata: ManagedReplacementMetadata?,
@@ -90,16 +89,6 @@ enum WMEvent: Equatable {
         token: WindowToken,
         workspaceId: WorkspaceDescriptor.ID,
         layoutOverride: ManualWindowOverride?,
-        source: WMEventSource
-    )
-    case windowAdmissionHintsChanged(
-        token: WindowToken,
-        workspaceId: WorkspaceDescriptor.ID,
-        admissionHints: ManagedWindowAdmissionHints,
-        source: WMEventSource
-    )
-    case niriPlacementsResolved(
-        placements: [WindowToken: PersistedNiriPlacement],
         source: WMEventSource
     )
     case dwindlePlacementsResolved(
@@ -220,25 +209,6 @@ enum WMEvent: Equatable {
         operation: LayoutOperation,
         source: WMEventSource
     )
-    case viewportChanged(
-        workspaceId: WorkspaceDescriptor.ID,
-        state: ViewportState,
-        source: WMEventSource
-    )
-    case viewportCommitted(
-        workspaceId: WorkspaceDescriptor.ID,
-        state: ViewportState,
-        source: WMEventSource
-    )
-    case viewportForgotten(
-        workspaceIds: Set<WorkspaceDescriptor.ID>,
-        source: WMEventSource
-    )
-    case selectionChanged(
-        workspaceId: WorkspaceDescriptor.ID,
-        nodeId: NodeId,
-        source: WMEventSource
-    )
     case scratchpadMembershipChanged(
         token: WindowToken,
         index: ScratchpadIndex?,
@@ -272,32 +242,6 @@ extension WMEvent {
     @MainActor
     func strippingAXReferences() -> WMEvent {
         switch self {
-        case let .windowAdmitted(
-            token,
-            workspaceId,
-            monitorId,
-            mode,
-            axRef,
-            ruleEffects,
-            admissionHints,
-            lifetimeAuthority,
-            adoptNativeFocus,
-            metadata,
-            source
-        ):
-            .windowAdmitted(
-                token: token,
-                workspaceId: workspaceId,
-                monitorId: monitorId,
-                mode: mode,
-                axRef: AXWindowRef(element: Self.placeholderAXElement, windowId: axRef.windowId),
-                ruleEffects: ruleEffects,
-                admissionHints: admissionHints,
-                lifetimeAuthority: lifetimeAuthority,
-                adoptNativeFocus: adoptNativeFocus,
-                managedReplacementMetadata: metadata,
-                source: source
-            )
         case let .windowRekeyed(from, to, workspaceId, monitorId, reason, newAXRef, metadata, source):
             .windowRekeyed(
                 from: from,
@@ -316,14 +260,13 @@ extension WMEvent {
 
     var token: WindowToken? {
         switch self {
-        case let .windowAdmitted(token, _, _, _, _, _, _, _, _, _, _),
+        case let .windowAdmitted(token, _, _, _, _, _, _, _, _, _),
              let .windowRemoved(token, _, _),
              let .workspaceAssigned(token, _, _, _, _),
              let .windowModeChanged(token, _, _, _, _),
              let .floatingGeometryUpdated(token, _, _, _, _, _, _),
              let .floatingStateChanged(token, _, _, _),
              let .manualLayoutOverrideChanged(token, _, _, _),
-             let .windowAdmissionHintsChanged(token, _, _, _),
              let .hiddenStateChanged(token, _, _, _, _),
              let .windowMinimizedChanged(token, _, _, _),
              let .nativeFullscreenTransition(token, _, _, _, _),
@@ -346,11 +289,9 @@ extension WMEvent {
              .hiddenApplicationsChanged,
              .nativeFocusOwnerChanged,
              .nativeFullscreenPlaceholderSelected,
-             .niriPlacementsResolved,
              .dwindlePlacementsResolved,
              .scratchpadMembershipChanged,
              .scratchpadRevealChanged,
-             .selectionChanged,
              .spaceTopologyChanged,
              .suppressedFocusChanged,
              .systemModalFocusChanged,
@@ -359,9 +300,6 @@ extension WMEvent {
              .topLevelInventoryObserved,
              .topologyChanged,
              .userCommand,
-             .viewportChanged,
-             .viewportCommitted,
-             .viewportForgotten,
              .visibleWorkspacesChanged,
              .workspaceFocusCleared:
             nil
@@ -370,7 +308,7 @@ extension WMEvent {
 
     var summary: String {
         switch self {
-        case let .windowAdmitted(token, workspaceId, _, mode, _, _, _, _, _, _, _):
+        case let .windowAdmitted(token, workspaceId, _, mode, _, _, _, _, _, _):
             "window_admitted token=\(token) workspace=\(workspaceId.uuidString) mode=\(mode)"
         case let .topLevelInventoryObserved(tokens, _):
             "top_level_inventory_observed count=\(tokens.count)"
@@ -388,10 +326,6 @@ extension WMEvent {
             "floating_state_changed token=\(token) workspace=\(workspaceId.uuidString) state=\(state != nil)"
         case let .manualLayoutOverrideChanged(token, workspaceId, layoutOverride, _):
             "manual_layout_override_changed token=\(token) workspace=\(workspaceId.uuidString) override=\(layoutOverride.map(\.rawValue) ?? "nil")"
-        case let .windowAdmissionHintsChanged(token, workspaceId, admissionHints, _):
-            "window_admission_hints_changed token=\(token) workspace=\(workspaceId.uuidString) initial_niri_container_primary_span=\(admissionHints.initialNiriContainerPrimarySpan.map { String($0) } ?? "nil")"
-        case let .niriPlacementsResolved(placements, _):
-            "niri_placements_resolved count=\(placements.count)"
         case let .dwindlePlacementsResolved(placements, _):
             "dwindle_placements_resolved count=\(placements.count)"
         case let .hiddenApplicationsChanged(pids, affectedWorkspaceIds, _):
@@ -438,14 +372,6 @@ extension WMEvent {
             "interaction_monitor_changed monitor=\(String(describing: monitorId)) previous=\(String(describing: previousMonitorId))"
         case let .layoutOperationPerformed(workspaceId, operation, _):
             "layout_operation workspace=\(workspaceId.uuidString) op=\(operation.summary)"
-        case let .viewportChanged(workspaceId, state, _):
-            "viewport_changed workspace=\(workspaceId.uuidString) selected=\(state.selectedNodeId.map(String.init(describing:)) ?? "nil") column=\(state.activeColumnIndex) target=\(state.viewOffset)"
-        case let .viewportCommitted(workspaceId, state, _):
-            "viewport_committed workspace=\(workspaceId.uuidString) selected=\(state.selectedNodeId.map(String.init(describing:)) ?? "nil") column=\(state.activeColumnIndex)"
-        case let .viewportForgotten(workspaceIds, _):
-            "viewport_forgotten workspaces=\(workspaceIds.count)"
-        case let .selectionChanged(workspaceId, nodeId, _):
-            "selection_changed workspace=\(workspaceId.uuidString) node=\(nodeId)"
         case let .scratchpadMembershipChanged(token, index, _):
             "scratchpad_membership_changed token=\(token) index=\(index.map(String.init(describing:)) ?? "nil")"
         case let .scratchpadRevealChanged(index, _):

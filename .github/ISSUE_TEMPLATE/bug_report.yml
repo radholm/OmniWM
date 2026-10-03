@@ -16,7 +16,7 @@ body:
       label: Issue type
       description: What kind of problem is this?
       options:
-        - Tiling layout (Niri / Dwindle)
+        - Tiling layout (Dwindle)
         - Focus / focus-follows-mouse
         - Multi-monitor / workspaces
         - Window placement or sizing
@@ -82,9 +82,8 @@ body:
     attributes:
       label: Active layout
       options:
-        - Niri
         - Dwindle
-        - Not sure / both
+        - Not sure
     validations:
       required: true
   - type: input

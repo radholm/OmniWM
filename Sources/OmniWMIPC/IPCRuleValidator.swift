@@ -8,7 +8,6 @@ public struct IPCRuleValidationReport: Equatable, Sendable {
     public let invalidRegexMessage: String?
     public let identifierError: String?
     public let titleMatcherError: String?
-    public let initialContainerPrimarySpanError: String?
     public let effectError: String?
     public let minSizeError: String?
 
@@ -17,7 +16,6 @@ public struct IPCRuleValidationReport: Equatable, Sendable {
         invalidRegexMessage: String?,
         identifierError: String? = nil,
         titleMatcherError: String? = nil,
-        initialContainerPrimarySpanError: String? = nil,
         effectError: String? = nil,
         minSizeError: String? = nil
     ) {
@@ -25,22 +23,13 @@ public struct IPCRuleValidationReport: Equatable, Sendable {
         self.invalidRegexMessage = invalidRegexMessage
         self.identifierError = identifierError
         self.titleMatcherError = titleMatcherError
-        self.initialContainerPrimarySpanError = initialContainerPrimarySpanError
         self.effectError = effectError
         self.minSizeError = minSizeError
     }
 
     public var messages: [String] {
-        [
-            bundleIdError,
-            invalidRegexMessage,
-            identifierError,
-            titleMatcherError,
-            initialContainerPrimarySpanError,
-            effectError,
-            minSizeError
-        ]
-        .compactMap { $0 }
+        [bundleIdError, invalidRegexMessage, identifierError, titleMatcherError, effectError, minSizeError]
+            .compactMap { $0 }
     }
 
     public var isValid: Bool {
@@ -75,20 +64,11 @@ public enum IPCRuleValidator {
     public static func effectError(for rule: IPCRuleDefinition) -> String? {
         let hasEffect = rule.layout != .auto
             || nonEmpty(rule.assignToWorkspace)
-            || rule.initialContainerPrimarySpan.map { initialContainerPrimarySpanError(for: $0) == nil } == true
             || rule.minWidth != nil
             || rule.minHeight != nil
         return hasEffect
             ? nil
-            : "Set a layout, workspace, initial container primary span, or minimum size — this rule has no effect"
-    }
-
-    public static func initialContainerPrimarySpanError(for value: Double?) -> String? {
-        guard let value else { return nil }
-        guard value.isFinite, (0.05 ... 1.0).contains(value) else {
-            return "Initial container primary span must be a finite proportion from 0.05 through 1.0 (5% through 100%)"
-        }
-        return nil
+            : "Set a layout, workspace, or minimum size — this rule has no effect"
     }
 
     public static func minSizeError(for rule: IPCRuleDefinition) -> String? {
@@ -125,7 +105,6 @@ public enum IPCRuleValidator {
             invalidRegexMessage: invalidRegexMessage(for: rule.titleRegex),
             identifierError: identifierError(for: rule),
             titleMatcherError: titleMatcherError(for: rule),
-            initialContainerPrimarySpanError: initialContainerPrimarySpanError(for: rule.initialContainerPrimarySpan),
             effectError: effectError(for: rule),
             minSizeError: minSizeError(for: rule)
         )

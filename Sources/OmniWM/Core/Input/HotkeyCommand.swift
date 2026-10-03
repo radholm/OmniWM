@@ -22,24 +22,14 @@ struct HotkeyInvocation: Equatable, Sendable {
 
 enum LayoutCompatibility: String {
     case shared = "Shared"
-    case niri = "Niri"
     case dwindle = "Dwindle"
 
     var localizedDisplayName: String {
-        Self.localizedNames[self] ?? rawValue
+        switch self {
+        case .shared: String(localized: "Shared")
+        case .dwindle: String(localized: "Dwindle")
+        }
     }
-
-    private static let localizedNames: [LayoutCompatibility: String] = [
-        .shared: String(localized: LocalizedStringResource(
-            "command.scope.shared", defaultValue: "Shared", table: "Commands", bundle: .omniWM
-        )),
-        .niri: String(localized: LocalizedStringResource(
-            "command.scope.niri", defaultValue: "Niri", table: "Commands", bundle: .omniWM
-        )),
-        .dwindle: String(localized: LocalizedStringResource(
-            "command.scope.dwindle", defaultValue: "Dwindle", table: "Commands", bundle: .omniWM
-        ))
-    ]
 }
 
 enum WindowMarkHotkeyAction: Equatable, Hashable {
@@ -52,7 +42,6 @@ enum HotkeyCommand: Equatable, Hashable {
     case move(Direction)
     case monitorFocus(IPCMonitorFocusCommand)
     case fullscreen(IPCFullscreenCommand)
-    case moveColumn(Direction)
 
     case openCommandPalette
 
@@ -66,7 +55,6 @@ enum HotkeyCommand: Equatable, Hashable {
     case presentation(IPCPresentationCommand)
     case focusNavigation(FocusNavigationAction)
     case windowMovement(WindowMovementAction)
-    case column(ColumnAction)
     case workspace(WorkspaceAction)
     case sizing(SizingAction)
     case dwindle(DwindleAction)

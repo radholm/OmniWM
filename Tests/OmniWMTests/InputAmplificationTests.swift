@@ -9,7 +9,6 @@ import XCTest
 final class InputAmplificationTests: XCTestCase {
     func testMultitouchSourceExistsOnlyWhileGestureFeatureIsEnabled() {
         let controller = WindowAdmissionTestSupport.controller(prefix: "DynamicMultitouch")
-        controller.settings.gestures.scrollEnabled = false
         controller.settings.gestures.workspaceSwipeEnabled = false
         controller.hasStartedServices = true
         let handler = controller.mouseEventHandler
@@ -38,20 +37,16 @@ final class InputAmplificationTests: XCTestCase {
     func testGestureAvailabilityCallbackOnlyFiresForAggregateTransitions() {
         let controller = WindowAdmissionTestSupport.controller(prefix: "GestureAvailability")
         let settings = controller.settings
-        settings.gestures.scrollEnabled = false
         settings.gestures.workspaceSwipeEnabled = false
         var states: [Bool] = []
         settings.onTrackpadGestureAvailabilityChanged = { states.append($0) }
-
-        settings.gestures.scrollEnabled = true
         settings.gestures.workspaceSwipeEnabled = true
-        settings.gestures.scrollEnabled = false
         settings.gestures.workspaceSwipeEnabled = false
 
         XCTAssertEqual(states, [true, false])
     }
 
-    func testTrackpadScrollDoesNotEnterEventIntake() {
+    func testWheelAndTrackpadScrollDoNotEnterEventIntake() {
         let controller = WindowAdmissionTestSupport.controller(prefix: "TrackpadScrollIntake")
         controller.eventIntake.open(sink: controller.eventInterpreter)
         defer { controller.eventIntake.close() }
@@ -75,6 +70,6 @@ final class InputAmplificationTests: XCTestCase {
             phase: 0,
             modifiersRawValue: 0
         ))
-        XCTAssertEqual(controller.eventIntake.lastSeq, initialSequence + 1)
+        XCTAssertEqual(controller.eventIntake.lastSeq, initialSequence)
     }
 }

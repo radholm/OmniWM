@@ -223,7 +223,7 @@ final class TabRailIconTests: XCTestCase {
         origin: CGPoint = CGPoint(x: 300, y: 300)
     ) -> TabRailInfo {
         TabRailInfo(
-            workspaceId: key?.workspaceId ?? UUID(), owner: key?.owner ?? .niriColumn(NodeId()), plannedSeq: 1,
+            workspaceId: key?.workspaceId ?? UUID(), owner: key?.owner ?? .dwindleTile(DwindleTileId()), plannedSeq: 1,
             tileFrame: CGRect(origin: origin, size: CGSize(width: 400, height: height)),
             tabCount: count, activeVisualIndex: active, activeWindowId: nil,
             tabs: (0 ..< count).map { index in

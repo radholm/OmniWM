@@ -316,11 +316,6 @@ final class GapSettingsTests: XCTestCase {
     }
 
     @MainActor
-    func testNiriLayoutRoutesInnerGapByWorkspaceDisplay() throws {
-        try assertLayoutRoutesInnerGapByWorkspaceDisplay(.niri)
-    }
-
-    @MainActor
     func testDwindleLayoutRoutesInnerGapByWorkspaceDisplay() throws {
         try assertLayoutRoutesInnerGapByWorkspaceDisplay(.dwindle)
     }
@@ -354,12 +349,7 @@ final class GapSettingsTests: XCTestCase {
         let controller = WMController(settings: settings)
         controller.workspaceManager.applyMonitorConfigurationChange([left, right])
         controller.workspaceManager.applySettings()
-        if layout == .niri {
-            controller.niriLayoutHandler.enableNiriLayout()
-            controller.syncMonitorsToNiriEngine()
-        } else {
-            controller.dwindleLayoutHandler.enableDwindleLayout()
-        }
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         let leftWorkspace = try XCTUnwrap(controller.workspaceManager.workspaceId(named: "1"))
         let rightWorkspace = try XCTUnwrap(controller.workspaceManager.workspaceId(named: "2"))
         XCTAssertTrue(controller.workspaceManager.setActiveWorkspace(leftWorkspace, on: left.id))
@@ -374,15 +364,9 @@ final class GapSettingsTests: XCTestCase {
             addWindow(pid: 104, windowId: 204, to: rightWorkspace, controller: controller)
         ]
         let plans = controller.workspaceManager.withBatchedLayoutBuild {
-            if layout == .niri {
-                controller.niriLayoutHandler.layoutWithNiriEngine(
-                    activeWorkspaces: [leftWorkspace, rightWorkspace]
-                )
-            } else {
-                controller.dwindleLayoutHandler.layoutWithDwindleEngine(
-                    activeWorkspaces: [leftWorkspace, rightWorkspace]
-                )
-            }
+            controller.dwindleLayoutHandler.layoutWithDwindleEngine(
+                activeWorkspaces: [leftWorkspace, rightWorkspace]
+            )
         }
         let leftPlan = try XCTUnwrap(plans.first { $0.workspaceId == leftWorkspace })
         let rightPlan = try XCTUnwrap(plans.first { $0.workspaceId == rightWorkspace })
@@ -432,73 +416,12 @@ final class GapSettingsTests: XCTestCase {
     }
 
     @MainActor
-    func testLiveReloadOfDisplayTopGapOverrideMovesNextLayout() throws {
-        let settings = makeSettingsStore()
-        settings.borders.enabled = false
-        settings.workspaceBar.enabled = false
-        settings.gaps.size = 0
-        settings.gaps.outerGapTop = 50
-        let left = makeMonitor(displayId: 1, name: "Left", originX: 0)
-        let right = makeMonitor(displayId: 2, name: "Right", originX: 1440)
-        settings.workspaces.configurations = [
-            WorkspaceConfiguration(
-                name: "1",
-                monitorAssignment: .specificDisplay(OutputId(from: left)),
-                layoutType: .niri
-            ),
-            WorkspaceConfiguration(
-                name: "2",
-                monitorAssignment: .specificDisplay(OutputId(from: right)),
-                layoutType: .niri
-            )
-        ]
-        let controller = WMController(settings: settings)
-        controller.workspaceManager.applyMonitorConfigurationChange([left, right])
-        controller.workspaceManager.applySettings()
-        controller.niriLayoutHandler.enableNiriLayout()
-        controller.syncMonitorsToNiriEngine()
-        controller.applyPersistedSettings(settings, startServices: false)
-        controller.layoutRefreshController.resetState()
-        let leftWorkspace = try XCTUnwrap(controller.workspaceManager.workspaceId(named: "1"))
-        let rightWorkspace = try XCTUnwrap(controller.workspaceManager.workspaceId(named: "2"))
-        XCTAssertTrue(controller.workspaceManager.setActiveWorkspace(leftWorkspace, on: left.id))
-        XCTAssertTrue(controller.workspaceManager.setActiveWorkspace(rightWorkspace, on: right.id))
-        let leftToken = addWindow(pid: 105, windowId: 205, to: leftWorkspace, controller: controller)
-        _ = addWindow(pid: 105, windowId: 206, to: leftWorkspace, controller: controller)
-        let rightToken = addWindow(pid: 106, windowId: 207, to: rightWorkspace, controller: controller)
-        _ = addWindow(pid: 106, windowId: 208, to: rightWorkspace, controller: controller)
-
-        var frames = laidOutFrames(controller: controller, workspaces: [leftWorkspace, rightWorkspace])
-        XCTAssertEqual(frames[leftToken]?.maxY, 850)
-        XCTAssertEqual(frames[rightToken]?.maxY, 850)
-
-        var export = settings.toExport()
-        export.monitorGapSettings = [
-            MonitorGapSettings(monitorName: right.name, monitorDisplayId: right.displayId, outerGapTop: 41)
-        ]
-        settings.applyExport(export)
-        controller.layoutRefreshController.resetState()
-        controller.applyPersistedSettings(settings, startServices: false)
-
-        XCTAssertNotNil(controller.layoutRefreshController.layoutState.pendingRefresh)
-        XCTAssertEqual(settings.gaps.resolved(for: right).outerGapTop, 41)
-        frames = laidOutFrames(controller: controller, workspaces: [leftWorkspace, rightWorkspace])
-        XCTAssertEqual(frames[rightToken]?.maxY, 859)
-        XCTAssertEqual(frames[leftToken]?.maxY ?? 850, 850)
-
-        let projected = IPCQueryRouter(controller: controller, appVersion: nil, sessionToken: "gap-tests")
-            .displaysResult(IPCQueryRequest(name: .displays, fields: ["id", "outer-gap-top"]))
-            .displays
-        XCTAssertEqual(projected.map { $0.outerGapTop }, [50, 41])
-    }
-
-    @MainActor
     private func laidOutFrames(
         controller: WMController,
         workspaces: [WorkspaceDescriptor.ID]
     ) -> [WindowToken: CGRect] {
         let plans = controller.workspaceManager.withBatchedLayoutBuild {
-            controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: Set(workspaces))
+            controller.dwindleLayoutHandler.layoutWithDwindleEngine(activeWorkspaces: Set(workspaces))
         }
         var frames: [WindowToken: CGRect] = [:]
         for change in plans.flatMap({ $0.diff.frameChanges }) {
@@ -548,39 +471,6 @@ final class GapSettingsTests: XCTestCase {
         XCTAssertEqual(frames.workingFrame, CGRect(x: 5.5, y: 5.5, width: 1429, height: 889))
         XCTAssertEqual(frames.borderSafeFillFrame, frames.workingFrame)
         XCTAssertEqual(frames.fullscreenLayoutFrame, monitor.visibleFrame)
-    }
-
-    @MainActor
-    func testNiriInteractionGeometryUsesOneResolvedScaleForFrameAndGap() {
-        let settings = makeSettingsStore()
-        let monitor = makeMonitor(displayId: 1, name: "Built-in")
-        settings.borders.enabled = true
-        settings.borders.width = 5.2
-        settings.gaps.size = 0
-        settings.gaps.outerGapLeft = 0
-        settings.gaps.outerGapRight = 0
-        settings.gaps.outerGapTop = 0
-        settings.gaps.outerGapBottom = 0
-        settings.workspaceBar.enabled = false
-        settings.gaps.update(
-            MonitorGapSettings(
-                monitorName: monitor.name,
-                monitorDisplayId: monitor.displayId,
-                innerGap: 0
-            ),
-            for: monitor
-        )
-        let controller = WMController(settings: settings)
-
-        let oneX = controller.niriInteractionGeometry(for: monitor, scale: 1)
-        let twoX = controller.niriInteractionGeometry(for: monitor, scale: 2)
-
-        XCTAssertEqual(oneX.scale, 1)
-        XCTAssertEqual(oneX.innerGap, 6)
-        XCTAssertEqual(oneX.workingFrame, CGRect(x: 6, y: 6, width: 1428, height: 888))
-        XCTAssertEqual(twoX.scale, 2)
-        XCTAssertEqual(twoX.innerGap, 5.5)
-        XCTAssertEqual(twoX.workingFrame, CGRect(x: 5.5, y: 5.5, width: 1429, height: 889))
     }
 
     @MainActor

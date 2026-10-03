@@ -81,17 +81,13 @@ final class WindowAdmissionPolicyTests: XCTestCase {
             minHeight: 480,
             matchedRuleId: UUID()
         )
-        let admissionHints = ManagedWindowAdmissionHints(
-            initialNiriContainerPrimarySpan: 0.4
-        )
         _ = controller.workspaceManager.addWindow(
             axRef,
             pid: token.pid,
             windowId: token.windowId,
             to: workspaceId,
             mode: .floating,
-            ruleEffects: ruleEffects,
-            admissionHints: admissionHints
+            ruleEffects: ruleEffects
         )
         controller.axEventHandler.windowInfoProvider = { _ in nil }
 
@@ -111,7 +107,6 @@ final class WindowAdmissionPolicyTests: XCTestCase {
         XCTAssertEqual(entry.workspaceId, workspaceId)
         XCTAssertEqual(entry.mode, .floating)
         XCTAssertEqual(entry.ruleEffects, ruleEffects)
-        XCTAssertEqual(entry.admissionHints, admissionHints)
     }
 
     func testRuleReevaluationRequestsOneWindowServerBatchForMultipleTargets() async throws {
@@ -188,7 +183,6 @@ final class WindowAdmissionPolicyTests: XCTestCase {
             pid: directToken.pid,
             windowId: directToken.windowId,
             to: workspaceId,
-            admissionHints: .init(initialNiriContainerPrimarySpan: 0.4),
             lifetimeAuthority: .directLifecycle,
             managedReplacementMetadata: metadata
         )
@@ -245,7 +239,6 @@ final class WindowAdmissionPolicyTests: XCTestCase {
         XCTAssertEqual(after.workspaceId, before.workspaceId)
         XCTAssertEqual(after.mode, before.mode)
         XCTAssertEqual(after.axRef, before.axRef)
-        XCTAssertEqual(after.admissionHints, before.admissionHints)
         XCTAssertEqual(after.restoreIntent, before.restoreIntent)
         XCTAssertEqual(after.managedReplacementMetadata, metadata)
         XCTAssertTrue(invalidations.isEmpty)
@@ -667,7 +660,6 @@ private func explicitProxyEvaluation(
             layoutDecisionKind: .explicitLayout,
             workspaceName: nil,
             ruleEffects: .none,
-            admissionHints: .none,
             heuristicReasons: [],
             deferredReason: nil
         ),

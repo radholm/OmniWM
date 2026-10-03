@@ -364,7 +364,6 @@ private struct SelectedMonitorDetails: View {
     @Bindable var controller: WMController
     let monitor: Monitor
     let displayLabel: MonitorDisplayLabel
-    @State private var rejectedGestureConflict: TrackpadGestureConflict?
 
     private var orientationOverride: Monitor.Orientation? {
         settings.monitors.orientationSettings(for: monitor)?.orientation
@@ -372,14 +371,6 @@ private struct SelectedMonitorDetails: View {
 
     private var effectiveOrientation: Monitor.Orientation {
         settings.monitors.effectiveOrientation(for: monitor)
-    }
-
-    private var gestureConflict: TrackpadGestureConflict? {
-        rejectedGestureConflict ?? GestureSettingsValidation.conflict(
-            gestures: settings.gestures.export(),
-            orientationOverrides: settings.monitors.orientationOverrides,
-            monitors: controller.workspaceManager.monitors
-        )
     }
 
     var body: some View {
@@ -422,21 +413,11 @@ private struct SelectedMonitorDetails: View {
             }
         }
 
-        SettingsCaption(localized: "Vertical monitors scroll windows top-to-bottom instead of left-to-right.")
-
-        if let conflict = gestureConflict {
-            Label(conflict.localizedDescription, systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-        }
+        SettingsCaption(localized: "Overrides the display orientation used for directional placement.")
     }
 
     private func updateOrientation(_ orientation: Monitor.Orientation?) {
-        rejectedGestureConflict = settings.updateMonitorOrientation(
-            orientation,
-            for: monitor,
-            monitors: controller.workspaceManager.monitors
-        )
-        guard rejectedGestureConflict == nil else { return }
+        settings.updateMonitorOrientation(orientation, for: monitor)
         controller.updateMonitorOrientations()
     }
 }

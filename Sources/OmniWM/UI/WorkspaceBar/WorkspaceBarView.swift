@@ -221,19 +221,6 @@ private struct WorkspaceItemView: View {
         drag?.highlights.contains(.workspace(item.id)) == true
     }
 
-    private var dropGapIndex: Int? {
-        drag?.highlights.lazy.compactMap { highlight -> Int? in
-            guard case let .gap(workspaceId, index) = highlight, workspaceId == item.id else { return nil }
-            return index
-        }.first
-    }
-
-    private func reflowOffset(forIconAt index: Int) -> CGFloat {
-        guard let gap = dropGapIndex else { return 0 }
-        let halfGap = min(8, iconSize * 0.4) / 2
-        return index < gap ? -halfGap : halfGap
-    }
-
     var body: some View {
         orientation.stack(spacing: windowSpacing) {
             if showLabels {
@@ -258,7 +245,7 @@ private struct WorkspaceItemView: View {
                 )
             }
 
-            ForEach(Array(item.tiledWindows.enumerated()), id: \.element.id) { index, window in
+            ForEach(Array(item.tiledWindows.enumerated()), id: \.element.id) { _, window in
                 WindowIconView(
                     window: window,
                     workspaceId: item.id,
@@ -273,11 +260,6 @@ private struct WorkspaceItemView: View {
                     textColor: textColor,
                     onFocusWindow: onFocusWindow
                 )
-                .offset(
-                    x: orientation.isVertical ? 0 : reflowOffset(forIconAt: index),
-                    y: orientation.isVertical ? reflowOffset(forIconAt: index) : 0
-                )
-                .animation(animationsEnabled ? .spring(duration: 0.2) : nil, value: dropGapIndex)
                 .workspaceBarHitRegion(.window(item.id, window.id))
             }
 

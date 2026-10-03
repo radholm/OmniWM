@@ -12,33 +12,6 @@ struct ManagedFocusRetryRuntimeSnapshot: Equatable, Sendable {
     var exhaustions: UInt64 = 0
 }
 
-struct ReplacementFocusPayload: Equatable, Sendable {
-    var pid: pid_t
-    let workspaceId: WorkspaceDescriptor.ID
-    var anchorToken: WindowToken
-    var protectedTokens: Set<WindowToken>
-    var isBurstOpen: Bool
-
-    mutating func rekey(from oldToken: WindowToken, to newToken: WindowToken) {
-        if anchorToken == oldToken {
-            anchorToken = newToken
-        }
-        if protectedTokens.remove(oldToken) != nil {
-            protectedTokens.insert(newToken)
-        }
-    }
-
-    func protects(_ token: WindowToken) -> Bool {
-        protectedTokens.contains(token)
-    }
-
-    func suppressesUnrelatedActivation(token: WindowToken, workspaceId: WorkspaceDescriptor.ID) -> Bool {
-        token.pid == pid
-            && workspaceId == self.workspaceId
-            && !protects(token)
-    }
-}
-
 struct SameAppCloseProbePayload: Equatable, Sendable {
     let focusedToken: WindowToken
     let observedToken: WindowToken
@@ -143,7 +116,6 @@ enum IntentKind: Equatable, Sendable {
         workspaceId: WorkspaceDescriptor.ID,
         phase: ManagedFocusRequest.Phase = .awaitingConfirmation
     )
-    case replacementFocus(ReplacementFocusPayload)
     case sameAppCloseProbe(SameAppCloseProbePayload)
 
     var focusTargetToken: WindowToken? {
@@ -152,7 +124,6 @@ enum IntentKind: Equatable, Sendable {
              .appTerminationFocusRecovery,
              .appRevealFocus,
              .focusPolicyLease,
-             .replacementFocus,
              .sameAppCloseProbe:
             nil
         case let .focusWindow(token, _, _):
@@ -185,8 +156,6 @@ enum IntentKind: Equatable, Sendable {
             nil
         case let .focusWindow(token, _, _):
             token.pid
-        case let .replacementFocus(payload):
-            payload.pid
         case let .sameAppCloseProbe(payload):
             payload.observedToken.pid
         }

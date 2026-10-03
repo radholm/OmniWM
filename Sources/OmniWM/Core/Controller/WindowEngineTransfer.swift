@@ -34,5 +34,4 @@ struct WindowEngineTransfer {
 
 struct WindowEngineTransferProgress {
     var newSourceFocusToken: WindowToken?
-    var movedWithNiri = false
 }

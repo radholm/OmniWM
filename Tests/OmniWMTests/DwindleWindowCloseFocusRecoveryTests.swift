@@ -31,15 +31,13 @@ private actor DwindleCloseFocusFactGate {
 final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
     private enum LayoutPair: CaseIterable {
         case dwindleToDwindle
-        case dwindleToNiri
-        case niriToDwindle
 
         var local: LayoutType {
-            self == .niriToDwindle ? .niri : .dwindle
+            .dwindle
         }
 
         var remote: LayoutType {
-            self == .dwindleToNiri ? .niri : .dwindle
+            .dwindle
         }
     }
 
@@ -65,14 +63,6 @@ final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
 
     func testDwindleCloseHoldsDwindleFocusForBothEventOrders() async throws {
         try await Self.verifyCloseRecovery(layouts: .dwindleToDwindle)
-    }
-
-    func testDwindleCloseHoldsNiriFocusForBothEventOrders() async throws {
-        try await Self.verifyCloseRecovery(layouts: .dwindleToNiri)
-    }
-
-    func testNiriCloseHoldsDwindleFocusForBothEventOrders() async throws {
-        try await Self.verifyCloseRecovery(layouts: .niriToDwindle)
     }
 
     func testDelayedFocusFactsCannotLeaveLocalWorkspaceAfterRemoval() async throws {
@@ -224,7 +214,6 @@ final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
             named: "92", layoutType: layouts.remote, controller: controller
         ))
         _ = controller.workspaceManager.focusWorkspace(named: "91")
-        controller.niriLayoutHandler.enableNiriLayout()
         controller.dwindleLayoutHandler.enableDwindleLayout()
         controller.layoutRefreshController.resetState()
         controller.axEventHandler.windowInfoProvider = { _ in nil }
@@ -250,20 +239,10 @@ final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
             )
         )
         let remoteAXRef = addWindow(remoteToken, to: remoteWorkspaceId, controller: controller)
-        let closingNode = controller.niriEngine?.findNode(for: closingToken, in: localWorkspaceId)
         controller.workspaceManager.withEngineMutationScope(in: localWorkspaceId) {
-            if let closingNode {
-                controller.niriEngine?.activateWindow(closingNode.id, in: localWorkspaceId)
-            } else {
-                _ = controller.dwindleEngine?.activateWindow(closingToken, in: localWorkspaceId)
-            }
+            _ = controller.dwindleEngine?.activateWindow(closingToken, in: localWorkspaceId)
         }
-        _ = controller.workspaceManager.commitWorkspaceSelection(
-            nodeId: closingNode?.id,
-            focusedToken: closingToken,
-            in: localWorkspaceId,
-            onMonitor: monitor.id
-        )
+        _ = controller.workspaceManager.rememberFocus(closingToken, in: localWorkspaceId)
         XCTAssertTrue(controller.workspaceManager.setManagedFocus(
             closingToken,
             in: localWorkspaceId,
@@ -305,12 +284,7 @@ final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
             managedReplacementMetadata: metadata
         )
         controller.workspaceManager.withEngineMutationScope(in: workspaceId) {
-            switch controller.workspaceManager.activeLayoutKind(for: workspaceId) {
-            case .niri:
-                _ = controller.niriEngine?.addWindow(token: token, to: workspaceId, afterSelection: nil)
-            case .dwindle:
-                _ = controller.dwindleEngine?.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
-            }
+            _ = controller.dwindleEngine?.addWindow(token: token, to: workspaceId, activeWindowFrame: nil)
         }
         return axRef
     }
@@ -382,7 +356,6 @@ final class DwindleWindowCloseFocusRecoveryTests: XCTestCase {
             fixture.fallbackToken
         )
         XCTAssertNil(controller.workspaceManager.entry(for: fixture.closingToken))
-        XCTAssertNil(controller.niriEngine?.findNode(for: fixture.closingToken, in: fixture.localWorkspaceId))
         XCTAssertFalse(controller.dwindleEngine?
             .containsWindow(fixture.closingToken, in: fixture.localWorkspaceId) ?? false)
         XCTAssertNil(controller.intentLedger.openSameAppCloseProbe())

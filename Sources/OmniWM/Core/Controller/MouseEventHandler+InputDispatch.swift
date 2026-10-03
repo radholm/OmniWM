@@ -16,8 +16,6 @@ extension MouseEventHandler {
         let overviewState = controller.windowActionHandler.overviewState
         let isOverviewOpen = overviewState.isOpen
         return TrackpadGestureIntent.Config(
-            columnScrollEnabled: settings.gestures.scrollEnabled && !isOverviewOpen,
-            columnScrollFingerCount: settings.gestures.fingerCount.rawValue,
             workspaceSwipeEnabled: settings.gestures.workspaceSwipeEnabled && !isOverviewOpen,
             workspaceSwipeFingerCount: settings.gestures.workspaceSwipeFingerCount.rawValue,
             workspaceSwipeAxis: settings.gestures.workspaceSwipeAxis,
@@ -121,14 +119,6 @@ extension MouseEventHandler {
             return
         }
         handleMouseUpFromTap(at: location, button: button)
-    }
-
-    func dispatchScrollWheel(_ payload: MouseScrollIntake) {
-        guard !isInputSuppressed else {
-            handleInputSuppressionBegan()
-            return
-        }
-        handleScrollWheelFromTap(payload)
     }
 
     func receiveTapMouseMoved(
@@ -265,44 +255,27 @@ extension MouseEventHandler {
             }
         }
         decision = scrollDecision(
-            at: payload.location,
             momentumPhase: payload.momentumPhase,
-            phase: payload.phase,
-            modifiers: payload.modifiers
+            phase: payload.phase
         )
         let suppress = decision.suppresses
         if suppress, MouseTrace.shared.isActive {
             MouseTrace.record("tap: scroll suppressed loc=\(TraceFormat.point(payload.location))")
         }
-        if payload.momentumPhase == 0, payload.phase == 0 {
-            EventIntake.post(.mouseScroll(payload))
-        } else {
+        if payload.momentumPhase != 0 || payload.phase != 0 {
             recordDroppedTrackpadScroll()
         }
         return suppress
     }
 
     private func scrollDecision(
-        at location: CGPoint,
         momentumPhase: UInt32,
-        phase: UInt32,
-        modifiers: CGEventFlags
+        phase: UInt32
     ) -> ScrollDecision {
         let isTrackpad = momentumPhase != 0 || phase != 0
         if isTrackpad { return trackpadScrollDecision(momentumPhase: momentumPhase, phase: phase) }
 
-        guard let controller, controller.isEnabled,
-              controller.settings.effectiveTrackpadGesturesEnabled
-        else {
-            return .wheelDisabled
-        }
-        if controller.isOverviewOpen() { return .overview }
-        if shouldBlockOwnWindowInput(at: location) { return .ownWindow }
-        guard !state.isResizing, !state.isMoving else { return .windowInteraction }
-        guard controller.settings.gestures.scrollEnabled else { return .wheelDisabled }
-        let requiredModifiers = controller.settings.gestures.scrollModifierKey.cgEventFlag
-        guard Self.mouseWheelModifiersMatch(modifiers, required: requiredModifiers) else { return .modifierMismatch }
-        return resolveScrollContext(at: location) != nil ? .wheelBinding : .wheelUnclaimed
+        return .wheelUnclaimed
     }
 
     private func trackpadScrollDecision(momentumPhase: UInt32, phase: UInt32) -> ScrollDecision {

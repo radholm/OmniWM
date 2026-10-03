@@ -42,12 +42,10 @@ final class CommandPaletteCommandSearchTests: XCTestCase {
         ))
 
         XCTAssertEqual(items.first { $0.id == "rescueOffscreenWindows" }?.shortcut, "Unassigned")
-        XCTAssertEqual(items.first { $0.id == "consumeOrExpelWindowLeft" }?.shortcut, "No shortcut")
         XCTAssertFalse(try XCTUnwrap(items.first { $0.id == "rescueOffscreenWindows" }).hasShortcut)
-        XCTAssertFalse(try XCTUnwrap(items.first { $0.id == "consumeOrExpelWindowLeft" }).hasShortcut)
         XCTAssertTrue(configured.hasShortcut)
         XCTAssertTrue(configured.isLayoutCompatible)
-        XCTAssertFalse(try XCTUnwrap(items.first { $0.id == "moveColumn.up" }).isLayoutCompatible)
+        XCTAssertTrue(items.allSatisfy(\.isLayoutCompatible))
     }
 
     func testEmptyQueryReturnsCategoryAndTitleOrder() {
@@ -65,10 +63,10 @@ final class CommandPaletteCommandSearchTests: XCTestCase {
 
         XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: "adjacent monitor")
             .contains { $0.id == "moveWindowToMonitor.left" })
-        XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: "container and column")
-            .contains { $0.id == "moveColumnToFirst" })
+        XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: "group")
+            .contains { $0.id == "moveGroup.left" })
         XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: "dwindle")
-            .contains { $0.id == "moveColumn.up" })
+            .contains { $0.id == "moveToRoot" })
         XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: binding.humanReadableString)
             .contains { $0.id == "openCommandPalette" })
         XCTAssertTrue(CommandPaletteSearch.filterCommandItems(items, query: "not-a-real-command-phrase").isEmpty)

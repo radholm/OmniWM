@@ -34,21 +34,9 @@ extension WMController {
             self?.statusBarController?.handleTraceCaptureStateChange()
         }
         tabRailManager.onSelect = { [weak self] info, visualIndex, token in
-            guard let self else { return }
-            switch info.owner {
-            case .niriColumn:
-                layoutRefreshController.selectTabInNiri(
-                    info: info,
-                    visualIndex: visualIndex,
-                    expectedToken: token
-                )
-            case .dwindleTile:
-                dwindleLayoutHandler.selectGroupMember(
-                    info: info,
-                    visualIndex: visualIndex,
-                    expectedToken: token
-                )
-            }
+            self?.dwindleLayoutHandler.selectGroupMember(
+                info: info, visualIndex: visualIndex, expectedToken: token
+            )
         }
     }
 
@@ -78,16 +66,6 @@ extension WMController {
         workspaceManager.onAnimationMotionsWillBeRemoved = { [weak self] workspaceIds in
             guard let self else { return }
             for workspaceId in workspaceIds {
-                self.niriLayoutHandler.terminateViewportGesture(
-                    for: workspaceId,
-                    disposition: .settleLiveOffset
-                )
-                let displayIds = self.niriLayoutHandler.scrollAnimationByDisplay.compactMap { displayId, registered in
-                    registered == workspaceId ? displayId : nil
-                }
-                for displayId in displayIds {
-                    self.layoutRefreshController.stopScrollAnimation(for: displayId)
-                }
                 for displayId in self.dwindleLayoutHandler.animationDisplayIds(for: workspaceId) {
                     self.layoutRefreshController.stopDwindleAnimation(for: displayId)
                 }

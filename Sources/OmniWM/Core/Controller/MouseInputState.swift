@@ -4,8 +4,6 @@
 import AppKit
 import Foundation
 
-let niriWheelScrollTickAmount: CGFloat = 120.0
-
 struct MouseInputState {
     enum InteractionSource: Hashable {
         case mouse(MouseEventHandler.MouseButton)
@@ -20,8 +18,6 @@ struct MouseInputState {
         let workspaceId: WorkspaceDescriptor.ID
         let monitorId: Monitor.ID
         let fingerCount: Int
-        let columnScrollCandidate: Bool
-        let columnScrollAxis: WorkspaceSwipeAxis
         let workspaceAxis: WorkspaceSwipeAxis?
         let overviewAction: OverviewGestureAction?
         let windowGestureTarget: WindowToken?
@@ -97,7 +93,6 @@ struct MouseInputState {
     var lockedGestureContext: LockedGestureContext?
     var activeGestureMode: TrackpadGestureMode?
     var gestureFingerCountMismatchSince: TimeInterval?
-    var viewportGestureSessionID: AnimationDriver.GestureSessionID?
     var workspaceSwipeFired = false
     let workspaceSwipeTracker = SwipeTracker()
     var suppressGestureStartUntilAllTouchesLift = false
@@ -105,6 +100,4 @@ struct MouseInputState {
     var suppressTrackpadMomentumScroll = false
     var contactSessions = MultitouchContactSessions()
     var consumedTrackpadSessions: [UInt64: MultitouchContactSession] = [:]
-    var horizontalWheelTracker = NiriScrollTracker(tick: niriWheelScrollTickAmount)
-    var verticalWheelTracker = NiriScrollTracker(tick: niriWheelScrollTickAmount)
 }

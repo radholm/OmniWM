@@ -8,7 +8,7 @@ import XCTest
 @MainActor
 final class NativeAppUnhideTests: XCTestCase {
     func testActivationBeforeNativeUnhideRestoresWorkspaceAndFocusInBothLayouts() throws {
-        for layout: LayoutType in [.niri, .dwindle] {
+        for layout: LayoutType in [LayoutType.dwindle] {
             let fixture = try Fixture(layout: layout)
             defer { fixture.stop() }
 
@@ -26,7 +26,7 @@ final class NativeAppUnhideTests: XCTestCase {
     }
 
     func testNativeUnhideBeforeActivationRestoresWorkspaceAndFocusInBothLayouts() throws {
-        for layout: LayoutType in [.niri, .dwindle] {
+        for layout: LayoutType in [LayoutType.dwindle] {
             let fixture = try Fixture(layout: layout)
             defer { fixture.stop() }
 
@@ -177,7 +177,7 @@ final class NativeAppUnhideTests: XCTestCase {
         var requestedPIDs: [pid_t] = []
         var requestedVisibilityGenerations: [UInt64] = []
 
-        init(layout: LayoutType = .niri) throws {
+        init(layout: LayoutType = .dwindle) throws {
             controller.settings.animationsEnabled = false
             controller.settings.focus.moveMouseToFocusedWindow = false
             monitor = Monitor(
@@ -196,13 +196,10 @@ final class NativeAppUnhideTests: XCTestCase {
                 named: "92", layoutType: layout, controller: controller
             ))
             _ = controller.workspaceManager.focusWorkspace(id: targetWorkspace)
-            controller.niriLayoutHandler.enableNiriLayout()
             controller.dwindleLayoutHandler.enableDwindleLayout()
             let axRef = WindowAdmissionTestSupport.track(token, in: targetWorkspace, controller: controller)
             controller.workspaceManager.withEngineMutationScope(in: targetWorkspace) {
                 switch controller.workspaceManager.activeLayoutKind(for: targetWorkspace) {
-                case .niri:
-                    _ = controller.niriEngine?.addWindow(token: token, to: targetWorkspace, afterSelection: nil)
                 case .dwindle:
                     _ = controller.dwindleEngine?.addWindow(token: token, to: targetWorkspace, activeWindowFrame: nil)
                 }

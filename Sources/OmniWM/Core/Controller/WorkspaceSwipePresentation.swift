@@ -179,7 +179,6 @@ final class WorkspaceSwipePresentation {
             trace("fallback-preview-unavailable")
             return
         }
-        refreshController?.stopScrollAnimation(for: preparation.monitor.displayId)
         refreshController?.stopDwindleAnimation(for: preparation.monitor.displayId)
         self.flight = flight
         trace("began")
@@ -285,7 +284,6 @@ final class WorkspaceSwipePresentation {
         flight.settlement = settlement
         settlement.onChange = { [weak self] in self?.checkSettlement() }
         controller.axManager.workspaceFrameSettlement = settlement
-        controller.workspaceNavigationHandler.saveNiriViewportState(for: flight.preparation.source.id)
         guard controller.workspaceManager.setActiveWorkspace(flight.destination.id, on: flight.preparation.monitor.id)
         else {
             flight.phase = .settling
@@ -294,7 +292,7 @@ final class WorkspaceSwipePresentation {
         }
         trace("committed", progress: flight.progress)
         controller.workspaceNavigationHandler.commitWorkspaceTransitionFocusHandoff(
-            targetWorkspaceId: flight.destination.id, monitor: flight.preparation.monitor, startScrollAnimation: false,
+            targetWorkspaceId: flight.destination.id, monitor: flight.preparation.monitor,
             placementSubmitted: { [weak self, weak flight] in
                 guard let self, let flight, self.flight === flight else { return }
                 didSubmitPlacement()
@@ -429,7 +427,6 @@ extension WorkspaceSwipePresentation {
                   wallpaperFrame: flight.wallpaper?.from
               ) == true
         else { return false }
-        refreshController?.stopScrollAnimation(for: preparation.monitor.displayId)
         refreshController?.stopDwindleAnimation(for: preparation.monitor.displayId)
         self.flight = flight
         trace("keyboard-began")

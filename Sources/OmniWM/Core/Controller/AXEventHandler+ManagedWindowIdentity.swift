@@ -13,7 +13,6 @@ extension AXEventHandler {
         windowId: UInt32,
         axRef: AXWindowRef,
         managedReplacementMetadata: ManagedReplacementMetadata? = nil,
-        admissionHints: ManagedWindowAdmissionHints? = nil,
         sizeConstraints: WindowSizeConstraints? = nil,
         preparedSubscriptionRetainContribution: Int = 0,
         focusedAdmissionContinuation: FocusedAdmissionRetryContinuation? = nil
@@ -27,8 +26,7 @@ extension AXEventHandler {
         let newWindow = AXManagedWindowIdentity(token: newToken, axRef: axRef)
         let rebind = ManagedWindowIdentityRebind(
             oldWindow: oldWindow, newWindow: newWindow,
-            managedReplacementMetadata: managedReplacementMetadata,
-            admissionHints: admissionHints, sizeConstraints: sizeConstraints
+            managedReplacementMetadata: managedReplacementMetadata, sizeConstraints: sizeConstraints
         )
         let changesRuntimeIdentity = oldToken != newToken
             || !CFEqual(oldEntry.axRef.element, axRef.element)
@@ -146,7 +144,6 @@ extension AXEventHandler {
         let oldWindow = rebind.oldWindow
         let newWindow = rebind.newWindow
         let managedReplacementMetadata = rebind.managedReplacementMetadata
-        let admissionHints = rebind.admissionHints
         let sizeConstraints = rebind.sizeConstraints
         guard let windowId = UInt32(exactly: newWindow.token.windowId) else { return false }
         let scheduled = scheduleAdmissionRetry(
@@ -158,7 +155,6 @@ extension AXEventHandler {
                 oldWindow: oldWindow,
                 newWindow: newWindow,
                 managedReplacementMetadata: managedReplacementMetadata,
-                admissionHints: admissionHints,
                 sizeConstraints: sizeConstraints
             ),
             preparedSubscriptionRetainContribution: preparedSubscriptionRetainContribution

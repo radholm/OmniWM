@@ -1,17 +1,13 @@
 ---
 title: Layout Modes
-description: OmniWM's Niri scrolling and Dwindle BSP layout engines, floating windows, and the two fullscreen modes.
+description: OmniWM's Dwindle BSP layout, floating windows, and the two fullscreen modes.
 sidebar:
   order: 3
 ---
 
-## Two engines, chosen per workspace
+## Dwindle tiling
 
-OmniWM offers two layout engines, and each workspace picks its own. Switch the active workspace's layout with `Toggle Workspace Layout` (`Option + Shift + L` by default) or configure layouts per workspace in the GUI settings.
-
-## Niri (orientation-aware scrolling containers)
-
-On monitors using horizontal orientation, windows form vertical columns that scroll left and right; in vertical orientation, they form horizontal rows that scroll up and down. Each container can hold multiple windows or be "tabbed" — multiple windows with one visible at a time.
+All tiled workspaces use Dwindle. Configure its split, grouping, and sizing behavior in Settings → Dwindle Layout.
 
 ## Hyprland Dwindle (BSP)
 
@@ -19,13 +15,13 @@ A binary space partition layout that recursively divides screen space. Each new 
 
 ## Tabbed windows
 
-Both layouts show a tab rail beside grouped windows. Click a tab to reveal and focus that window without changing the group order. Hovering a tab also shows its window title, app, and position in the group.
+Dwindle shows a tab rail beside grouped windows. Click a tab to reveal and focus that window without changing the group order. Hovering a tab also shows its window title, app, and position in the group.
 
 Enable **Settings → General → Appearance → Show app icons in tab rails** to replace compact markers with icons; crowded icon rails scroll vertically. See the [appearance reference](/config/settings-reference/#appearance).
 
 ## Floating windows
 
-Windows can also float above the tiled layout in either engine:
+Windows can also float above the tiled layout:
 
 - `Toggle Focused Window Floating` (unassigned by default) floats or re-tiles the focused window.
 - [App Rules](/features/app-rules/) can force matching windows to float — or to tile — instead of the automatic classification.
@@ -41,4 +37,4 @@ Windows can also float above the tiled layout in either engine:
 The [Workspace Bar](/features/workspace-bar/) can optionally hide itself on a monitor while that monitor shows a macOS native fullscreen window (`Hide in Native Fullscreen`), and comes back on exit.
 :::
 
-The full list of layout-related shortcuts — sizing, balancing, Dwindle splits and preselection, Niri spans and columns — lives in [Keyboard Shortcuts](/guides/keyboard-shortcuts/).
+The full list of layout-related shortcuts — sizing, balancing, Dwindle splits and preselection — lives in [Keyboard Shortcuts](/guides/keyboard-shortcuts/).

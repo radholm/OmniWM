@@ -63,12 +63,11 @@ final class SingleWindowFitSerializationSafetyTests: XCTestCase {
         let boundaryFit = SingleWindowFit(mode: .custom, width: Double(Int.max), height: 720)
         let hugeFit = SingleWindowFit(mode: .custom, width: 1024, height: Double.greatestFiniteMagnitude)
         var export = SettingsExport.defaults()
-        export.niri.singleWindowFit = boundaryFit
+        export.dwindle.singleWindowFit = boundaryFit
         export.monitorDwindleSettings = [MonitorDwindleSettings(monitorName: "Extreme", singleWindowFit: hugeFit)]
 
         let decoded = try SettingsTOMLCodec.decode(SettingsTOMLCodec.encode(export))
-
-        XCTAssertEqual(decoded.niri.singleWindowFit, boundaryFit)
+        XCTAssertEqual(decoded.dwindle.singleWindowFit, boundaryFit)
         XCTAssertEqual(decoded.monitorDwindleSettings.first?.singleWindowFit, hugeFit)
     }
 }

@@ -30,64 +30,7 @@ extension MouseEventHandler {
             return true
         }
 
-        let layoutType = controller.workspaceManager.descriptor(for: wsId)
-            .map { controller.settings.workspaces.layoutType(for: $0.name) }
-        if layoutType == .dwindle {
-            return handleDwindleMouseDown(at: location, modifiers: modifiers, button: button, wsId: wsId)
-        }
-
-        guard let engine = controller.niriEngine else { return false }
-
-        if button == .left,
-           let moveMode = Self.mouseMoveMode(
-               modifiers: modifiers,
-               required: controller.settings.gestures.mouseMoveModifierKey.cgEventFlags
-           )
-        {
-            beginNiriMouseMove(at: location, mode: moveMode, engine: engine, workspaceId: wsId, button: button)
-            return false
-        }
-
-        guard button == .right,
-              Self.modifierFlagsMatch(
-                  modifiers,
-                  required: controller.settings.gestures.mouseResizeModifierKey.cgEventFlag
-              )
-        else { return false }
-
-        return beginNiriMouseResize(at: location, engine: engine, workspaceId: wsId, button: button)
-    }
-
-    private func beginNiriMouseMove(
-        at location: CGPoint, mode: MouseMoveMode, engine: NiriLayoutEngine,
-        workspaceId: WorkspaceDescriptor.ID, button: MouseButton
-    ) {
-        guard let window = engine.hitTestTiled(point: location, in: workspaceId) else { return }
-        _ = beginNiriMove(
-            window: window,
-            engine: engine,
-            wsId: workspaceId,
-            at: location,
-            isInsertMode: mode == .insert,
-            source: .mouse(button)
-        )
-    }
-
-    private func beginNiriMouseResize(
-        at location: CGPoint, engine: NiriLayoutEngine, workspaceId wsId: WorkspaceDescriptor.ID, button: MouseButton
-    ) -> Bool {
-        guard let controller else { return false }
-        guard let monitor = controller.workspaceManager.monitor(for: wsId) else { return false }
-        let window = engine.hitTestTiled(point: location, in: wsId)
-            ?? focusedBorderResizeToken(
-                at: location,
-                in: wsId,
-                scale: controller.backingScaleFactor(for: monitor),
-                appliedBorder: controller.surfaceReconciler.appliedScene.border
-            )
-            .flatMap { engine.findNode(for: $0, in: wsId) }
-        guard let window else { return false }
-        return beginNiriResize(window: window, engine: engine, wsId: wsId, at: location, source: .mouse(button))
+        return handleDwindleMouseDown(at: location, modifiers: modifiers, button: button, wsId: wsId)
     }
 
     /// Returns true when the press started an edge-drag resize and must be consumed.

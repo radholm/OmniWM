@@ -605,7 +605,6 @@ final class MultitouchLifecycleTests: XCTestCase {
     func testPerformanceCountersSurviveSourceDisable() async throws {
         let harness = makeHarness([FakeMultitouchBackend.enumeration([deviceA])])
         let controller = WindowAdmissionTestSupport.controller(prefix: "MultitouchMetricsDisable")
-        controller.settings.gestures.scrollEnabled = true
         controller.settings.gestures.workspaceSwipeEnabled = false
         controller.hasStartedServices = true
         let handler = controller.mouseEventHandler
@@ -615,8 +614,6 @@ final class MultitouchLifecycleTests: XCTestCase {
         handler.beginPerformanceCapture()
         harness.backend.emitFrame(registryId: 101, touches: [], timestamp: 1)
         harness.backend.emitFrame(registryId: 101, touches: [], timestamp: 2)
-
-        controller.settings.gestures.scrollEnabled = false
         handler.reconcileMultitouchSource()
 
         let liveSnapshot = try XCTUnwrap(handler.performanceSnapshot()?.multitouch)
@@ -640,7 +637,6 @@ final class MultitouchLifecycleTests: XCTestCase {
             FakeMultitouchBackend.enumeration([deviceA])
         ])
         let controller = WindowAdmissionTestSupport.controller(prefix: "MultitouchDisableRecovery")
-        controller.settings.gestures.scrollEnabled = true
         controller.settings.gestures.workspaceSwipeEnabled = false
         controller.hasStartedServices = true
         let handler = controller.mouseEventHandler
@@ -653,15 +649,12 @@ final class MultitouchLifecycleTests: XCTestCase {
         XCTAssertTrue(handler.installMultitouchSource(harness.source))
         await runNext(harness)
         harness.backend.stopResults[101] = [-1, KERN_SUCCESS]
-
-        controller.settings.gestures.scrollEnabled = false
         handler.reconcileMultitouchSource()
 
         XCTAssertEqual(handler.multitouchDiagnosticsSnapshot?.state, .stopped)
         XCTAssertEqual(handler.multitouchDiagnosticsSnapshot?.lastStop, .status(-1))
         XCTAssertTrue(MultitouchGestureSource.shared === harness.source)
-
-        controller.settings.gestures.scrollEnabled = true
+        controller.settings.gestures.workspaceSwipeEnabled = true
         handler.reconcileMultitouchSource()
         await runNext(harness)
 

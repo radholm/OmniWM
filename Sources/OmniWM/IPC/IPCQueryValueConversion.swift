@@ -106,8 +106,6 @@ extension IPCWorkspaceLayout {
         switch layout {
         case .defaultLayout:
             self = .defaultLayout
-        case .niri:
-            self = .niri
         case .dwindle:
             self = .dwindle
         }

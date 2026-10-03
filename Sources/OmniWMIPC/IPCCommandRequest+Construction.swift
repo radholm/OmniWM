@@ -16,10 +16,6 @@ extension IPCCommandRequest {
             self = try .workspace(IPCWorkspaceCommand(name: name, arguments: arguments))
         case let .monitorFocus(name):
             self = try .monitorFocus(arguments.requireNoArguments(name))
-        case let .column(name):
-            self = try .column(IPCColumnCommand(name: name, arguments: arguments))
-        case let .sizing(name):
-            self = try .sizing(IPCSizingCommand(name: name, arguments: arguments))
         case .swapWorkspaceWithMonitor:
             self = try .swapWorkspaceWithMonitor(direction: arguments.direction())
         case let .dwindle(name):

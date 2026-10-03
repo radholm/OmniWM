@@ -48,7 +48,7 @@ final class ReportIssueViewModel {
         didSet { handleEdit(oldValue, category) }
     }
 
-    var layout: LayoutType = .niri {
+    var layout: LayoutType = .dwindle {
         didSet { handleEdit(oldValue, layout) }
     }
 
@@ -82,7 +82,7 @@ final class ReportIssueViewModel {
 
     init(
         engine: (any IssueRewriting)? = nil,
-        defaultLayout: LayoutType = .niri,
+        defaultLayout: LayoutType = .dwindle,
         urlBuilder: GitHubIssueURLBuilder = GitHubIssueURLBuilder(),
         prepareDiagnosticAttachment: @MainActor @escaping (IssueDiagnosticEvidence?) async throws
             -> DiagnosticAttachmentResult = { _ in

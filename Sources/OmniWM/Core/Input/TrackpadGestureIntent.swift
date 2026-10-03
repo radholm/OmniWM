@@ -24,7 +24,6 @@ enum OverviewGestureAction: Equatable {
 
 enum TrackpadGestureMode: Equatable {
     case overview(OverviewGestureAction)
-    case columnScroll
     case workspaceSwitch(axis: WorkspaceSwipeAxis)
     case windowMove
     case windowResize
@@ -34,7 +33,6 @@ enum TrackpadGestureMode: Equatable {
         case .windowMove,
              .windowResize: true
         case .overview,
-             .columnScroll,
              .workspaceSwitch: false
         }
     }
@@ -58,8 +56,6 @@ enum TrackpadGestureIntent {
     }
 
     struct Config: Equatable {
-        var columnScrollEnabled: Bool
-        var columnScrollFingerCount: Int
         var workspaceSwipeEnabled: Bool
         var workspaceSwipeFingerCount: Int
         var workspaceSwipeAxis: WorkspaceSwipeAxis
@@ -74,30 +70,11 @@ enum TrackpadGestureIntent {
     static let workspaceSwipeTriggerUnits: CGFloat = 140.0
     static let workspaceSwipeReleaseVelocityFloor: Double = 800.0
 
-    static func effectiveWorkspaceSwipeAxis(
-        _ config: Config,
-        columnScrollAxis: WorkspaceSwipeAxis?
-    ) -> WorkspaceSwipeAxis {
-        if config.columnScrollEnabled,
-           config.columnScrollFingerCount == config.workspaceSwipeFingerCount,
-           let columnScrollAxis
-        {
-            return columnScrollAxis == .horizontal ? .vertical : .horizontal
-        }
-        return config.workspaceSwipeAxis
-    }
-
-    static func overviewConflict(_ config: Config, columnScrollAxis: WorkspaceSwipeAxis?) -> TrackpadGestureMode? {
+    static func overviewConflict(_ config: Config) -> TrackpadGestureMode? {
         guard config.overviewAction == .open else { return nil }
-        if config.columnScrollEnabled,
-           config.columnScrollFingerCount == config.overviewFingerCount,
-           columnScrollAxis == .vertical
-        {
-            return .columnScroll
-        }
         if config.workspaceSwipeEnabled,
            config.workspaceSwipeFingerCount == config.overviewFingerCount,
-           effectiveWorkspaceSwipeAxis(config, columnScrollAxis: columnScrollAxis) == .vertical
+           config.workspaceSwipeAxis == .vertical
         {
             return .workspaceSwitch(axis: .vertical)
         }
@@ -116,11 +93,9 @@ enum TrackpadGestureIntent {
             fingerCount = config.windowResizeFingerCount
             if config.windowMoveEnabled, config.windowMoveFingerCount == fingerCount { return .windowMove }
         case .overview,
-             .columnScroll,
              .workspaceSwitch:
             return nil
         }
-        if config.columnScrollEnabled, config.columnScrollFingerCount == fingerCount { return .columnScroll }
         if config.workspaceSwipeEnabled, config.workspaceSwipeFingerCount == fingerCount {
             return .workspaceSwitch(axis: config.workspaceSwipeAxis)
         }
@@ -146,21 +121,18 @@ enum TrackpadGestureIntent {
             return windowGestureConflict(config, mode: mode) == nil
         }
         return (config.overviewAction != nil && fingerCount == config.overviewFingerCount)
-            || (config.columnScrollEnabled && fingerCount == config.columnScrollFingerCount)
             || (config.workspaceSwipeEnabled && fingerCount == config.workspaceSwipeFingerCount)
     }
 
     static func hasCandidateMode(
         _ config: Config,
         fingerCount: Int,
-        columnContextAvailable: Bool,
         windowContextAvailable: Bool = false
     ) -> Bool {
         if let mode = requestedWindowGestureMode(config, fingerCount: fingerCount) {
             return windowContextAvailable && windowGestureConflict(config, mode: mode) == nil
         }
         return (config.overviewAction != nil && fingerCount == config.overviewFingerCount)
-            || (config.columnScrollEnabled && fingerCount == config.columnScrollFingerCount && columnContextAvailable)
             || (config.workspaceSwipeEnabled && fingerCount == config.workspaceSwipeFingerCount)
     }
 
@@ -168,8 +140,6 @@ enum TrackpadGestureIntent {
         _ config: Config,
         fingerCount: Int,
         cumulativeTranslation: CGVector,
-        columnScrollAxis: WorkspaceSwipeAxis,
-        columnContextAvailable: Bool,
         windowContextAvailable: Bool = false
     ) -> TrackpadGestureMode? {
         if let mode = requestedWindowGestureMode(config, fingerCount: fingerCount) {
@@ -177,20 +147,13 @@ enum TrackpadGestureIntent {
         }
         let dominantAxis: WorkspaceSwipeAxis = abs(cumulativeTranslation.dx) > abs(cumulativeTranslation.dy) ?
             .horizontal : .vertical
-        let columnCandidate = config.columnScrollEnabled
-            && fingerCount == config.columnScrollFingerCount
-            && columnContextAvailable
         let workspaceCandidate = config.workspaceSwipeEnabled && fingerCount == config.workspaceSwipeFingerCount
-        let contextAxis = columnContextAvailable ? columnScrollAxis : nil
-        let workspaceAxis = effectiveWorkspaceSwipeAxis(config, columnScrollAxis: contextAxis)
+        let workspaceAxis = config.workspaceSwipeAxis
         if let action = config.overviewAction, fingerCount == config.overviewFingerCount,
            dominantAxis == .vertical, action.accepts(verticalTranslation: cumulativeTranslation.dy)
         {
-            guard overviewConflict(config, columnScrollAxis: contextAxis) == nil else { return nil }
+            guard overviewConflict(config) == nil else { return nil }
             return .overview(action)
-        }
-        if columnCandidate, dominantAxis == columnScrollAxis {
-            return .columnScroll
         }
         guard workspaceCandidate, workspaceAxis == dominantAxis else { return nil }
         return .workspaceSwitch(axis: workspaceAxis)

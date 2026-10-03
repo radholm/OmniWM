@@ -313,7 +313,6 @@ final class OverviewDragSessionRegressionTests: XCTestCase {
                 activateApp: { _ in }, focusSpecificWindow: { _, _, _ in }, raiseWindow: { _ in }
             )
         )
-        controller.niriEngine = NiriLayoutEngine()
         controller.dwindleEngine = DwindleLayoutEngine()
         return (controller, monitors)
     }

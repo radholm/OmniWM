@@ -2,18 +2,14 @@
 // Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
 
 public enum IPCWorkspaceLayoutCommandName: String, CaseIterable, Hashable, Sendable {
-    case toggle = "toggle-workspace-layout"
     case set = "set-workspace-layout"
 }
 
 public enum IPCWorkspaceLayoutCommand: Equatable, Sendable {
-    case toggle
     case set(layout: IPCWorkspaceLayout)
 
     public var name: IPCWorkspaceLayoutCommandName {
         switch self {
-        case .toggle:
-            .toggle
         case .set:
             .set
         }
@@ -21,8 +17,6 @@ public enum IPCWorkspaceLayoutCommand: Equatable, Sendable {
 
     init(name: IPCWorkspaceLayoutCommandName, arguments: IPCCommandArgumentSource) throws {
         switch name {
-        case .toggle:
-            self = try arguments.requireNoArguments(.toggle)
         case .set:
             self = try .set(layout: arguments.layout())
         }
@@ -32,8 +26,6 @@ public enum IPCWorkspaceLayoutCommand: Equatable, Sendable {
         switch self {
         case let .set(layout):
             try writer.encode(layout: layout)
-        case .toggle:
-            break
         }
     }
 }

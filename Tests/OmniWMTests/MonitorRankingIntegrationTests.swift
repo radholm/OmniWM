@@ -32,17 +32,17 @@ final class MonitorRankingIntegrationTests: XCTestCase {
     func testWorkspaceHomesFollowRankingAcrossReorderDisconnectAndReconnect() throws {
         let settings = makeSettings()
         let monitors = makeMonitors()
-        settings.monitors.ranking = monitors.reversed().map(OutputId.init(from:))
         settings.workspaces.configurations = [
-            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri),
-            WorkspaceConfiguration(name: "2", monitorAssignment: .secondary, layoutType: .niri),
-            WorkspaceConfiguration(name: "3", monitorAssignment: .tertiary, layoutType: .niri),
+            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .dwindle),
+            WorkspaceConfiguration(name: "2", monitorAssignment: .secondary, layoutType: .dwindle),
+            WorkspaceConfiguration(name: "3", monitorAssignment: .tertiary, layoutType: .dwindle),
             WorkspaceConfiguration(
                 name: "4",
                 monitorAssignment: .specificDisplay(OutputId(from: monitors[0])),
-                layoutType: .niri
+                layoutType: .dwindle
             )
         ]
+        settings.monitors.ranking = monitors.reversed().map(OutputId.init(from:))
         let manager = WorkspaceManager(settings: settings)
         manager.applyMonitorConfigurationChange(monitors)
         manager.applySettings()
@@ -78,11 +78,11 @@ final class MonitorRankingIntegrationTests: XCTestCase {
 
     func testRuntimeMonitorOverrideTakesPrecedenceOverRankedHome() throws {
         let settings = makeSettings()
+        settings.workspaces.configurations = [
+            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .dwindle)
+        ]
         let monitors = makeMonitors()
         settings.monitors.ranking = monitors.reversed().map(OutputId.init(from:))
-        settings.workspaces.configurations = [
-            WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri)
-        ]
         let manager = WorkspaceManager(settings: settings)
         manager.applyMonitorConfigurationChange(monitors)
         manager.applySettings()
@@ -102,8 +102,8 @@ final class MonitorRankingIntegrationTests: XCTestCase {
             arrangements: [],
             mouseWarpEnabled: false,
             workspaceConfigurations: [
-                WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .niri),
-                WorkspaceConfiguration(name: "2", monitorAssignment: .tertiary, layoutType: .niri)
+                WorkspaceConfiguration(name: "1", monitorAssignment: .main, layoutType: .dwindle),
+                WorkspaceConfiguration(name: "2", monitorAssignment: .tertiary, layoutType: .dwindle)
             ],
             monitorRanking: [OutputId(from: monitors[1]), OutputId(from: monitors[2]), OutputId(from: monitors[0])]
         )

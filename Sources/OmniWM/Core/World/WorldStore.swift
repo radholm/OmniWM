@@ -11,13 +11,11 @@ final class WorldStore {
     private let trace: ReconcileTraceRecorder
     private(set) var seq: UInt64 = 0
     private(set) var focus = FocusSessionSnapshot()
-    private(set) var viewports: [WorkspaceDescriptor.ID: ViewportState] = [:]
     private(set) var scratchpads = ScratchpadState()
     private(set) var hiddenAppPIDs: Set<pid_t> = []
     private var appVisibilityGenerationByPID: [pid_t: UInt64] = [:]
     private(set) var monitorSessions: [Monitor.ID: MonitorSession] = [:]
     private(set) var spaceTopology = SpaceTopology()
-    private(set) var niriEngine: NiriLayoutEngine?
     private(set) var dwindleEngine: DwindleLayoutEngine?
     private var activeLayoutResolver: ((WorkspaceDescriptor.ID) -> ActiveLayoutKind)?
     private(set) var epochMarks = InvalidationMarks()
@@ -32,7 +30,6 @@ final class WorldStore {
 
     private func pushEngineSanction() {
         let sanctioned = isEngineMutationSanctioned
-        niriEngine?.isMutationSanctioned = sanctioned
         dwindleEngine?.isMutationSanctioned = sanctioned
     }
 
@@ -156,8 +153,7 @@ final class WorldStore {
             applyWindowEventBeforePlan(event, monitors: monitors)
         case .session:
             applySessionEventBeforePlan(event)
-        case .focus,
-             .viewport:
+        case .focus:
             break
         }
     }
@@ -174,7 +170,6 @@ final class WorldStore {
              .floatingGeometryUpdated,
              .floatingStateChanged,
              .manualLayoutOverrideChanged,
-             .niriPlacementsResolved,
              .dwindlePlacementsResolved,
              .hiddenStateChanged,
              .nativeFullscreenTransition,
@@ -190,10 +185,6 @@ final class WorldStore {
             if mode == .tiling {
                 refreshProjectionExclusions(in: [workspaceId])
             }
-
-        case let .windowAdmissionHintsChanged(token, _, admissionHints, _):
-            guard canUpdateAdmissionHints(for: token) else { return }
-            model.setAdmissionHints(admissionHints, for: token)
 
         case .hiddenApplicationsChanged:
             applyHiddenApplications(event)
@@ -250,15 +241,11 @@ final class WorldStore {
             mode,
             axRef,
             ruleEffects,
-            admissionHints,
             lifetimeAuthority,
             _,
             metadata,
             _
         ) = event else { preconditionFailure("Unexpected event for applyWindowAdmission") }
-        let resolvedAdmissionHints = canUpdateAdmissionHints(for: token)
-            ? admissionHints
-            : model.admissionHints(for: token) ?? admissionHints
         model.upsert(
             window: axRef,
             pid: token.pid,
@@ -266,14 +253,8 @@ final class WorldStore {
             workspace: workspaceId,
             mode: mode,
             ruleEffects: ruleEffects,
-            admissionHints: resolvedAdmissionHints,
             lifetimeAuthority: lifetimeAuthority,
             managedReplacementMetadata: metadata
-        )
-        reconcileNiriMembership(
-            for: token,
-            keeping: mode == .tiling ? workspaceId : nil,
-            monitors: monitors
         )
         refreshProjectionExclusions(in: [workspaceId])
     }
@@ -288,7 +269,6 @@ final class WorldStore {
             newAXRef: newAXRef,
             managedReplacementMetadata: metadata
         )
-        _ = niriEngine?.rekeyWindow(from: from, to: to, in: workspaceId)
         _ = dwindleEngine?.rekeyWindow(from: from, to: to, in: workspaceId)
         scratchpads.rekey(from: from, to: to)
         refreshProjectionExclusions(in: [workspaceId])
@@ -308,7 +288,6 @@ final class WorldStore {
         guard case let .windowRemoved(token, _, _) = event else { return }
         model.removeWindow(key: token)
         spaceTopology.windowSpace.removeValue(forKey: token.windowId)
-        reconcileNiriMembership(for: token, keeping: nil, monitors: monitors)
     }
 
     func assertInCommit(_ operation: StaticString) {
@@ -355,21 +334,11 @@ extension WorldStore {
     ) {
         assertInCommit("updateWorkspace")
         model.updateWorkspace(for: token, workspace: workspace)
-        reconcileNiriMembership(
-            for: token,
-            keeping: model.mode(for: token) == .tiling ? workspace : nil,
-            monitors: monitors
-        )
     }
 
     func setMode(_ mode: TrackedWindowMode, for token: WindowToken, monitors: [Monitor]) {
         assertInCommit("setMode")
         model.setMode(mode, for: token)
-        reconcileNiriMembership(
-            for: token,
-            keeping: mode == .tiling ? model.workspace(for: token) : nil,
-            monitors: monitors
-        )
     }
 
     func setFloatingState(_ state: FloatingState?, for token: WindowToken) {
@@ -407,9 +376,9 @@ extension WorldStore {
         switch activeLayoutResolver?(workspaceId) {
         case .dwindle:
             return LayoutTopology(dwindleFullscreenTokens: dwindleEngine?.fullscreenTokens(in: workspaceId) ?? [])
-        case .niri,
-             nil:
-            return LayoutTopology(columns: niriEngine?.topologyColumns(in: workspaceId) ?? [])
+        case
+            nil:
+            return LayoutTopology()
         }
     }
 
@@ -417,62 +386,21 @@ extension WorldStore {
         activeLayoutResolver = resolver
     }
 
-    @discardableResult
-    func installNiriEngine(_ engine: NiriLayoutEngine?, monitors: [Monitor]) -> Bool {
-        let captured = if let current = niriEngine, current !== engine {
-            captureNiriPlacements(from: current, monitors: monitors)
-        } else {
-            false
-        }
-        engine?.isMutationSanctioned = isEngineMutationSanctioned
-        niriEngine = engine
-        return captured
-    }
-
-    @discardableResult
-    func storeNiriPlacement(
-        _ placement: PersistedNiriPlacement,
-        detached: Bool,
-        for token: WindowToken,
-        monitors: [Monitor]
-    ) -> Bool {
-        guard let entry = model.entry(for: token) else { return false }
-        var restoreIntent = StateReducer.restoreIntent(for: entry, monitors: monitors)
-        restoreIntent.niriPlacement = placement
-        if detached {
-            restoreIntent.detachedNiriContainerSizingState = NiriContainerSizingState(
-                width: placement.column.width,
-                presetWidthIndex: placement.column.presetWidthIndex,
-                isFullWidth: placement.column.isFullWidth,
-                savedWidth: placement.column.savedWidth,
-                hasManualSingleWindowWidthOverride: placement.column.hasManualSingleWindowWidthOverride,
-                height: placement.column.height,
-                isFullHeight: placement.column.isFullHeight,
-                savedHeight: placement.column.savedHeight,
-                hasManualSingleWindowHeightOverride: placement.column.hasManualSingleWindowHeightOverride
-            )
-        } else {
-            restoreIntent.detachedNiriContainerSizingState = nil
-        }
-        guard entry.restoreIntent != restoreIntent else { return false }
-        model.setRestoreIntent(restoreIntent, for: token)
-        return true
-    }
-
     func installDwindleEngine(_ engine: DwindleLayoutEngine?) {
         engine?.isMutationSanctioned = isEngineMutationSanctioned
         dwindleEngine = engine
     }
 
-    func applyViewportPlan(_ viewportPlan: ViewportPlan) {
-        assertInCommit("applyViewportPlan")
-        switch viewportPlan {
-        case let .set(workspaceId, state):
-            viewports[workspaceId] = state
-        case let .remove(workspaceIds):
-            for workspaceId in workspaceIds {
-                viewports.removeValue(forKey: workspaceId)
-            }
+    func refreshProjectionExclusions(in workspaceIds: Set<WorkspaceDescriptor.ID>) {
+        for workspaceId in workspaceIds {
+            let tiledEntries = windows.windows(in: workspaceId).filter { $0.mode == .tiling }
+            let authoritativeTokens = Set(tiledEntries.lazy.map(\.token))
+            let excludedTokens = Set(tiledEntries.lazy.filter {
+                self.hiddenAppPIDs.contains($0.pid) || $0.observedState.isMinimized
+            }.map(\.token))
+            dwindleEngine?.setExcludedTokens(
+                excludedTokens, authoritativeTokens: authoritativeTokens, in: workspaceId
+            )
         }
     }
 

@@ -23,43 +23,16 @@ extension WMController {
 
     func recoverSourceFocusAfterMove(
         in workspaceId: WorkspaceDescriptor.ID,
-        preferredNodeId: NodeId? = nil,
         preferredToken: WindowToken? = nil
     ) {
         let monitorId = workspaceManager.monitorId(for: workspaceId)
 
         switch workspaceManager.activeLayoutKind(for: workspaceId) {
-        case .niri:
-            if let engine = niriEngine {
-                let preferredTokenNode: NiriWindow? = preferredToken.flatMap { token in
-                    guard !isManagedWindowSuppressedByMacOS(token) else { return nil }
-                    return engine.findNode(for: token, in: workspaceId)
-                }
-                let preferredNode = preferredNodeId
-                    .flatMap { engine.findNode(by: $0, in: workspaceId) as? NiriWindow }
-                    .flatMap { node in
-                        isManagedWindowSuppressedByMacOS(node.token) ? nil : node
-                    }
-                if let node = preferredTokenNode ?? preferredNode {
-                    _ = workspaceManager.commitWorkspaceSelection(
-                        nodeId: node.id,
-                        focusedToken: node.token,
-                        in: workspaceId,
-                        onMonitor: monitorId
-                    )
-                    return
-                }
-            }
         case .dwindle:
             if let token = dwindleEngine?.selectedNode(in: workspaceId)?.windowToken,
                !isManagedWindowSuppressedByMacOS(token)
             {
-                _ = workspaceManager.commitWorkspaceSelection(
-                    nodeId: nil,
-                    focusedToken: token,
-                    in: workspaceId,
-                    onMonitor: monitorId
-                )
+                _ = workspaceManager.rememberFocus(token, in: workspaceId)
                 return
             }
             if let preferredToken,
@@ -80,31 +53,12 @@ extension WMController {
         in workspaceId: WorkspaceDescriptor.ID,
         focusDwindleCandidate: Bool = false
     ) -> Bool {
-        let monitorId = workspaceManager.monitorId(for: workspaceId)
-
         switch workspaceManager.activeLayoutKind(for: workspaceId) {
-        case .niri:
-            if let engine = niriEngine,
-               let node = engine.findNode(for: token, in: workspaceId)
-            {
-                _ = workspaceManager.commitWorkspaceSelection(
-                    nodeId: node.id,
-                    focusedToken: token,
-                    in: workspaceId,
-                    onMonitor: monitorId
-                )
-                return false
-            }
         case .dwindle:
             if let engine = dwindleEngine,
                engine.findNode(for: token, in: workspaceId) != nil
             {
-                _ = workspaceManager.commitWorkspaceSelection(
-                    nodeId: nil,
-                    focusedToken: token,
-                    in: workspaceId,
-                    onMonitor: monitorId
-                )
+                _ = workspaceManager.rememberFocus(token, in: workspaceId)
                 let activation = dwindleLayoutHandler.activateWindow(
                     token,
                     in: workspaceId,
@@ -117,7 +71,6 @@ extension WMController {
         _ = workspaceManager.applySessionPatch(
             .init(
                 workspaceId: workspaceId,
-                viewportState: nil,
                 rememberedFocusToken: token,
                 plannedSeq: workspaceManager.worldSeq
             )

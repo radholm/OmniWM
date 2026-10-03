@@ -38,16 +38,6 @@ extension AXEventHandler {
             || controller.workspaceManager.hiddenState(for: token)?.isScratchpad == true
         let policy = retirementPolicy(for: reason)
 
-        var oldFrames: [WindowToken: CGRect] = [:]
-        var removedNodeId: NodeId?
-        var removedNiriColumn = false
-        if layoutType != .dwindle, let engine = controller.niriEngine {
-            oldFrames = engine.captureWindowFrames(in: workspaceId)
-            let node = engine.findNode(for: token, in: workspaceId)
-            removedNodeId = node?.id
-            removedNiriColumn = node.flatMap { engine.column(of: $0) }?.windowNodes.count == 1
-        }
-
         prepareRetirementFocus(entry, policy: policy, ownsLiveFocus: ownsLiveFocus, controller: controller)
         controller.mouseEventHandler.discardNativeTitleBarDrag(for: token)
         _ = controller.workspaceManager.removeWindow(pid: token.pid, windowId: token.windowId)
@@ -66,9 +56,6 @@ extension AXEventHandler {
             .init(
                 workspaceId: workspaceId,
                 layoutType: layoutType,
-                removedNodeId: removedNodeId,
-                removedNiriColumn: removedNiriColumn,
-                niriOldFrames: oldFrames,
                 shouldRecoverFocus: policy.shouldRecoverFocus,
                 allowsPreferredRecoveryToken: policy.allowsPreferredRecoveryToken
             )
@@ -113,17 +100,6 @@ extension AXEventHandler {
         }
 
         quarantineAfterTerminalFrameRefusal(entry)
-        if let windowId = UInt32(exactly: refusal.windowId) {
-            recordNiriCreateFocusTrace(
-                .init(
-                    kind: .admissionRejected(
-                        windowId: windowId,
-                        pid: entry.pid,
-                        reason: .terminalFrameRefusal
-                    )
-                )
-            )
-        }
     }
 
     private func retirementPolicy(

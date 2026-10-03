@@ -50,19 +50,12 @@ struct ManagedWindowRuleEffects: Equatable, Sendable {
     static let none = ManagedWindowRuleEffects()
 }
 
-struct ManagedWindowAdmissionHints: Equatable, Sendable {
-    var initialNiriContainerPrimarySpan: Double?
-
-    static let none = ManagedWindowAdmissionHints()
-}
-
 struct WindowDecision: Equatable, Sendable {
     let disposition: WindowDecisionDisposition
     let source: WindowDecisionSource
     let layoutDecisionKind: WindowDecisionLayoutKind
     let workspaceName: String?
     let ruleEffects: ManagedWindowRuleEffects
-    let admissionHints: ManagedWindowAdmissionHints
     let heuristicReasons: [AXWindowHeuristicReason]
     let deferredReason: WindowDecisionDeferredReason?
 

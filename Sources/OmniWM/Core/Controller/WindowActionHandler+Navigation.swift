@@ -53,9 +53,6 @@ extension WindowActionHandler {
             return nil
         }
         let targetLayoutKind = controller.workspaceManager.activeLayoutKind(for: workspaceId)
-        if targetLayoutKind == .niri, controller.niriEngine == nil {
-            return nil
-        }
 
         let currentWsId = controller.activeWorkspace()?.id
 
@@ -63,7 +60,6 @@ extension WindowActionHandler {
             let wsName = controller.workspaceManager.descriptor(for: workspaceId)?.name ?? ""
             if let result = controller.workspaceManager.focusWorkspace(named: wsName) {
                 _ = controller.workspaceManager.setInteractionMonitor(result.monitor.id)
-                controller.syncMonitorsToNiriEngine()
             }
         }
 
@@ -73,73 +69,13 @@ extension WindowActionHandler {
                 _ = controller.workspaceManager.applySessionPatch(
                     .init(
                         workspaceId: workspaceId,
-                        viewportState: nil,
                         rememberedFocusToken: token,
                         plannedSeq: controller.workspaceManager.worldSeq
                     )
                 )
             }
-        case .niri:
-            guard let engine = controller.niriEngine else { return nil }
-            if settlesMotion {
-                controller.niriLayoutHandler.cancelAnimationMotion(for: workspaceId)
-                for (displayId, animatedWorkspaceId) in controller.niriLayoutHandler.scrollAnimationByDisplay
-                    where animatedWorkspaceId == workspaceId
-                {
-                    controller.layoutRefreshController.stopScrollAnimation(for: displayId)
-                }
-            }
-            prepareNiriNavigationTarget(token, workspaceId: workspaceId, engine: engine, controller: controller)
         }
         return handle
-    }
-
-    private func prepareNiriNavigationTarget(
-        _ token: WindowToken, workspaceId: WorkspaceDescriptor.ID, engine: NiriLayoutEngine, controller: WMController
-    ) {
-        var targetState = controller.workspaceManager.niriViewportState(for: workspaceId)
-        if let niriWindow = engine.findNode(for: token, in: workspaceId) {
-            targetState.selectedNodeId = niriWindow.id
-
-            if engine.findColumn(containing: niriWindow, in: workspaceId) != nil,
-               let monitor = controller.workspaceManager.monitor(for: workspaceId)
-            {
-                let gap = controller.innerGap(for: monitor)
-                let workingFrame = controller.niriWorkingFrame(for: monitor)
-                let orientation = controller.settings.monitors.effectiveOrientation(for: monitor)
-                controller.workspaceManager.withEngineMutationScope {
-                    engine.activateWindow(niriWindow.id, in: workspaceId)
-                    engine.resolvePrimaryContainerSpans(
-                        in: workspaceId,
-                        workingFrame: workingFrame,
-                        gaps: gap,
-                        orientation: orientation
-                    )
-                    engine.ensureProjectedSelectionVisible(
-                        node: niriWindow,
-                        context: .init(
-                            workspaceId: workspaceId,
-                            motion: .disabled,
-                            workingFrame: workingFrame,
-                            gaps: gap,
-                            orientation: orientation
-                        ),
-                        state: &targetState,
-                        animationConfig: nil,
-                        fromContainerIndex: nil
-                    )
-                }
-            }
-        }
-
-        _ = controller.workspaceManager.applySessionPatch(
-            .init(
-                workspaceId: workspaceId,
-                viewportState: targetState,
-                rememberedFocusToken: token,
-                plannedSeq: controller.workspaceManager.worldSeq
-            )
-        )
     }
 
     private func commitWindowNavigation(

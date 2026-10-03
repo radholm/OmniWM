@@ -102,10 +102,6 @@ extension WorkspaceManager {
         windowQueries.restoreIntent(for: token)
     }
 
-    func admissionHints(for token: WindowToken) -> ManagedWindowAdmissionHints? {
-        windowQueries.admissionHints(for: token)
-    }
-
     func cachedConstraints(for token: WindowToken, maxAge: TimeInterval = 5.0) -> WindowSizeConstraints? {
         windowQueries.cachedConstraints(for: token, maxAge: maxAge)
     }

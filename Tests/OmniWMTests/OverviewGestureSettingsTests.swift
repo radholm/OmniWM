@@ -9,8 +9,7 @@ import XCTest
 final class OverviewGestureSettingsTests: XCTestCase {
     func testRejectedOverviewEnableDoesNotChangeSettingsOrNotify() {
         withSettings { settings in
-            let monitor = makeMonitor(orientation: .vertical)
-            configureColumnAndOverview(settings, overviewEnabled: false)
+            configureWorkspaceAndOverview(settings, overviewEnabled: false)
             let original = settings.gestures.export()
             var changes = 0
             var availability: [Bool] = []
@@ -19,7 +18,7 @@ final class OverviewGestureSettingsTests: XCTestCase {
             var candidate = original
             candidate.overviewGestureEnabled = true
 
-            let conflict = settings.updateGestureSettings(candidate, monitors: [monitor])
+            let conflict = settings.updateGestureSettings(candidate)
 
             XCTAssertNotNil(conflict)
             XCTAssertEqual(settings.gestures.export(), original)
@@ -30,19 +29,18 @@ final class OverviewGestureSettingsTests: XCTestCase {
 
     func testRejectedOverviewFingerChangeRetainsPreviouslyValidAssignment() {
         withSettings { settings in
-            configureColumnAndOverview(settings)
+            configureWorkspaceAndOverview(settings)
             settings.gestures.overviewGestureFingerCount = .three
             var candidate = settings.gestures.export()
             candidate.overviewGestureFingerCount = .four
 
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: [makeMonitor(orientation: .vertical)]))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.overviewGestureFingerCount, .three)
         }
     }
 
     func testRejectedWorkspaceEditsRetainEnabledFingerAndAxisValues() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             settings.gestures.overviewGestureEnabled = true
             settings.gestures.overviewGestureFingerCount = .four
             settings.gestures.workspaceSwipeEnabled = false
@@ -50,103 +48,37 @@ final class OverviewGestureSettingsTests: XCTestCase {
             settings.gestures.workspaceSwipeAxis = .vertical
             var candidate = settings.gestures.export()
             candidate.workspaceSwipeEnabled = true
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
             XCTAssertFalse(settings.gestures.workspaceSwipeEnabled)
 
             settings.gestures.workspaceSwipeFingerCount = .three
             settings.gestures.workspaceSwipeEnabled = true
             candidate = settings.gestures.export()
             candidate.workspaceSwipeFingerCount = .four
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.workspaceSwipeFingerCount, .three)
 
             settings.gestures.workspaceSwipeAxis = .horizontal
             settings.gestures.workspaceSwipeFingerCount = .four
             candidate = settings.gestures.export()
             candidate.workspaceSwipeAxis = .vertical
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
-        }
-    }
-
-    func testColumnEnableCannotForceWorkspaceSwipeIntoOverviewAssignment() {
-        withSettings { settings in
-            configureColumnAndOverview(settings)
-            settings.gestures.scrollEnabled = false
-            settings.gestures.workspaceSwipeEnabled = true
-            settings.gestures.workspaceSwipeFingerCount = .four
-            settings.gestures.workspaceSwipeAxis = .horizontal
-            let original = settings.gestures.export()
-            var candidate = original
-            candidate.scrollEnabled = true
-
-            XCTAssertNotNil(settings.updateGestureSettings(
-                candidate,
-                monitors: [makeMonitor(orientation: .horizontal)]
-            ))
-            XCTAssertEqual(settings.gestures.export(), original)
-        }
-    }
-
-    func testHorizontalColumnAndOverviewCanShareFingers() {
-        withSettings { settings in
-            configureColumnAndOverview(settings, overviewEnabled: false)
-            var candidate = settings.gestures.export()
-            candidate.overviewGestureEnabled = true
-
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: [makeMonitor(orientation: .horizontal)]))
-            XCTAssertEqual(settings.gestures.export(), candidate)
-        }
-    }
-
-    func testRejectedOrientationOverrideDoesNotChangeSettingsOrNotify() {
-        withSettings { settings in
-            let monitor = makeMonitor(orientation: .horizontal)
-            configureColumnAndOverview(settings)
-            let original = settings.monitors.orientationOverrides
-            var changes = 0
-            var availability: [Bool] = []
-            settings.monitors.onChange = { changes += 1 }
-            settings.gestures.onChange = { changes += 1 }
-            settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
-
-            XCTAssertNotNil(settings.updateMonitorOrientation(.vertical, for: monitor, monitors: [monitor]))
-            XCTAssertEqual(settings.monitors.orientationOverrides, original)
-            XCTAssertEqual(changes, 0)
-            XCTAssertTrue(availability.isEmpty)
-        }
-    }
-
-    func testRejectedResetToAutoRetainsHorizontalOverride() {
-        withSettings { settings in
-            let monitor = makeMonitor(orientation: .vertical)
-            configureColumnAndOverview(settings)
-            settings.monitors.updateOrientationSettings(
-                MonitorOrientationSettings(monitorName: monitor.name, orientation: .horizontal),
-                for: monitor
-            )
-            let original = settings.monitors.orientationOverrides
-            var changes = 0
-            settings.monitors.onChange = { changes += 1 }
-
-            XCTAssertNotNil(settings.updateMonitorOrientation(nil, for: monitor, monitors: [monitor]))
-            XCTAssertEqual(settings.monitors.orientationOverrides, original)
-            XCTAssertEqual(changes, 0)
         }
     }
 
     func testValidOrientationOverrideAndResetApplyOnceEach() {
         withSettings { settings in
             let monitor = makeMonitor(orientation: .horizontal)
-            configureColumnAndOverview(settings)
+            configureWorkspaceAndOverview(settings)
             settings.gestures.overviewGestureFingerCount = .three
             var changes = 0
             settings.monitors.onChange = { changes += 1 }
 
-            XCTAssertNil(settings.updateMonitorOrientation(.vertical, for: monitor, monitors: [monitor]))
+            settings.updateMonitorOrientation(.vertical, for: monitor)
             XCTAssertEqual(settings.monitors.effectiveOrientation(for: monitor), .vertical)
             XCTAssertEqual(changes, 1)
-            XCTAssertNil(settings.updateMonitorOrientation(nil, for: monitor, monitors: [monitor]))
+            settings.updateMonitorOrientation(nil, for: monitor)
             XCTAssertEqual(settings.monitors.effectiveOrientation(for: monitor), .horizontal)
             XCTAssertTrue(settings.monitors.orientationOverrides.isEmpty)
             XCTAssertEqual(changes, 2)
@@ -155,45 +87,31 @@ final class OverviewGestureSettingsTests: XCTestCase {
 
     func testDisableThenReassignRemainsPossible() {
         withSettings { settings in
-            let monitors = [makeMonitor(orientation: .vertical)]
-            configureColumnAndOverview(settings)
+            settings.gestures.workspaceSwipeEnabled = true
+            settings.gestures.workspaceSwipeFingerCount = .four
+            settings.gestures.workspaceSwipeAxis = .vertical
+            settings.gestures.overviewGestureEnabled = true
             settings.gestures.overviewGestureFingerCount = .three
             var availability: [Bool] = []
             settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
             var candidate = settings.gestures.export()
             candidate.overviewGestureEnabled = false
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: monitors))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             candidate.overviewGestureFingerCount = .four
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: monitors))
-            candidate.scrollEnabled = false
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: monitors))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
+            candidate.workspaceSwipeEnabled = false
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             candidate.overviewGestureEnabled = true
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: monitors))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.export(), candidate)
             XCTAssertEqual(availability, [false, true])
         }
     }
 
-    func testDisablingGestureIsAllowedWhenChangedMonitorContextHasAnotherConflict() {
-        withSettings { settings in
-            configureColumnAndOverview(settings)
-            settings.gestures.workspaceSwipeEnabled = true
-            settings.gestures.workspaceSwipeFingerCount = .three
-            var candidate = settings.gestures.export()
-            candidate.workspaceSwipeEnabled = false
-
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: [makeMonitor(orientation: .vertical)]))
-            XCTAssertFalse(settings.gestures.workspaceSwipeEnabled)
-            candidate.overviewGestureEnabled = false
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: [makeMonitor(orientation: .vertical)]))
-            XCTAssertFalse(settings.gestures.overviewGestureEnabled)
-        }
-    }
-
-    private func configureColumnAndOverview(_ settings: SettingsStore, overviewEnabled: Bool = true) {
-        settings.gestures.scrollEnabled = true
-        settings.gestures.fingerCount = .four
-        settings.gestures.workspaceSwipeEnabled = false
+    private func configureWorkspaceAndOverview(_ settings: SettingsStore, overviewEnabled: Bool = true) {
+        settings.gestures.workspaceSwipeEnabled = true
+        settings.gestures.workspaceSwipeFingerCount = .four
+        settings.gestures.workspaceSwipeAxis = .vertical
         settings.gestures.overviewGestureEnabled = overviewEnabled
         settings.gestures.overviewGestureFingerCount = .four
     }

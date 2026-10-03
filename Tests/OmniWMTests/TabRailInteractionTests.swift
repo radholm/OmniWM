@@ -224,7 +224,7 @@ final class TabRailInteractionTests: XCTestCase {
 
     private func makeInfo(count: Int) -> TabRailInfo {
         let info = TabRailInfo(
-            workspaceId: WorkspaceDescriptor.ID(), owner: .niriColumn(NodeId()), plannedSeq: 1,
+            workspaceId: WorkspaceDescriptor.ID(), owner: .dwindleTile(DwindleTileId()), plannedSeq: 1,
             tileFrame: CGRect(x: 300, y: 300, width: 400, height: 800),
             tabCount: count, activeVisualIndex: 0, activeWindowId: nil
         )

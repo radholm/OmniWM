@@ -16,82 +16,14 @@ extension IPCAutomationManifest {
             summary: "Focus the previously focused window."
         ),
         .init(
-            commandWords: ["focus", "down-or-left"],
-            name: .focus(.downOrLeft),
-            summary: "Traverse backward through the active Niri workspace.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["focus", "up-or-right"],
-            name: .focus(.upOrRight),
-            summary: "Traverse forward through the active Niri workspace.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .focus(.windowInColumn),
-            summary: "Focus a window in the focused Niri column by one-based index.",
-            arguments: [.windowIndex],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["focus-window", "top"],
-            name: .focus(.windowTop),
-            summary: "Focus the top window in the focused Niri column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["focus-window", "bottom"],
-            name: .focus(.windowBottom),
-            summary: "Focus the bottom window in the focused Niri column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
             commandWords: ["focus-window", "down-or-top"],
             name: .focus(.windowDownOrTop),
-            summary: "Focus the next window in the active Niri column or Dwindle group, wrapping to the top."
+            summary: "Focus the next window in the active Dwindle group, wrapping to the top."
         ),
         .init(
             commandWords: ["focus-window", "up-or-bottom"],
             name: .focus(.windowUpOrBottom),
-            summary: "Focus the previous window in the active Niri column or Dwindle group, wrapping to the bottom."
-        ),
-        .init(
-            name: .focus(.windowOrWorkspaceDown),
-            summary: "Focus down using the active Niri orientation; if no target exists, switch without wrapping to the workspace below.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .focus(.windowOrWorkspaceUp),
-            summary: "Focus up using the active Niri orientation; if no target exists, switch without wrapping to the workspace above.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .focus(.column),
-            summary: "Focus a Niri column by one-based index.",
-            arguments: [.columnIndex],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["focus-column", "first"],
-            name: .focus(.columnFirst),
-            summary: "Focus the first Niri column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["focus-column", "last"],
-            name: .focus(.columnLast),
-            summary: "Focus the last Niri column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .focus(.centerColumn),
-            summary: "Center the focused Niri column without changing focus.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .focus(.centerVisibleColumns),
-            summary: "Center the current block of fully visible Niri columns in the viewport.",
-            layoutCompatibility: .niri
+            summary: "Focus the previous window in the active Dwindle group, wrapping to the bottom."
         ),
         .init(
             name: .windowMovement(.spatial),
@@ -100,41 +32,11 @@ extension IPCAutomationManifest {
         ),
         .init(
             name: .windowMovement(.down),
-            summary: "Reorder the focused window down by one without wrapping within its Niri column or Dwindle group."
+            summary: "Reorder the focused window down by one without wrapping within its Dwindle group."
         ),
         .init(
             name: .windowMovement(.up),
-            summary: "Reorder the focused window up by one without wrapping within its Niri column or Dwindle group."
-        ),
-        .init(
-            name: .windowMovement(.downOrToWorkspaceDown),
-            summary: "Move the focused Niri window down, or to the workspace below at the column edge.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .windowMovement(.upOrToWorkspaceUp),
-            summary: "Move the focused Niri window up, or to the workspace above at the column edge.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .windowMovement(.consumeOrExpelLeft),
-            summary: "Consume the focused Niri window into the column to the left, or expel it left from its column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .windowMovement(.consumeOrExpelRight),
-            summary: "Consume the focused Niri window into the column to the right, or expel it right from its column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .windowMovement(.consumeIntoColumn),
-            summary: "Consume the top window from the next Niri column into the focused column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .windowMovement(.expelFromColumn),
-            summary: "Expel the bottom window from the focused Niri column into a new following column.",
-            layoutCompatibility: .niri
+            summary: "Reorder the focused window up by one without wrapping within its Dwindle group."
         ),
         .init(
             name: .workspace(.switchTo),
@@ -216,124 +118,29 @@ extension IPCAutomationManifest {
             summary: "Move interaction focus back to the previous monitor."
         ),
         .init(
-            name: .column(.move),
-            summary: "Move a Niri column horizontally or a complete Dwindle tile/group without monitor fallback.",
-            arguments: [.direction]
-        ),
-        .init(
-            name: .column(.moveToFirst),
-            summary: "Move the focused Niri column to the first position.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .column(.moveToLast),
-            summary: "Move the focused Niri column to the last position.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .column(.moveToIndex),
-            summary: "Move the focused Niri column to a one-based index.",
-            arguments: [.columnIndex],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .column(.moveToWorkspace),
-            summary: "Move the focused Niri column to a Niri workspace by workspace ID.",
-            arguments: [.workspaceNumber],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["move-column-to-workspace", "up"],
-            name: .column(.moveToWorkspaceUp),
-            summary: "Move the focused Niri column to the adjacent workspace above.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["move-column-to-workspace", "down"],
-            name: .column(.moveToWorkspaceDown),
-            summary: "Move the focused Niri column to the adjacent workspace below.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .column(.toggleTabbed),
-            summary: "Toggle tabbed mode for the focused Niri column.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["cycle-size", "forward"],
-            name: .sizing(.cycleSizeForward),
-            summary: "Cycle layout sizing presets forward."
-        ),
-        .init(
-            commandWords: ["cycle-size", "backward"],
-            name: .sizing(.cycleSizeBackward),
-            summary: "Cycle layout sizing presets backward."
-        ),
-        .init(
-            commandWords: ["cycle-window-primary-span", "forward"],
-            name: .sizing(.cycleWindowPrimarySpanForward),
-            summary: "Cycle Niri window primary-span presets forward.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["cycle-window-primary-span", "backward"],
-            name: .sizing(.cycleWindowPrimarySpanBackward),
-            summary: "Cycle Niri window primary-span presets backward.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["cycle-window-secondary-span", "forward"],
-            name: .sizing(.cycleWindowSecondarySpanForward),
-            summary: "Cycle Niri window secondary-span presets forward.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            commandWords: ["cycle-window-secondary-span", "backward"],
-            name: .sizing(.cycleWindowSecondarySpanBackward),
-            summary: "Cycle Niri window secondary-span presets backward.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.toggleContainerFullPrimarySpan),
-            summary: "Toggle full-primary-span mode for the focused Niri container.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.expandContainerToAvailablePrimarySpan),
-            summary: "Expand the focused Niri container into available primary-axis space.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.resetWindowSecondarySpan),
-            summary: "Reset the focused Niri window secondary span.",
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.setContainerPrimarySpan),
-            summary: "Set or adjust the focused Niri container primary span.",
-            arguments: [.sizeChange],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.setWindowPrimarySpan),
-            summary: "Set or adjust the focused Niri window primary span.",
-            arguments: [.sizeChange],
-            layoutCompatibility: .niri
-        ),
-        .init(
-            name: .sizing(.setWindowSecondarySpan),
-            summary: "Set or adjust the focused Niri window secondary span.",
-            arguments: [.sizeChange],
-            layoutCompatibility: .niri
-        ),
-        .init(
             name: .swapWorkspaceWithMonitor,
             summary: "Swap the active workspace with the active workspace on an adjacent monitor.",
             arguments: [.direction]
         ),
         .init(
+            commandWords: ["cycle-size", "forward"],
+            name: .dwindle(.cycleSizeForward),
+            summary: "Cycle forward through Dwindle split ratio presets."
+        ),
+        .init(
+            commandWords: ["cycle-size", "backward"],
+            name: .dwindle(.cycleSizeBackward),
+            summary: "Cycle backward through Dwindle split ratio presets."
+        ),
+        .init(
             name: .dwindle(.balanceSizes),
             summary: "Balance layout sizes in the active workspace."
+        ),
+        .init(
+            name: .dwindle(.moveGroup),
+            summary: "Move the selected Dwindle group as one tile.",
+            arguments: [.direction],
+            layoutCompatibility: .dwindle
         ),
         .init(
             name: .dwindle(.moveToRoot),
@@ -422,10 +229,6 @@ extension IPCAutomationManifest {
         .init(
             name: .presentation(.quakeTerminal),
             summary: "Toggle the configured Quake terminal."
-        ),
-        .init(
-            name: .workspaceLayout(.toggle),
-            summary: "Toggle the current workspace between Niri and Dwindle."
         ),
         .init(
             name: .workspaceLayout(.set),

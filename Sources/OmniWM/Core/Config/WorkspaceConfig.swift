@@ -6,7 +6,6 @@ import OmniWMIPC
 
 enum LayoutType: String, Codable, CaseIterable, Identifiable {
     case defaultLayout = "default"
-    case niri
     case dwindle
 
     var id: String {
@@ -16,7 +15,6 @@ enum LayoutType: String, Codable, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .defaultLayout: "Default"
-        case .niri: "Niri (Scrolling)"
         case .dwindle: "Dwindle (BSP)"
         }
     }

@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+
+import AppKit
+import Foundation
+
+struct ResizeEdge: OptionSet, Hashable, CustomStringConvertible {
+    let rawValue: UInt32
+
+    private static let diagonalAccessibilityDescription = String(localized: "Resize diagonally")
+
+    static let top = ResizeEdge(rawValue: 0b0001)
+    static let bottom = ResizeEdge(rawValue: 0b0010)
+    static let left = ResizeEdge(rawValue: 0b0100)
+    static let right = ResizeEdge(rawValue: 0b1000)
+    static let all: ResizeEdge = [.top, .bottom, .left, .right]
+
+    var description: String {
+        let names: [(ResizeEdge, String)] = [(.left, "left"), (.right, "right"), (.top, "top"), (.bottom, "bottom")]
+        let present = names.filter { contains($0.0) }.map(\.1)
+        return present.isEmpty ? "none" : present.joined(separator: "+")
+    }
+
+    var hasHorizontal: Bool {
+        !intersection([.left, .right]).isEmpty
+    }
+
+    var hasVertical: Bool {
+        !intersection([.top, .bottom]).isEmpty
+    }
+
+    @MainActor
+    var cursor: NSCursor {
+        let hasLeft = contains(.left)
+        let hasRight = contains(.right)
+        let hasTop = contains(.top)
+        let hasBottom = contains(.bottom)
+
+        if (hasTop && hasLeft) || (hasBottom && hasRight) {
+            return Self.makeDiagonalNWSECursor()
+        }
+        if (hasTop && hasRight) || (hasBottom && hasLeft) {
+            return Self.makeDiagonalNESWCursor()
+        }
+
+        if hasLeft || hasRight {
+            return NSCursor.resizeLeftRight
+        }
+        if hasTop || hasBottom {
+            return NSCursor.resizeUpDown
+        }
+
+        return NSCursor.arrow
+    }
+
+    @MainActor
+    private static func makeDiagonalNWSECursor() -> NSCursor {
+        if let image = NSImage(
+            systemSymbolName: "arrow.up.left.and.arrow.down.right",
+            accessibilityDescription: diagonalAccessibilityDescription
+        ) {
+            return NSCursor(image: image, hotSpot: NSPoint(x: 8, y: 8))
+        }
+        return NSCursor.crosshair
+    }
+
+    @MainActor
+    private static func makeDiagonalNESWCursor() -> NSCursor {
+        if let image = NSImage(
+            systemSymbolName: "arrow.up.right.and.arrow.down.left",
+            accessibilityDescription: diagonalAccessibilityDescription
+        ) {
+            return NSCursor(image: image, hotSpot: NSPoint(x: 8, y: 8))
+        }
+        return NSCursor.crosshair
+    }
+}

@@ -44,14 +44,10 @@ extension WorkspaceNavigationHandler {
             }
             return WindowTransferResult(succeeded: true, newSourceFocusToken: nil)
         }
-        transferNiriWindow(transfer, controller: controller, progress: &progress)
         detachTransferredWindow(transfer, controller: controller, progress: &progress)
-        let succeeded = progress.movedWithNiri || sourceWsId == nil || transfer.sourceIsDwindle || transfer
-            .targetIsDwindle
+        let succeeded = sourceWsId == nil || transfer.sourceIsDwindle || transfer.targetIsDwindle
         if succeeded {
-            if !progress.movedWithNiri {
-                controller.reassignManagedWindow(token, to: targetWsId)
-            }
+            controller.reassignManagedWindow(token, to: targetWsId)
             if let sourceWsId {
                 recordLayoutOperation(.windowMovedToWorkspace(token: token, to: targetWsId), in: sourceWsId)
             }
@@ -63,9 +59,6 @@ extension WorkspaceNavigationHandler {
     func moveWindowToAdjacentWorkspace(direction: Direction) {
         guard let controller else { return }
         guard let token = controller.workspaceManager.selectedManagedToken else { return }
-        guard let sourceWorkspaceId = controller.workspaceManager.workspace(for: token) else { return }
-
-        saveNiriViewportState(for: sourceWorkspaceId)
         guard case let .changed(mutation) = moveWindowToAdjacentWorkspace(
             handle: WindowHandle(id: token),
             direction: direction
@@ -129,15 +122,7 @@ extension WorkspaceNavigationHandler {
         )
         guard transferResult.succeeded else { return .unchanged }
 
-        let targetViewportState = transferredWindowNiriViewportState(
-            token: token,
-            workspaceId: targetWsId
-        )
-        applySessionPatch(
-            workspaceId: targetWsId,
-            viewportState: targetViewportState,
-            rememberedFocusToken: token
-        )
+        _ = controller.workspaceManager.rememberFocus(token, in: targetWsId)
 
         recoverSourceFocus(after: transferResult, from: currentWorkspaceId)
 
@@ -146,8 +131,7 @@ extension WorkspaceNavigationHandler {
                 sourceWorkspaceId: currentWorkspaceId,
                 destinationWorkspaceId: targetWsId,
                 selectedHandle: handle,
-                movedTokens: [token],
-                scrollWorkspaceId: targetViewportState?.hasPendingOffsetAnimation == true ? targetWsId : nil
+                movedTokens: [token]
             )
         )
     }
@@ -197,50 +181,8 @@ extension WorkspaceNavigationHandler {
             return true
         }
         switch controller.workspaceManager.activeLayoutKind(for: workspaceId) {
-        case .niri:
-            return controller.niriEngine?.findNode(for: handle, in: workspaceId) != nil
         case .dwindle:
             return controller.dwindleEngine?.findNode(for: handle.id, in: workspaceId) != nil
-        }
-    }
-
-    private func transferNiriWindow(
-        _ transfer: WindowEngineTransfer,
-        controller: WMController,
-        progress: inout WindowEngineTransferProgress
-    ) {
-        let token = transfer.token
-        let sourceWsId = transfer.sourceWorkspaceId
-        let targetWsId = transfer.targetWorkspaceId
-        let sourceIsDwindle = transfer.sourceIsDwindle
-        let targetIsDwindle = transfer.targetIsDwindle
-        if !sourceIsDwindle,
-           !targetIsDwindle,
-           let sourceWsId,
-           let engine = controller.niriEngine,
-           let windowNode = engine.findNode(for: token, in: sourceWsId)
-        {
-            let result = controller.workspaceManager.withBatchedWorkspaceMove(
-                sourceWorkspaceId: sourceWsId,
-                targetWorkspaceId: targetWsId
-            ) { sourceState, targetState in
-                guard let moveResult = engine.moveWindowToWorkspace(
-                    windowNode,
-                    from: sourceWsId,
-                    to: targetWsId,
-                    sourceState: &sourceState,
-                    targetState: &targetState
-                ) else { return nil }
-                return (moveResult, [token])
-            }
-            if let result {
-                if let newFocusId = result.newFocusNodeId,
-                   let newFocusNode = engine.findNode(by: newFocusId, in: sourceWsId) as? NiriWindow
-                {
-                    progress.newSourceFocusToken = newFocusNode.token
-                }
-                progress.movedWithNiri = true
-            }
         }
     }
 
@@ -252,42 +194,9 @@ extension WorkspaceNavigationHandler {
         let token = transfer.token
         let sourceWsId = transfer.sourceWorkspaceId
         let sourceIsDwindle = transfer.sourceIsDwindle
-        let targetIsDwindle = transfer.targetIsDwindle
-        if !progress.movedWithNiri,
-           !sourceIsDwindle,
+        if sourceIsDwindle,
            let sourceWsId,
-           let engine = controller.niriEngine
-        {
-            controller.workspaceManager.withBatchedNiriSourceMutation(workspaceId: sourceWsId) { sourceState in
-                if let currentNode = engine.findNode(for: token, in: sourceWsId),
-                   sourceState.selectedNodeId == currentNode.id
-                {
-                    sourceState.selectedNodeId = engine.fallbackSelectionOnRemoval(
-                        removing: currentNode.id,
-                        in: sourceWsId
-                    )
-                }
-
-                if targetIsDwindle, engine.findNode(for: token, in: sourceWsId) != nil {
-                    controller.workspaceManager.captureDetachedNiriPlacement(for: token, in: sourceWsId)
-                    engine.removeWindow(token: token, in: sourceWsId)
-                }
-
-                if let selectedId = sourceState.selectedNodeId,
-                   engine.findNode(by: selectedId, in: sourceWsId) == nil
-                {
-                    sourceState.selectedNodeId = engine.validateSelection(selectedId, in: sourceWsId)
-                }
-
-                if let selectedId = sourceState.selectedNodeId,
-                   let selectedNode = engine.findNode(by: selectedId, in: sourceWsId) as? NiriWindow
-                {
-                    progress.newSourceFocusToken = selectedNode.token
-                }
-            }
-        } else if sourceIsDwindle,
-                  let sourceWsId,
-                  let dwindleEngine = controller.dwindleEngine
+           let dwindleEngine = controller.dwindleEngine
         {
             progress.newSourceFocusToken = controller.workspaceManager.withEngineMutationScope(in: sourceWsId) {
                 dwindleEngine.removeWindow(token: token, from: sourceWsId)

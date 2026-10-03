@@ -39,36 +39,6 @@ extension WorkspaceManager {
     }
 
     @discardableResult
-    func commitWorkspaceSelection(
-        nodeId: NodeId?,
-        focusedToken: WindowToken?,
-        in workspaceId: WorkspaceDescriptor.ID,
-        onMonitor _: Monitor.ID? = nil
-    ) -> Bool {
-        var changed = false
-
-        if let nodeId {
-            let currentSelection = niriViewportState(for: workspaceId).selectedNodeId
-            if currentSelection != nodeId {
-                recordReconcileEvent(
-                    .selectionChanged(
-                        workspaceId: workspaceId,
-                        nodeId: nodeId,
-                        source: .workspaceManager
-                    )
-                )
-                changed = true
-            }
-        }
-
-        if let focusedToken {
-            changed = rememberFocus(focusedToken, in: workspaceId) || changed
-        }
-
-        return changed
-    }
-
-    @discardableResult
     func applySessionPatch(_ patch: WorkspaceSessionPatch) -> Bool {
         guard isSeqCurrent(
             patch.plannedSeq,
@@ -79,18 +49,6 @@ extension WorkspaceManager {
         }
 
         var changed = false
-
-        if var viewportState = patch.viewportState {
-            normalizeNiriRefreshRate(&viewportState, for: patch.workspaceId)
-            recordReconcileEvent(
-                .viewportCommitted(
-                    workspaceId: patch.workspaceId,
-                    state: viewportState,
-                    source: .workspaceManager
-                )
-            )
-            changed = true
-        }
 
         if let rememberedFocusToken = patch.rememberedFocusToken {
             if isSeqCurrent(

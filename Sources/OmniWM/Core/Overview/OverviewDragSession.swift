@@ -212,8 +212,6 @@ final class OverviewDragSession {
             mutationSession.completeStructuralMutation(mutation)
         case let .placedFloating(mutation, frame):
             mutationSession.completeStructuralMutation(mutation, floatingPlacement: frame)
-        case let .awaitingAdmission(mutation, deferredTarget):
-            mutationSession.completeDeferredDragMutation(mutation, target: deferredTarget)
         case .unchanged:
             updateWindowDisplays()
         }

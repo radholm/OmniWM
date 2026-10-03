@@ -39,29 +39,22 @@ struct SpringConfig: Equatable {
         )
     }
 
-    static let niriHorizontalViewMovement = SpringConfig(
+    static let viewMovement = SpringConfig(
         dampingRatio: 1.0,
         stiffness: 800.0,
         epsilon: 0.0001,
         velocityEpsilon: 0.01
     )
 
-    static let niriWindowMovement = SpringConfig(
+    static let windowMovement = SpringConfig(
         dampingRatio: 1.0,
         stiffness: 800.0,
         epsilon: 0.0001,
         velocityEpsilon: 0.01
     )
 
-    static let niriWindowResize = SpringConfig(
-        dampingRatio: 1.0,
-        stiffness: 800.0,
-        epsilon: 0.0001,
-        velocityEpsilon: 0.01
-    )
-
-    static let snappy = SpringConfig.niriHorizontalViewMovement
-    static let balanced = SpringConfig.niriWindowMovement
+    static let snappy = SpringConfig.viewMovement
+    static let balanced = SpringConfig.windowMovement
     static let `default` = SpringConfig.snappy
 
     func with(epsilon: Double, velocityEpsilon: Double) -> SpringConfig {

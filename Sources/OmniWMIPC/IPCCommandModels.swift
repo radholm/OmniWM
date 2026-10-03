@@ -3,46 +3,12 @@
 
 import Foundation
 
-public enum IPCSizeChangeKind: String, Codable, Equatable, Sendable {
-    case setFixed = "set-fixed"
-    case setProportion = "set-proportion"
-    case adjustFixed = "adjust-fixed"
-    case adjustProportion = "adjust-proportion"
-}
-
-public struct IPCSizeChange: Codable, Equatable, Sendable {
-    public let kind: IPCSizeChangeKind
-    public let value: Double
-
-    public init(kind: IPCSizeChangeKind, value: Double) {
-        self.kind = kind
-        self.value = value
-    }
-
-    public static func setFixed(_ value: Double) -> IPCSizeChange {
-        IPCSizeChange(kind: .setFixed, value: value)
-    }
-
-    public static func setProportion(_ value: Double) -> IPCSizeChange {
-        IPCSizeChange(kind: .setProportion, value: value)
-    }
-
-    public static func adjustFixed(_ value: Double) -> IPCSizeChange {
-        IPCSizeChange(kind: .adjustFixed, value: value)
-    }
-
-    public static func adjustProportion(_ value: Double) -> IPCSizeChange {
-        IPCSizeChange(kind: .adjustProportion, value: value)
-    }
-}
-
 public enum IPCCommandArgumentValue: Equatable, Sendable {
     case direction(IPCDirection)
     case integer(Int)
     case layout(IPCWorkspaceLayout)
     case resizeAxis(IPCResizeAxis)
     case resizeOperation(IPCResizeOperation)
-    case sizeChange(IPCSizeChange)
 }
 
 public enum IPCCommandRequestConstructionError: Error, Equatable, Sendable {
@@ -55,8 +21,6 @@ public enum IPCCommandRequest: Equatable, Sendable {
     case windowMovement(IPCWindowMovementCommand)
     case workspace(IPCWorkspaceCommand)
     case monitorFocus(IPCMonitorFocusCommand)
-    case column(IPCColumnCommand)
-    case sizing(IPCSizingCommand)
     case swapWorkspaceWithMonitor(direction: IPCDirection)
     case dwindle(IPCDwindleCommand)
     case openCommandPalette
@@ -79,10 +43,6 @@ public enum IPCCommandRequest: Equatable, Sendable {
             .workspace(command.name)
         case let .monitorFocus(command):
             .monitorFocus(command)
-        case let .column(command):
-            .column(command.name)
-        case let .sizing(command):
-            .sizing(command.name)
         case .swapWorkspaceWithMonitor:
             .swapWorkspaceWithMonitor
         case let .dwindle(command):

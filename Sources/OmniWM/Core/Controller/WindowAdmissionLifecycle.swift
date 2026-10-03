@@ -117,7 +117,6 @@ enum AdmissionRetryTrigger {
         oldWindow: AXManagedWindowIdentity,
         newWindow: AXManagedWindowIdentity,
         managedReplacementMetadata: ManagedReplacementMetadata?,
-        admissionHints: ManagedWindowAdmissionHints?,
         sizeConstraints: WindowSizeConstraints?
     )
     case ruleReevaluation(token: WindowToken, axRef: AXWindowRef)
@@ -157,7 +156,7 @@ enum AdmissionRetryTrigger {
              let .focused(token, _, _, _),
              let .ruleReevaluation(token, _):
             [token.pid]
-        case let .identityRebind(oldWindow, newWindow, _, _, _):
+        case let .identityRebind(oldWindow, newWindow, _, _):
             [oldWindow.token.pid, newWindow.token.pid]
         }
     }
@@ -235,11 +234,6 @@ enum AdmissionRetryExecutionPhase: Equatable {
     case waiting
     case queued
     case running(UInt64)
-}
-
-struct ManagedReplacementFocusKey: Hashable, Equatable {
-    let pid: pid_t
-    let workspaceId: WorkspaceDescriptor.ID
 }
 
 struct ManagedWindowIdentityRebindSource {

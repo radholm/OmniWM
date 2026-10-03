@@ -821,7 +821,6 @@ final class DiagnosticsTraceRecorderTests: XCTestCase {
             destination: .window,
             source: .service
         )
-        NiriLayoutTrace.record(.viewport, workspaceId: nil, "jump 0→10 col=0")
         AnimationTickTrace.shared.record(
             AnimationTickTrace.Record(
                 mediaTime: 1,
@@ -833,7 +832,6 @@ final class DiagnosticsTraceRecorderTests: XCTestCase {
                     entrySlackMs: 2.5,
                     completionSlackMs: -3.5
                 ),
-                scrollMs: 5,
                 dwindleMs: 0,
                 closingMs: 0,
                 reconcileMs: 1,
@@ -910,14 +908,13 @@ final class DiagnosticsTraceRecorderTests: XCTestCase {
         XCTAssertTrue(appVisibilityDump.contains("destination=window"))
         XCTAssertTrue(appVisibilityDump.contains("source=service"))
         XCTAssertTrue(RawAXNotificationTrace.shared.dump().contains("ax.during"))
-        XCTAssertTrue(NiriLayoutTrace.shared.dump().contains("jump 0→10"))
         let tickDump = AnimationTickTrace.shared.dump()
         XCTAssertTrue(tickDump.contains("entry_slack=2.50ms completion_slack=-3.50ms"))
         XCTAssertTrue(tickDump.hasSuffix(" LONG_GAP COMPLETION_PAST_TARGET"))
         XCTAssertFalse(tickDump.contains("WORK_OVER_PERIOD"))
         XCTAssertTrue(tickDump.hasSuffix(
             "t=1.000 effect=0 disp=1 interval=99.00ms expected=6.00ms entry_slack=2.50ms"
-                + " completion_slack=-3.50ms scroll=5.00ms dwindle=0.00ms closing=0.00ms"
+                + " completion_slack=-3.50ms dwindle=0.00ms closing=0.00ms"
                 + " reconcile=1.00ms total=6.00ms"
                 + " surface=0.100ms transaction_scope=0.200ms idle_stop=0.300ms park_audit=0.400ms"
                 + " LONG_GAP COMPLETION_PAST_TARGET"
@@ -934,7 +931,6 @@ final class DiagnosticsTraceRecorderTests: XCTestCase {
         XCTAssertTrue(body.contains("== macOS App Visibility Trace =="))
         XCTAssertTrue(body.contains("event=state_transition"))
         XCTAssertTrue(body.contains("== Raw AX Notifications =="))
-        XCTAssertTrue(body.contains("== Niri Layout Trace =="))
         XCTAssertTrue(body.contains("== Frame Apply Trace =="))
         XCTAssertTrue(body.contains("== Animation Tick Timing =="))
         XCTAssertTrue(body.contains("== Scroll Tick Breakdown =="))

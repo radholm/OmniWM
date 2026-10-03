@@ -11,7 +11,7 @@ Turn Overview off in Settings. Its shortcut, mouse button, gesture, and commands
 
 ## Finding and focusing windows
 
-- Type to filter by window title or app name, including inactive members of Niri tabbed columns and Dwindle groups; `Backspace` deletes search text.
+- Type to filter by window title or app name, including inactive members of Dwindle groups; `Backspace` deletes search text.
 - Grouped windows share one preview card. Use its arrows or click the position indicator to choose a window by title. Small Dwindle cards use a compact count picker. Browsing changes the preview; the chosen window becomes active when you dismiss Overview to it.
 - `Arrow Keys` navigate spatially; `Left` / `Right` stay within the current workspace. `Tab` / `Shift + Tab` cycle forward or backward through matching windows, and keyboard navigation automatically scrolls the selected thumbnail into view.
 - `Enter` focuses the selected window; pressing and releasing a thumbnail without dragging it focuses that window. `Escape`, the configured Overview shortcut, and clicking the backdrop also dismiss Overview and focus the current selection; `Escape` does not clear search first.
@@ -23,8 +23,7 @@ Turn Overview off in Settings. Its shortcut, mouse button, gesture, and commands
 ## Managing windows from Overview
 
 - `Command + W` closes the selected window once per press and keeps Overview open; selection advances only after the window has closed.
-- Drag a thumbnail onto a workspace, an exact window position, or a Niri column gap; no modifier is needed, and layouts without an exact placement equivalent fall back to moving the window to the destination workspace.
-- Your assigned structural move, reorder, consume/expel, and workspace-transfer [shortcuts](/guides/keyboard-shortcuts/) operate on the selected thumbnail while Overview is open. In Niri workspaces you can reorder windows and columns, consume or expel windows, move windows into or out of columns, move windows across workspaces and monitors, and move whole columns between Niri workspaces. In Dwindle workspaces, Overview supports moving windows across workspaces and closing them.
+- Your assigned workspace-transfer [shortcuts](/guides/keyboard-shortcuts/) operate on the selected thumbnail while Overview is open. Overview supports moving windows across workspaces and monitors and closing them. Leave Overview before changing a Dwindle tree.
 - A successful move keeps the moved window selected and activates its destination workspace and monitor behind Overview.
 
 :::note

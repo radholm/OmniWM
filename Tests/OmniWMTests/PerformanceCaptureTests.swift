@@ -378,7 +378,7 @@ final class PerformanceCaptureTests: XCTestCase {
 
         await sleepGate.resumeFirst()
         for _ in 0 ..< 100 where coordinator.status.phase != .idle {
-            await Task.yield()
+            try await Task.sleep(for: .milliseconds(10))
         }
 
         XCTAssertEqual(coordinator.status.phase, .idle)

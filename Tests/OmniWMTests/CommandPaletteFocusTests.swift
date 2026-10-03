@@ -458,26 +458,6 @@ final class CommandPaletteFocusTests: XCTestCase {
         XCTAssertFalse(fixture.palette.isVisible)
     }
 
-    func testCommandForInactiveLayoutCannotBeSelected() throws {
-        var dispatched: [HotkeyCommand] = []
-        let fixture = CommandPaletteFocusFixture { environment in
-            environment.performCommand = { _, command in
-                dispatched.append(command)
-                return .executed
-            }
-        }
-        defer { fixture.cleanup() }
-        _ = try fixture.show()
-        let incompatible = try XCTUnwrap(fixture.palette.commandItems.first { !$0.isLayoutCompatible })
-
-        fixture.palette.selectMode(.commands)
-        fixture.palette.selectedItemID = .command(incompatible.id)
-        fixture.palette.selectCurrent()
-
-        XCTAssertTrue(dispatched.isEmpty)
-        XCTAssertTrue(fixture.palette.isVisible)
-    }
-
     func testSelectingPaletteToggleClosesWithoutReopening() throws {
         var dispatched: [HotkeyCommand] = []
         let fixture = CommandPaletteFocusFixture { environment in

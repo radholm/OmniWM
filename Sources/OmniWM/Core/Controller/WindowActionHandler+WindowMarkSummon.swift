@@ -62,11 +62,9 @@ extension WindowActionHandler {
                 return false
             }
             switch controller.settings.workspaces.layoutType(for: workspaceName) {
-            case .dwindle:
-                return controller.dwindleEngine != nil
-            case .niri,
+            case .dwindle,
                  .defaultLayout:
-                return controller.niriEngine != nil
+                return controller.dwindleEngine != nil
             }
         }
         guard supportsSummon(targetEntry.workspaceId), supportsSummon(anchorWorkspaceId) else {

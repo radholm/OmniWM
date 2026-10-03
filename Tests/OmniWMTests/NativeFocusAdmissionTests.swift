@@ -38,7 +38,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
     func testCreateAdmissionRechecksExactFocusBeforeTwoWindowRelayout() async throws {
         for focusedIndex in 0 ... 1 {
             let operations = FocusOperationRecorder()
-            let (controller, workspaceId) = try await Self.niriController(operations: operations)
+            let (controller, workspaceId) = try await Self.dwindleController(operations: operations)
             defer { Self.stopFocusObservation(controller) }
             let manager = controller.workspaceManager
             let tokens = [
@@ -70,7 +70,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
 
     func testCreateAdmissionRechecksFocusAfterRelayoutAndRestoresMouseFocus() async throws {
         let operations = FocusOperationRecorder()
-        let (controller, workspaceId) = try await Self.niriController(operations: operations)
+        let (controller, workspaceId) = try await Self.dwindleController(operations: operations)
         defer { Self.stopFocusObservation(controller) }
         let manager = controller.workspaceManager
         let token = WindowToken(pid: 510_511, windowId: 510_512)
@@ -142,7 +142,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
 
     func testAdmissionProbeFollowsExactFocusToAssignedInactiveWorkspace() async throws {
         let operations = FocusOperationRecorder()
-        let (controller, initialWorkspaceId) = try await Self.niriController(operations: operations)
+        let (controller, initialWorkspaceId) = try await Self.dwindleController(operations: operations)
         defer { Self.stopFocusObservation(controller) }
         let manager = controller.workspaceManager
         let assignedWorkspaceId = try XCTUnwrap(manager.workspaceId(for: "2", createIfMissing: true))
@@ -301,55 +301,6 @@ final class NativeFocusAdmissionTests: XCTestCase {
         XCTAssertEqual(sessionChangeCount, 1)
         XCTAssertNil(controller.intentLedger.activeManagedRequest)
         XCTAssertTrue(operations.values.isEmpty)
-    }
-
-    func testExactExternalFocusAdmissionSkipsNiriCreateActivationAfterRelayout() async throws {
-        let operations = FocusOperationRecorder()
-        let (controller, workspaceId) = try await Self.niriController(operations: operations)
-        let manager = controller.workspaceManager
-        let token = WindowToken(pid: 510_011, windowId: 510_012)
-        XCTAssertTrue(manager.recordExternalFocus(pid: token.pid, windowId: token.windowId))
-
-        controller.axEventHandler.trackPreparedCreate(
-            Self.preparedCreate(token: token, workspaceId: workspaceId)
-        )
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-
-        XCTAssertEqual(manager.nativeManagedFocusToken, token)
-        XCTAssertEqual(manager.selectedManagedToken, token)
-        XCTAssertNil(manager.pendingFocusedToken)
-        XCTAssertNil(controller.intentLedger.activeManagedRequest)
-        XCTAssertTrue(controller.intentLedger.entries.isEmpty)
-        XCTAssertTrue(operations.values.isEmpty)
-    }
-
-    func testDifferentNiriCreateStillPerformsNormalActivationAfterAdoptedFocus() async throws {
-        let operations = FocusOperationRecorder()
-        let (controller, workspaceId) = try await Self.niriController(operations: operations)
-        let manager = controller.workspaceManager
-        let focusedToken = WindowToken(pid: 510_013, windowId: 510_014)
-        XCTAssertTrue(
-            manager.recordExternalFocus(
-                pid: focusedToken.pid,
-                windowId: focusedToken.windowId
-            )
-        )
-        controller.axEventHandler.trackPreparedCreate(
-            Self.preparedCreate(token: focusedToken, workspaceId: workspaceId)
-        )
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-        XCTAssertTrue(operations.values.isEmpty)
-
-        let newToken = WindowToken(pid: 510_015, windowId: 510_016)
-        controller.axEventHandler.trackPreparedCreate(
-            Self.preparedCreate(token: newToken, workspaceId: workspaceId)
-        )
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
-
-        XCTAssertEqual(operations.values, ["activate", "focus", "raise"])
-        XCTAssertEqual(manager.nativeManagedFocusToken, focusedToken)
-        XCTAssertEqual(manager.pendingFocusedToken, newToken)
-        XCTAssertEqual(controller.intentLedger.activeManagedRequest?.token, newToken)
     }
 
     func testFloatingAdmissionAdoptsFocusWithoutUpdatingTiledHistory() throws {
@@ -513,7 +464,6 @@ final class NativeFocusAdmissionTests: XCTestCase {
                 token: token,
                 axRef: WindowAdmissionTestSupport.axRef(for: token),
                 ruleEffects: .none,
-                admissionHints: .none,
                 appFullscreen: true,
                 replacementMetadata: .init(
                     bundleId: nil,
@@ -547,7 +497,6 @@ final class NativeFocusAdmissionTests: XCTestCase {
             mode: .tiling,
             axRef: WindowAdmissionTestSupport.axRef(for: token),
             ruleEffects: .none,
-            admissionHints: .none,
             lifetimeAuthority: .directLifecycle,
             adoptNativeFocus: true,
             managedReplacementMetadata: nil,
@@ -599,8 +548,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
             workspaceId: workspaceId,
             mode: .tiling,
             managedReplacementMetadata: nil,
-            ruleEffects: .none,
-            admissionHints: .none
+            ruleEffects: .none
         )
         var existingEntryFocus = FocusSessionSnapshot()
         existingEntryFocus.nativeFocusOwner = .external(pid: token.pid, windowId: token.windowId)
@@ -663,7 +611,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
         )
     }
 
-    private static func niriController(
+    private static func dwindleController(
         operations: FocusOperationRecorder
     ) async throws -> (controller: WMController, workspaceId: WorkspaceDescriptor.ID) {
         let controller = controller(operations: operations)
@@ -672,7 +620,7 @@ final class NativeFocusAdmissionTests: XCTestCase {
         )
         _ = controller.workspaceManager.focusWorkspace(id: workspaceId)
         controller.motionPolicy.animationsEnabled = false
-        controller.niriLayoutHandler.enableNiriLayout()
+        controller.dwindleLayoutHandler.enableDwindleLayout()
         await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
         controller.layoutRefreshController.layoutState.hasCompletedInitialRefresh = true
         return (controller, workspaceId)
@@ -687,7 +635,6 @@ final class NativeFocusAdmissionTests: XCTestCase {
             token: token,
             axRef: WindowAdmissionTestSupport.axRef(for: token),
             ruleEffects: .none,
-            admissionHints: .none,
             appFullscreen: false,
             replacementMetadata: ManagedReplacementMetadata(
                 bundleId: nil,

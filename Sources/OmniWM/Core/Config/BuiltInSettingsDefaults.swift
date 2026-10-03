@@ -4,70 +4,62 @@
 import Foundation
 
 enum BuiltInSettingsDefaults {
-    static let niriResizeStepPercent = 5
-
-    static let niriContainerPrimarySpanPresets: [Double] = [
-        0.33333333333333331,
-        0.5,
-        0.66666666666666663
-    ]
-
     static let workspaceConfigurations: [WorkspaceConfiguration] = [
         WorkspaceConfiguration(
             id: uuid("AD36F001-C57E-41A5-AC1D-DF5249D007F0"),
             name: "1",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("454CECD4-5E9D-4ED1-95D7-979D48817F5F"),
             name: "2",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("BEB842B5-E894-4791-9FD1-397C3CDD3538"),
             name: "3",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("248AA883-2261-4D45-943C-79C0E46A232B"),
             name: "4",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("8B8C45D6-CE9E-41D9-BD50-BE4989D5E3DE"),
             name: "5",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("5953F2BF-A378-4266-91B2-287174C4FA4D"),
             name: "6",
             displayName: "\u{2764}\u{FE0F}",
             monitorAssignment: .secondary,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("A7D5E104-6985-4516-8ED5-07F144F2A33D"),
             name: "7",
             displayName: "\u{1F680}",
             monitorAssignment: .secondary,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("0E18F6B0-345A-4078-8B21-33641F07A861"),
             name: "8",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         ),
         WorkspaceConfiguration(
             id: uuid("8D4D711C-2B2F-4FEC-86BF-FA952037738A"),
             name: "9",
             monitorAssignment: .main,
-            layoutType: .niri
+            layoutType: .dwindle
         )
     ]
 

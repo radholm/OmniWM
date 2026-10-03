@@ -11,7 +11,7 @@ final class WindowMarkLifecycleIntegrationTests: XCTestCase {
     func testHiddenLiveWindowKeepsItsMarkAndRetirementClearsIt() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMWindowMarkLifecycle")
         let workspaceId = try XCTUnwrap(
-            WindowAdmissionTestSupport.workspace(named: "76", layoutType: .niri, controller: controller)
+            WindowAdmissionTestSupport.workspace(named: "76", layoutType: .dwindle, controller: controller)
         )
         let token = WindowToken(pid: 76_001, windowId: 76_101)
         _ = WindowAdmissionTestSupport.track(token, in: workspaceId, controller: controller)
@@ -32,7 +32,7 @@ final class WindowMarkLifecycleIntegrationTests: XCTestCase {
     func testAppTerminationRetiresMarksAndReleasesTheirNames() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMWindowMarkTermination")
         let workspaceId = try XCTUnwrap(
-            WindowAdmissionTestSupport.workspace(named: "78", layoutType: .niri, controller: controller)
+            WindowAdmissionTestSupport.workspace(named: "78", layoutType: .dwindle, controller: controller)
         )
         let terminatedToken = WindowToken(pid: 76_021, windowId: 76_121)
         let replacementToken = WindowToken(pid: 76_022, windowId: 76_122)
@@ -50,7 +50,7 @@ final class WindowMarkLifecycleIntegrationTests: XCTestCase {
     func testManagedReplacementRekeysMarkToReplacementToken() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMWindowMarkRebind")
         let workspaceId = try XCTUnwrap(
-            WindowAdmissionTestSupport.workspace(named: "77", layoutType: .niri, controller: controller)
+            WindowAdmissionTestSupport.workspace(named: "77", layoutType: .dwindle, controller: controller)
         )
         let oldToken = WindowToken(pid: 76_011, windowId: 76_111)
         let newToken = WindowToken(pid: 76_011, windowId: 76_112)

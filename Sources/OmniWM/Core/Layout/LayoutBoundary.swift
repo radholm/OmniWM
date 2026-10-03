@@ -76,29 +76,6 @@ struct WorkspaceRefreshInput {
     let isActiveWorkspace: Bool
 }
 
-struct NiriWindowRemovalSeed {
-    let removedNodeIds: [NodeId]
-    let oldFrames: [WindowToken: CGRect]
-    let removedColumn: Bool
-}
-
-struct NiriWorkspaceSnapshot {
-    let workspaceId: WorkspaceDescriptor.ID
-    let monitor: LayoutMonitorSnapshot
-    let windows: [LayoutWindowSnapshot]
-    let excludedTokens: Set<WindowToken>
-    let plannedSeq: UInt64
-    let viewportState: ViewportState
-    let preferredFocusToken: WindowToken?
-    let hasCompletedInitialRefresh: Bool
-    let useScrollAnimationPath: Bool
-    let removalSeed: NiriWindowRemovalSeed?
-    let gap: CGFloat
-    let niriWorkingFrame: CGRect
-    let displayRefreshRate: Double
-    let isActiveWorkspace: Bool
-}
-
 struct DwindleWorkspaceSnapshot {
     let workspaceId: WorkspaceDescriptor.ID
     let monitor: LayoutMonitorSnapshot
@@ -235,14 +212,12 @@ struct WorkspaceLayoutDiff {
 
 struct WorkspaceSessionPatch {
     let workspaceId: WorkspaceDescriptor.ID
-    var viewportState: ViewportState?
     var rememberedFocusToken: WindowToken?
     var plannedSeq: UInt64 = 0
 }
 
 enum AnimationDirective {
     case none
-    case startNiriScroll(workspaceId: WorkspaceDescriptor.ID)
     case startDwindleAnimation(workspaceId: WorkspaceDescriptor.ID, monitorId: Monitor.ID)
     case activateWindow(token: WindowToken)
 }
@@ -264,7 +239,6 @@ struct WorkspaceLayoutPlan {
     let monitor: LayoutMonitorSnapshot
     var sessionPatch: WorkspaceSessionPatch
     var diff: WorkspaceLayoutDiff
-    var niriRestorePlacements: [WindowToken: PersistedNiriPlacement] = [:]
     var dwindleRestorePlacements: [WindowToken: PersistedDwindlePlacement] = [:]
     var animationDirectives: [AnimationDirective] = []
     var dwindleAnimationTargetDisposition: DwindleAnimationTargetDisposition?

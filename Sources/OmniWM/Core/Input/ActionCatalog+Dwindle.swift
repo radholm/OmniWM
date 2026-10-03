@@ -5,6 +5,28 @@ import Carbon
 import OmniWMIPC
 
 extension ActionCatalog {
+    static func appendGroupMoveBindings(_ specs: inout [ActionSpec]) {
+        for direction in [Direction.left, .right, .up, .down] {
+            let binding: KeyBinding = switch direction {
+            case .left:
+                .init(keyCode: UInt32(kVK_LeftArrow), modifiers: UInt32(optionKey | controlKey | shiftKey))
+            case .right:
+                .init(keyCode: UInt32(kVK_RightArrow), modifiers: UInt32(optionKey | controlKey | shiftKey))
+            case .up,
+                 .down:
+                .unassigned
+            }
+            specs.append(action(
+                id: "moveGroup.\(direction.rawValue)",
+                command: .dwindle(.moveGroup(direction)),
+                category: .layout,
+                binding: binding,
+                visibility: .advanced,
+                keywords: ["move", "tile", "group"]
+            ))
+        }
+    }
+
     static func appendAxisResizeBindings(_ specs: inout [ActionSpec]) {
         specs.append(contentsOf: [
             action(

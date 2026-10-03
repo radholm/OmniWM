@@ -58,7 +58,6 @@ extension WorkspaceManager {
                 preferredMonitor = monitor(for: entry.workspaceId, context: context).map(DisplayFingerprint.init)
                     ?? restoreIntent.preferredMonitor
             }
-
             snapshotEntries.append(
                 PersistedWindowRestoreCatalogBuildEntry(
                     token: entry.token,
@@ -70,8 +69,6 @@ extension WorkspaceManager {
                     normalizedFloatingOrigin: restoreIntent.normalizedFloatingOrigin,
                     restoreToFloating: restoreIntent.restoreToFloating,
                     rescueEligible: restoreIntent.rescueEligible,
-                    niriPlacement: restoreIntent.niriPlacement,
-                    detachedNiriContainerSizingState: restoreIntent.detachedNiriContainerSizingState,
                     dwindlePlacement: restoreIntent.dwindlePlacement
                 )
             )

@@ -68,37 +68,20 @@ omniwmctl command <command-path> [arguments...]
 | Command | Arguments | Layout | Description |
 |---------|-----------|--------|-------------|
 | `command focus` | `<left\|right\|up\|down>` | shared | Focus spatially; Dwindle Up/Down traverse grouped tabs before edge fallback |
-| `command focus-window-in-column` | `<number>` | niri | Focus a window in the focused Niri column by one-based index |
-| `command focus-window top` | — | niri | Focus the top window in the focused Niri column |
-| `command focus-window bottom` | — | niri | Focus the bottom window in the focused Niri column |
-| `command focus-window down-or-top` | — | shared | Focus the next window in the active Niri column or Dwindle group, wrapping locally |
-| `command focus-window up-or-bottom` | — | shared | Focus the previous window in the active Niri column or Dwindle group, wrapping locally |
-| `command focus-window-or-workspace-down` | — | niri | Focus down using the active Niri orientation; if no target exists, switch without wrapping to the workspace below |
-| `command focus-window-or-workspace-up` | — | niri | Focus up using the active Niri orientation; if no target exists, switch without wrapping to the workspace above |
+| `command focus-window down-or-top` | — | shared | Focus the next window in the active Dwindle group, wrapping locally |
+| `command focus-window up-or-bottom` | — | shared | Focus the previous window in the active Dwindle group, wrapping locally |
 | `command focus previous` | — | shared | Focus the previously focused window |
-| `command focus down-or-left` | — | niri | Traverse backward through the active Niri workspace |
-| `command focus up-or-right` | — | niri | Traverse forward through the active Niri workspace |
-| `command focus-column` | `<number>` | niri | Focus a Niri column by one-based index |
-| `command focus-column first` | — | niri | Focus the first Niri column |
-| `command focus-column last` | — | niri | Focus the last Niri column |
 
 ### Move
 
 | Command | Arguments | Layout | Description |
 |---------|-----------|--------|-------------|
 | `command move` | `<left\|right\|up\|down>` | shared | Move with layout-aware consume/expel or Dwindle join/extract behavior |
-| `command move-window-down` | — | shared | Reorder the focused window down by one without wrapping within its Niri column or Dwindle group |
-| `command move-window-up` | — | shared | Reorder the focused window up by one without wrapping within its Niri column or Dwindle group |
-| `command move-window-down-or-to-workspace-down` | — | niri | Move the focused Niri window down, or to the workspace below at the column edge |
-| `command move-window-up-or-to-workspace-up` | — | niri | Move the focused Niri window up, or to the workspace above at the column edge |
-| `command consume-or-expel-window-left` | — | niri | Consume or expel using the previous Niri column without wrapping or crossing monitors |
-| `command consume-or-expel-window-right` | — | niri | Consume or expel using the next Niri column without wrapping or crossing monitors |
-| `command consume-window-into-column` | — | niri | Consume the top window from the next Niri column into the focused column |
-| `command expel-window-from-column` | — | niri | Expel the bottom window from the focused Niri column into a new following column |
+| `command move-window-down` | — | shared | Reorder the focused window down by one without wrapping within its Dwindle group |
+| `command move-window-up` | — | shared | Reorder the focused window up by one without wrapping within its Dwindle group |
 
-`command move <direction>` follows the active layout's orientation and configured edge behavior, including optional monitor crossing. The explicit consume-or-expel commands use fixed Niri column order, never wrap or cross monitors, and cannot be assigned as shortcuts.
 
-In Dwindle, `focus left/right` remains spatial. `focus up/down` traverses a group's eligible tabs; at the group edge it tries a spatial neighbor, then the configured monitor transition, and wraps locally only when neither exit succeeds. `move <direction>` joins a singleton with the touching tile or extracts only the active member from a group onto that side. Moving between two existing groups is a two-step extract-then-join operation. Use `move-column <direction>` when the complete tile or group should move instead.
+In Dwindle, `focus left/right` remains spatial. `focus up/down` traverses a group's eligible tabs; at the group edge it tries a spatial neighbor, then the configured monitor transition, and wraps locally only when neither exit succeeds. `move <direction>` joins a singleton with the touching tile or extracts only the active member from a group onto that side. Moving between two existing groups is a two-step extract-then-join operation. Use `move-group <direction>` when the complete tile or group should move instead.
 
 ### Workspace Switching
 
@@ -137,38 +120,12 @@ Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever
 
 `command move-to-monitor` does not wrap when no monitor exists in the requested direction. It honors **Follow Window to Monitor** and operates independently of **Move Window Across Monitor at Edge**.
 
-### Container and Column Operations
-
-| Command | Arguments | Layout | Description |
-|---------|-----------|--------|-------------|
-| `command center-column` | — | niri | Center the focused Niri column without changing focus |
-| `command center-visible-columns` | — | niri | Center the current block of fully visible Niri columns in the viewport |
-| `command move-column` | `<left\|right\|up\|down>` | shared left/right; dwindle up/down | Move a Niri column horizontally or swap a complete Dwindle tile/group without monitor fallback |
-| `command move-column-to-first` | — | niri | Move the focused Niri column to the first position |
-| `command move-column-to-last` | — | niri | Move the focused Niri column to the last position |
-| `command move-column-to-index` | `<number>` | niri | Move the focused Niri column to a one-based index |
-| `command move-column-to-workspace` | `<number>` | niri | Move the focused Niri column to a Niri workspace by workspace ID |
-| `command move-column-to-workspace up` | — | niri | Move focused column to the adjacent workspace above |
-| `command move-column-to-workspace down` | — | niri | Move focused column to the adjacent workspace below |
-| `command toggle-column-tabbed` | — | niri | Toggle tabbed mode for the focused column |
-| `command toggle-container-full-primary-span` | — | niri | Toggle full-primary-span mode for the focused container |
-| `command expand-container-to-available-primary-span` | — | niri | Expand the focused container into available primary-axis space |
-| `command cycle-window-primary-span forward` | — | niri | Cycle window primary-span presets forward |
-| `command cycle-window-primary-span backward` | — | niri | Cycle window primary-span presets backward |
-| `command cycle-window-secondary-span forward` | — | niri | Cycle window secondary-span presets forward |
-| `command cycle-window-secondary-span backward` | — | niri | Cycle window secondary-span presets backward |
-| `command reset-window-secondary-span` | — | niri | Reset the focused window secondary span |
-| `command set-container-primary-span` | `<size-change>` | niri | Set or adjust the focused container primary span |
-| `command set-window-primary-span` | `<size-change>` | niri | Set or adjust the focused window primary span |
-| `command set-window-secondary-span` | `<size-change>` | niri | Set or adjust the focused window secondary span |
-
-`<size-change>` accepts fixed pixels (`100`), proportions (`50%`), fixed deltas (`+10`), or proportional deltas (`-10%`).
-
 ### Dwindle Operations
 
 | Command | Arguments | Layout | Description |
 |---------|-----------|--------|-------------|
 | `command move-to-root` | — | dwindle | Move the selected window to the root split |
+| `command move-group` | `left` \| `right` \| `up` \| `down` | dwindle | Move the complete tile or group |
 | `command toggle-split` | — | dwindle | Toggle the active split orientation |
 | `command swap-split` | — | dwindle | Swap the active split |
 | `command resize` | `<horizontal\|vertical> <grow\|shrink>` | dwindle | Grow or shrink the selected window along an axis |
@@ -183,8 +140,7 @@ Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever
 | `command balance-sizes` | — | shared | Balance layout sizes in the active workspace |
 | `command cycle-size forward` | — | shared | Cycle layout sizing presets forward (in Dwindle the focused window takes 30, 50, or 70 % of its split) |
 | `command cycle-size backward` | — | shared | Cycle layout sizing presets backward (in Dwindle the focused window takes 70, 50, or 30 % of its split) |
-| `command toggle-workspace-layout` | — | shared | Toggle the workspace between Niri and Dwindle |
-| `command set-workspace-layout` | `<default\|niri\|dwindle>` | shared | Set the workspace layout explicitly |
+| `command set-workspace-layout` | `<default\|dwindle>` | shared | Set the workspace layout explicitly |
 | `command toggle-fullscreen` | — | shared | Toggle OmniWM-managed fullscreen |
 | `command toggle-native-fullscreen` | — | shared | Toggle native macOS fullscreen |
 
@@ -217,7 +173,6 @@ Overview is modal with respect to external commands. While it is open every IPC/
 
 **Layout compatibility:**
 - `shared` — works with any active layout
-- `niri` — only works when the active workspace uses the Niri layout
 - `dwindle` — only works when the active workspace uses the Dwindle layout
 
 Commands sent to an incompatible layout return `layout_mismatch`.

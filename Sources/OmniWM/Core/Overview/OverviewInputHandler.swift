@@ -285,14 +285,6 @@ extension OverviewInputHandler {
         updateWindowDisplays()
     }
 
-    func panStrip(at point: CGPoint, by delta: CGFloat, on monitorId: Monitor.ID) {
-        guard case .open = state, controller?.hasActiveDragSession == false,
-              let section = projection.layoutsByMonitor[monitorId]?.ribbonSection(at: point)
-        else { return }
-        projection.panStrip(section.workspaceId, by: delta, on: monitorId)
-        updateWindowDisplays(update: .immediate, on: monitorId)
-    }
-
     func selectAndActivateWindow(_ handle: WindowHandle) {
         guard case .open = state else { return }
         projection.setSelectedWindowHandle(handle)
@@ -391,13 +383,6 @@ extension OverviewInputHandler {
         let immediate = event.isPrecise || zoom
         if projection.handleScroll(event, on: monitorId) || immediate {
             updateWindowDisplays(update: immediate ? .immediate : .viewport, on: zoom ? nil : monitorId)
-        }
-    }
-
-    func pageStrip(_ pill: OverviewOverflowPill, on monitorId: Monitor.ID) {
-        guard case .open = state else { return }
-        if projection.pageStrip(pill, on: monitorId) {
-            updateWindowDisplays(update: .viewport, on: monitorId)
         }
     }
 }

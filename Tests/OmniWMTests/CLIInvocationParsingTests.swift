@@ -57,8 +57,8 @@ final class CLIInvocationParsingTests: XCTestCase {
         }
     }
 
-    func testPositiveIndexAndWorkspaceArgumentsKeepIdenticalBounds() throws {
-        let commands = ["switch-workspace", "focus-column", "focus-window-in-column"]
+    func testWorkspaceNumberArgumentsKeepPositiveBounds() throws {
+        let commands = ["switch-workspace"]
         for command in commands {
             for value in ["1", "+1", String(Int.max)] {
                 XCTAssertNoThrow(try CLIParser.parse(arguments: ["omniwmctl", "command", command, value]))

@@ -8,8 +8,6 @@ extension StateReducer {
     static func reducePlacementNotes(_ event: WMEvent, context: ReductionContext, plan: inout ActionPlan) {
         let existingEntry = context.existingEntry
         switch event {
-        case let .niriPlacementsResolved(placements, _):
-            plan.notes = ["niri_placements=\(placements.count)"]
         case let .dwindlePlacementsResolved(placements, _):
             plan.notes = ["dwindle_placements=\(placements.count)"]
         case let .layoutOperationPerformed(_, operation, _):
@@ -52,31 +50,6 @@ extension StateReducer {
             plan.notes = ["system_wake"]
         case .userCommand:
             plan.notes = ["user_command"]
-        default:
-            break
-        }
-    }
-
-    static func reduceViewport(_ event: WMEvent, context: ReductionContext, plan: inout ActionPlan) {
-        let currentSnapshot = context.currentSnapshot
-        switch event {
-        case let .viewportChanged(workspaceId, state, _):
-            var viewport = state
-            viewport.clearOffsetTransition()
-            setViewport(viewport, for: workspaceId, currentSnapshot: currentSnapshot, plan: &plan)
-        case let .viewportCommitted(workspaceId, state, _):
-            var viewport = state
-            viewport.clearOffsetTransition()
-            setViewport(viewport, for: workspaceId, currentSnapshot: currentSnapshot, plan: &plan)
-        case let .viewportForgotten(workspaceIds, _):
-            let present = workspaceIds.filter { currentSnapshot.viewports[$0] != nil }
-            if !present.isEmpty {
-                plan.viewport = .remove(workspaceIds: present)
-            }
-        case let .selectionChanged(workspaceId, nodeId, _):
-            var viewport = currentSnapshot.viewports[workspaceId] ?? ViewportState()
-            viewport.selectedNodeId = nodeId
-            setViewport(viewport, for: workspaceId, currentSnapshot: currentSnapshot, plan: &plan)
         default:
             break
         }

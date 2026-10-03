@@ -188,13 +188,6 @@ extension AXEventHandler {
             requestId: confirmationRequestId
         )
         confirmedRequest = confirmManagedActivationRequest(observation, controller: controller)
-        recordNiriCreateFocusTrace(
-            .init(kind: .focusConfirmed(
-                token: entry.token,
-                workspaceId: entry.workspaceId,
-                source: observation.source
-            ))
-        )
         completeAppTerminationFocusRecoveryIfNeeded(entry.token)
         return true
     }
@@ -243,82 +236,7 @@ extension AXEventHandler {
             )
             return engine.contentFrame(for: entry.token, in: entry.workspaceId)
                 ?? engine.findNode(for: entry.token, in: entry.workspaceId)?.cachedFrame
-        case .niri:
-            return activateManagedNiriTarget(observation, controller: controller)
         }
-    }
-
-    private func activateManagedNiriTarget(
-        _ observation: ManagedActivationObservation,
-        controller: WMController
-    ) -> CGRect? {
-        let entry = observation.entry
-        let wsId = entry.workspaceId
-        guard let engine = controller.niriEngine,
-              let node = engine.findNode(for: entry.token, in: wsId),
-              controller.workspaceManager.monitor(for: wsId) != nil
-        else { return nil }
-        let preferredFrame = node.renderedFrame ?? node.frame
-        var state = controller.workspaceManager.niriViewportState(for: wsId)
-        let preservesPointerViewport = switch observation.focusObservation {
-        case let .echoOf(intent),
-             let .lateEcho(intent):
-            intent.origin.preservesViewportOnActivation
-        case .external: false
-        }
-        let preserveViewport = controller.workspaceManager.animationDriver.hasMotion(in: wsId)
-            || preservesPointerViewport
-            || preservesAppTerminationRecoveryViewport(for: entry.token)
-        let preserveReplacementViewport = isProtectedManagedReplacementFocus(
-            token: entry.token,
-            workspaceId: wsId
-        )
-        controller.niriLayoutHandler.activateNode(
-            node, in: wsId, state: &state,
-            options: managedActivationOptions(
-                isWorkspaceActive: observation.isWorkspaceActive,
-                preserveViewport: preserveViewport,
-                preserveReplacementViewport: preserveReplacementViewport
-            )
-        )
-        _ = controller.workspaceManager.applySessionPatch(
-            .init(
-                workspaceId: wsId,
-                viewportState: state,
-                rememberedFocusToken: nil,
-                plannedSeq: controller.workspaceManager.worldSeq
-            )
-        )
-        if preserveReplacementViewport {
-            completeManagedReplacementFocusTransactionIfNeeded(token: entry.token, workspaceId: wsId)
-        }
-        return preferredFrame
-    }
-
-    private func managedActivationOptions(
-        isWorkspaceActive: Bool,
-        preserveViewport: Bool,
-        preserveReplacementViewport: Bool
-    ) -> NodeActivationOptions {
-        if preserveReplacementViewport {
-            return .init(
-                ensureVisible: false,
-                preserveViewportAnchor: true,
-                layoutRefresh: isWorkspaceActive,
-                axFocus: false,
-                startAnimation: false
-            )
-        }
-        if preserveViewport {
-            return .init(
-                ensureVisible: false,
-                preserveViewportAnchor: true,
-                layoutRefresh: false,
-                axFocus: false,
-                startAnimation: false
-            )
-        }
-        return .init(layoutRefresh: isWorkspaceActive, axFocus: false)
     }
 
     private func finishManagedActivation(
@@ -330,7 +248,6 @@ extension AXEventHandler {
         let entry = observation.entry
         controller.surfaceReconciler.noteRestackOccurred()
         if observation.shouldActivateWorkspace, observation.shouldConfirmRequest {
-            controller.syncMonitorsToNiriEngine()
             controller.layoutRefreshController.commitWorkspaceTransition(reason: .appActivationTransition)
         }
         if observation.shouldConfirmRequest,

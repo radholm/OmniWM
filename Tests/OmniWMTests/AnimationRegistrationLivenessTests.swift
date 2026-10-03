@@ -8,16 +8,6 @@ import XCTest
 
 @MainActor
 final class AnimationRegistrationLivenessTests: XCTestCase {
-    func testNiriTickRemovesRegistrationWhenControllerIsGone() {
-        let handler = NiriLayoutHandler(controller: nil)
-        let displayId: CGDirectDisplayID = 981_001
-        handler.scrollAnimationByDisplay[displayId] = WorkspaceDescriptor.ID()
-
-        handler.tickScrollAnimation(targetTime: 0, displayId: displayId)
-
-        XCTAssertNil(handler.scrollAnimationByDisplay[displayId])
-    }
-
     func testDwindleTickRemovesRegistrationWhenControllerIsGone() {
         let handler = DwindleLayoutHandler(controller: nil)
         let displayId: CGDirectDisplayID = 981_002
@@ -148,51 +138,6 @@ final class AnimationRegistrationLivenessTests: XCTestCase {
 
         XCTAssertTrue(controller.dwindleLayoutHandler.dwindleAnimationByDisplay.isEmpty)
         XCTAssertFalse(engine.hasActiveAnimations(in: animatedWorkspaceId, at: CACurrentMediaTime()))
-    }
-
-    func testResetCancelsRegisteredNiriAndDwindleMotion() {
-        let controller = WindowAdmissionTestSupport.controller()
-        let niriWorkspaceId = WorkspaceDescriptor.ID()
-        let dwindleWorkspaceId = WorkspaceDescriptor.ID()
-        let niriMonitor = makeMonitor(displayId: 981_007)
-        let dwindleMonitor = makeMonitor(displayId: 981_008)
-        let niriEngine = NiriLayoutEngine()
-        controller.niriEngine = niriEngine
-        let niriWindow = controller.workspaceManager.withEngineMutationScope(in: niriWorkspaceId) {
-            niriEngine.addWindow(
-                token: WindowToken(pid: 981_107, windowId: 981_207),
-                to: niriWorkspaceId,
-                afterSelection: nil
-            )
-        }
-        niriWindow.animateMoveFrom(
-            displacement: CGPoint(x: 50, y: 0),
-            clock: nil,
-            animated: true
-        )
-        controller.workspaceManager.animationDriver.beginGesture(
-            in: niriWorkspaceId,
-            isTrackpad: true
-        )
-        controller.niriLayoutHandler.scrollAnimationByDisplay[niriMonitor.displayId] = niriWorkspaceId
-
-        let dwindleEngine = seedDwindleMotion(
-            controller: controller,
-            workspaceId: dwindleWorkspaceId,
-            token: WindowToken(pid: 981_108, windowId: 981_208)
-        )
-        controller.dwindleLayoutHandler.dwindleAnimationByDisplay[dwindleMonitor.displayId] = (
-            dwindleWorkspaceId,
-            dwindleMonitor
-        )
-
-        controller.layoutRefreshController.resetDisplayLinkAndAnimationState()
-
-        XCTAssertTrue(controller.niriLayoutHandler.scrollAnimationByDisplay.isEmpty)
-        XCTAssertTrue(controller.dwindleLayoutHandler.dwindleAnimationByDisplay.isEmpty)
-        XCTAssertFalse(controller.workspaceManager.animationDriver.hasMotion(in: niriWorkspaceId))
-        XCTAssertFalse(niriWindow.hasMoveAnimationsRunning)
-        XCTAssertFalse(dwindleEngine.hasActiveAnimations(in: dwindleWorkspaceId, at: CACurrentMediaTime()))
     }
 
     func testRejectedPlanDoesNotPublishDwindleAnimationTarget() throws {

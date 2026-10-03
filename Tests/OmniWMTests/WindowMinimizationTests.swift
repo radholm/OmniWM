@@ -8,55 +8,6 @@ import XCTest
 
 @MainActor
 final class WindowMinimizationTests: XCTestCase {
-    func testNiriMinimizingEitherColumnFillsScreenAndRestoresPlacement() throws {
-        for minimizedIndex in 0 ... 1 {
-            let controller = WindowAdmissionTestSupport.controller()
-            let workspaceId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
-            _ = controller.workspaceManager.focusWorkspace(named: "1")
-            controller.niriLayoutHandler.enableNiriLayout()
-            let tokens = [WindowToken(pid: 688_001, windowId: 688_101), WindowToken(pid: 688_001, windowId: 688_102)]
-            for token in tokens {
-                _ = WindowAdmissionTestSupport.track(token, in: workspaceId, controller: controller)
-            }
-            let engine = try XCTUnwrap(controller.niriEngine)
-            _ = controller.workspaceManager.withEngineMutationScope {
-                controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: [workspaceId])
-            }
-            let columns = engine.columns(in: workspaceId)
-            XCTAssertEqual(columns.count, 2)
-            let columnIds = columns.map(\.id)
-            let sizing = columns.map(\.width)
-            let minimized = tokens[minimizedIndex]
-            let survivor = tokens[1 - minimizedIndex]
-            controller.workspaceManager.setWindowMinimized(true, token: minimized)
-            let monitor = try XCTUnwrap(controller.workspaceManager.monitor(for: workspaceId))
-            let input = try XCTUnwrap(controller.layoutRefreshController.buildRefreshInput(
-                workspaceId: workspaceId, monitor: monitor, resolveConstraints: false, isActiveWorkspace: true
-            ))
-            XCTAssertEqual(input.excludedTokens, [minimized])
-            XCTAssertEqual(Set(input.windows.map(\.token)), Set(tokens))
-            let plan = try XCTUnwrap(controller.workspaceManager.withEngineMutationScope {
-                controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: [workspaceId]).first
-            })
-            XCTAssertFalse(plan.diff.frameChanges.contains { $0.token == minimized })
-            XCTAssertFalse(plan.diff.restoreChanges.contains { $0.token == minimized })
-            let visibleFrame = try XCTUnwrap(engine.findNode(for: survivor, in: workspaceId)?.frame)
-            XCTAssertTrue(visibleFrame.approximatelyEqual(
-                to: controller.borderSafeFillFrame(for: monitor),
-                tolerance: 1
-            ))
-            XCTAssertEqual(engine.columns(in: workspaceId).map(\.id), columnIds)
-            XCTAssertEqual(controller.resolveAndSetWorkspaceFocusToken(for: workspaceId), survivor)
-            controller.workspaceManager.setWindowMinimized(false, token: minimized)
-            _ = controller.workspaceManager.withEngineMutationScope {
-                controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: [workspaceId])
-            }
-            XCTAssertEqual(engine.columns(in: workspaceId).map(\.id), columnIds)
-            XCTAssertEqual(engine.columns(in: workspaceId).map(\.width), sizing)
-            XCTAssertEqual(engine.columns(in: workspaceId).flatMap { $0.windowNodes.map(\.token) }, tokens)
-        }
-    }
-
     func testDwindleMinimizationRetainsSplitAndRestoresFrames() throws {
         let controller = WindowAdmissionTestSupport.controller()
         let workspaceId = try XCTUnwrap(WindowAdmissionTestSupport.workspace(
@@ -89,36 +40,6 @@ final class WindowMinimizationTests: XCTestCase {
         XCTAssertEqual(controller.workspaceManager.withEngineMutationScope {
             engine.calculateLayout(for: workspaceId, screen: frame)
         }, original)
-    }
-
-    func testMinimizationCancelsMatchingFocusAndRejectsStalePlan() throws {
-        let controller = WindowAdmissionTestSupport.controller()
-        let workspaceId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
-        _ = controller.workspaceManager.focusWorkspace(named: "1")
-        controller.niriLayoutHandler.enableNiriLayout()
-        let token = WindowToken(pid: 688_003, windowId: 688_301)
-        let axRef = WindowAdmissionTestSupport.track(token, in: workspaceId, controller: controller)
-        let request = controller.intentLedger.beginManagedRequest(
-            token: token,
-            workspaceId: workspaceId,
-            origin: .keyboardOrProgrammatic
-        )
-        _ = controller.workspaceManager.beginManagedFocusRequest(
-            token,
-            in: workspaceId,
-            onMonitor: nil,
-            requestId: request.requestId
-        )
-        let plan = try XCTUnwrap(controller.workspaceManager.withEngineMutationScope {
-            controller.niriLayoutHandler.layoutWithNiriEngine(activeWorkspaces: [workspaceId]).first
-        })
-        controller.axEventHandler.handleWindowMinimized(pid: token.pid, axRef: axRef, minimized: true)
-        XCTAssertNil(controller.intentLedger.activeManagedRequest)
-        XCTAssertNil(controller.workspaceManager.pendingFocusedToken)
-        XCTAssertFalse(controller.isManagedWindowDisplayable(token))
-        XCTAssertFalse(controller.canFocusWindow(pid: token.pid, windowId: token.windowId))
-        XCTAssertNil(controller.resolveAndSetWorkspaceFocusToken(for: workspaceId))
-        XCTAssertFalse(controller.layoutRefreshController.executeLayoutPlan(plan))
     }
 
     func testAppUnhidePreservesMinimizedFloatingWindowAndItsParkingState() throws {

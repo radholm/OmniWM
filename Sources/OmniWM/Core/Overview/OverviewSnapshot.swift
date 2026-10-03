@@ -13,7 +13,6 @@ final class OverviewSnapshot {
     private let facts: OverviewWindowFacts
     private(set) var workspaces: [OverviewWorkspaceLayoutItem] = []
     private(set) var windows: [WindowHandle: OverviewWindowLayoutData] = [:]
-    private(set) var niriSnapshotsByWorkspace: [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot] = [:]
     private(set) var dwindleGroupsByWorkspace: [WorkspaceDescriptor.ID: [OverviewDwindleGroup]] = [:]
 
     init(wmController: WMController, facts: OverviewWindowFacts) {
@@ -28,7 +27,6 @@ final class OverviewSnapshot {
     func reset() {
         workspaces = []
         windows = [:]
-        niriSnapshotsByWorkspace = [:]
         dwindleGroupsByWorkspace = [:]
     }
 
@@ -36,23 +34,15 @@ final class OverviewSnapshot {
         windows.removeValue(forKey: handle)
     }
 
-    func refresh(affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>, settledNiriFrames: Bool = false) {
+    func refresh(affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>) {
         guard let wmController else { return }
         let workspaceManager = wmController.workspaceManager
         refreshWorkspaces(affectedWorkspaceIds: affectedWorkspaceIds, workspaceManager: workspaceManager)
         let projections = refreshEngineProjections(
             affectedWorkspaceIds: affectedWorkspaceIds,
-            wmController: wmController,
-            settledNiriFrames: settledNiriFrames
+            wmController: wmController
         )
         refreshCachedWindows(engineFrames: projections.frames)
-        for workspaceId in projections.niriWorkspaceIds {
-            reconcileNiriOverviewProjection(
-                workspaceId: workspaceId,
-                frames: projections.frames
-            )
-        }
-
         for (workspaceId, projection) in projections.dwindleProjections {
             reconcileDwindleOverviewProjection(
                 projection,
@@ -93,47 +83,28 @@ final class OverviewSnapshot {
 
     private struct EngineProjections {
         var frames: [WindowToken: CGRect]
-        var niriWorkspaceIds: Set<WorkspaceDescriptor.ID>
         var dwindleProjections: [WorkspaceDescriptor.ID: DwindleOverviewWorkspaceProjection]
     }
 
     private func refreshEngineProjections(
         affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>,
-        wmController: WMController,
-        settledNiriFrames: Bool
+        wmController: WMController
     ) -> EngineProjections {
         let workspaceManager = wmController.workspaceManager
         var engineFrames: [WindowToken: CGRect] = [:]
-        var niriWorkspaceIds: Set<WorkspaceDescriptor.ID> = []
         var dwindleProjections: [WorkspaceDescriptor.ID: DwindleOverviewWorkspaceProjection] = [:]
         for workspaceId in affectedWorkspaceIds {
             switch workspaceManager.activeLayoutKind(for: workspaceId) {
-            case .niri:
-                niriWorkspaceIds.insert(workspaceId)
-                let frames = (settledNiriFrames ? wmController.niriLayoutHandler.settledFrames(in: workspaceId) : nil)
-                    ?? wmController.niriEngine?.captureWindowFrames(in: workspaceId)
-                if let frames {
-                    engineFrames.merge(frames) { _, new in new }
-                }
-                if let snapshot = wmController.niriLayoutHandler.overviewSnapshot(for: workspaceId),
-                   let filteredSnapshot = facts.cachedNiriSnapshot(snapshot)
-                {
-                    niriSnapshotsByWorkspace[workspaceId] = filteredSnapshot
-                } else {
-                    niriSnapshotsByWorkspace.removeValue(forKey: workspaceId)
-                }
             case .dwindle:
                 if let projection = dwindleOverviewProjection(for: workspaceId) {
                     dwindleProjections[workspaceId] = projection
                     engineFrames.merge(projection.frames) { _, new in new }
                 }
-                niriSnapshotsByWorkspace.removeValue(forKey: workspaceId)
             }
         }
 
         return EngineProjections(
             frames: engineFrames,
-            niriWorkspaceIds: niriWorkspaceIds,
             dwindleProjections: dwindleProjections
         )
     }
@@ -217,7 +188,6 @@ final class OverviewSnapshot {
         self.workspaces = workspaces
         windows = windowData
         self.dwindleGroupsByWorkspace = dwindleGroupsByWorkspace
-        niriSnapshotsByWorkspace = buildNiriOverviewSnapshots()
     }
 
     private func displayedWorkspaces(
@@ -323,76 +293,5 @@ extension OverviewSnapshot {
         for handle in staleHandles {
             windows.removeValue(forKey: handle)
         }
-    }
-
-    private func reconcileNiriOverviewProjection(
-        workspaceId: WorkspaceDescriptor.ID,
-        frames: [WindowToken: CGRect]
-    ) {
-        guard let wmController else { return }
-        let workspaceManager = wmController.workspaceManager
-        var desiredHandles: Set<WindowHandle> = []
-
-        for entry in workspaceManager.entries(in: workspaceId) {
-            guard facts.isOverviewEligible(entry, workspaceManager: workspaceManager),
-                  let handle = workspaceManager.handle(for: entry.token)
-            else {
-                continue
-            }
-
-            desiredHandles.insert(handle)
-            let frame = frames[entry.token]
-                ?? windows[handle]?.frame
-                ?? facts.windowFrame(entry)
-                ?? .zero
-            if let data = windows[handle] {
-                if data.token != entry.token || data.workspaceId != workspaceId || data.frame != frame || data
-                    .floatingPreviewFrame != facts.floatingPreviewFrame(for: entry)
-                {
-                    windows[handle] = OverviewWindowLayoutData(
-                        token: entry.token,
-                        workspaceId: workspaceId,
-                        title: data.title,
-                        appName: data.appName,
-                        appIcon: data.appIcon,
-                        frame: frame,
-                        isNativeFullscreen: data.isNativeFullscreen,
-                        floatingPreviewFrame: facts.floatingPreviewFrame(for: entry)
-                    )
-                }
-            } else {
-                windows[handle] = facts.makeOverviewWindowData(
-                    for: entry,
-                    preferredFrame: frame,
-                    appInfoCache: wmController.appInfoCache
-                )
-            }
-        }
-
-        let staleHandles = windows.compactMap { handle, data in
-            data.workspaceId == workspaceId && !desiredHandles.contains(handle) ? handle : nil
-        }
-        for handle in staleHandles {
-            windows.removeValue(forKey: handle)
-        }
-    }
-
-    private func buildNiriOverviewSnapshots() -> [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot] {
-        guard let wmController, wmController.niriEngine != nil else { return [:] }
-
-        var snapshots: [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot] = [:]
-        snapshots.reserveCapacity(workspaces.count)
-
-        for workspace in workspaces {
-            guard facts.isNiriLayout(workspaceId: workspace.id),
-                  let snapshot = wmController.niriLayoutHandler.overviewSnapshot(for: workspace.id),
-                  let filteredSnapshot = facts.cachedNiriSnapshot(snapshot)
-            else {
-                continue
-            }
-            snapshots[workspace.id] = filteredSnapshot
-        }
-
-        return snapshots
     }
 }

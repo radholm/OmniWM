@@ -5,7 +5,7 @@ import CoreGraphics
 @testable import OmniWM
 import XCTest
 
-final class EdgeDragResizeTests: NiriInteractionTestCase {
+final class EdgeDragResizeTests: XCTestCase {
     func testEdgeBandsCoverInsideAndGapOnly() {
         let frame = CGRect(x: 100, y: 100, width: 400, height: 300)
         func edges(_ x: CGFloat, _ y: CGFloat) -> ResizeEdge {
@@ -163,6 +163,7 @@ final class EdgeDragResizeTests: NiriInteractionTestCase {
     @MainActor
     private func makeDwindleFixture(pid: pid_t) throws -> DwindleFixture {
         let controller = makeController()
+        let workingFrame = CGRect(x: 0, y: 0, width: 1600, height: 900)
         let monitor = Monitor(
             id: .init(displayId: 51_301),
             displayId: 51_301,

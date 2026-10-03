@@ -28,7 +28,6 @@ final class OverviewWindow: NSPanel {
 
     var onStripPan: ((Monitor.ID, CGPoint, CGFloat) -> Void)?
     var onWorkspaceSelected: ((Monitor.ID, WorkspaceDescriptor.ID) -> Void)?
-    var onOverflowPillPressed: ((Monitor.ID, OverviewOverflowPill) -> Void)?
     var onDismiss: ((Monitor.ID) -> Void)?
     var onScroll: ((Monitor.ID, CGFloat) -> Void)?
     var onScrollEvent: ((Monitor.ID, OverviewScrollInput.Event) -> Void)?
@@ -104,10 +103,6 @@ final class OverviewWindow: NSPanel {
         overlayView.onWorkspaceSelected = { [weak self] workspaceId in
             guard let self else { return }
             self.onWorkspaceSelected?(self.monitor.id, workspaceId)
-        }
-        overlayView.onOverflowPillPressed = { [weak self] pill in
-            guard let self else { return }
-            self.onOverflowPillPressed?(self.monitor.id, pill)
         }
         overlayView.onDismiss = { [weak self] in
             guard let self else { return }

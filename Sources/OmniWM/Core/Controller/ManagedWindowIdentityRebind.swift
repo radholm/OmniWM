@@ -8,6 +8,5 @@ struct ManagedWindowIdentityRebind {
     let oldWindow: AXManagedWindowIdentity
     let newWindow: AXManagedWindowIdentity
     let managedReplacementMetadata: ManagedReplacementMetadata?
-    let admissionHints: ManagedWindowAdmissionHints?
     let sizeConstraints: WindowSizeConstraints?
 }

@@ -162,7 +162,7 @@ final class LayoutDiffFrameOnlyTests: XCTestCase {
                 scale: 1,
                 orientation: monitor.autoOrientation
             ),
-            sessionPatch: WorkspaceSessionPatch(workspaceId: workspaceId, viewportState: nil),
+            sessionPatch: WorkspaceSessionPatch(workspaceId: workspaceId),
             diff: diff,
             isAnimationTick: true
         )

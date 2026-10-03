@@ -21,9 +21,6 @@ extension MouseEventHandler {
         if relevantModifiers == required {
             return .swap
         }
-        if relevantModifiers == required.union(.maskShift) {
-            return .insert
-        }
         return nil
     }
 

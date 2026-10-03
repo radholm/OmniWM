@@ -266,7 +266,6 @@ extension WMController {
             "enabled=\(isEnabled)",
             "locked=\(isLockScreenActive)",
             "animationsEnabled=\(settings.animationsEnabled)",
-            "scrollGestureEnabled=\(settings.gestures.scrollEnabled)",
             "workspaceSwipeEnabled=\(settings.gestures.workspaceSwipeEnabled)",
             "windowMoveEnabled=\(settings.gestures.windowMoveEnabled)",
             "windowResizeEnabled=\(settings.gestures.windowResizeEnabled)",
@@ -280,8 +279,7 @@ extension WMController {
             "monitors=\(workspaceManager.monitors.count)",
             "workspaces=\(workspaceManager.workspaces.count)",
             "windows=\(snapshot.windows.count)",
-            "layouts=\(snapshot.layouts.count)",
-            "viewports=\(snapshot.viewports.count)"
+            "layouts=\(snapshot.layouts.count)"
         ].joined(separator: "\n")
         var sections = [
             "== Product State ==",

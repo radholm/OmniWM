@@ -8,34 +8,6 @@ import XCTest
 
 @MainActor
 final class OverviewDwindleControlsTests: XCTestCase {
-    func testDwindleControlThresholdsPreserveNiriGeometry() throws {
-        let fixture = Fixture()
-        for (size, style) in [
-            (CGSize(width: 100, height: 92), OverviewTabControl.Style.segmented),
-            (CGSize(width: 99, height: 92), .pickerOnly),
-            (CGSize(width: 100, height: 91), .pickerOnly),
-            (CGSize(width: 74, height: 68), .pickerOnly)
-        ] {
-            let layout = fixture.layout(size: size)
-            let control = try XCTUnwrap(layout.tabControls(for: layout.workspaceSections[0]).first)
-            XCTAssertEqual(control.style, style)
-            XCTAssertEqual(control.frame.height, 22)
-            XCTAssertEqual(control.frame.minX, 108)
-            XCTAssertEqual(control.frame.minY, style == .segmented ? 140 : 100 + size.height - 30)
-        }
-        for size in [CGSize(width: 73, height: 92), CGSize(width: 100, height: 67)] {
-            let layout = fixture.layout(size: size)
-            XCTAssertTrue(layout.tabControls(for: layout.workspaceSections[0]).isEmpty)
-            XCTAssertEqual(layout.tabMembers(for: fixture.handles[1]).count, 3)
-        }
-        let niri = fixture.layout(size: CGSize(width: 100, height: 60), niri: true)
-        let control = try XCTUnwrap(niri.tabControls(for: niri.workspaceSections[0]).first)
-        XCTAssertEqual(control.style, .segmented)
-        XCTAssertEqual(control.frame, CGRect(x: 108, y: 136, width: 84, height: 22))
-        let narrowNiri = fixture.layout(size: CGSize(width: 99, height: 92), niri: true)
-        XCTAssertTrue(narrowNiri.tabControls(for: narrowNiri.workspaceSections[0]).isEmpty)
-    }
-
     func testControlsClearRenderedCaptionsAndCloseTargets() throws {
         let fixture = Fixture()
         for size in [
@@ -247,19 +219,7 @@ final class OverviewDwindleControlsTests: XCTestCase {
             handles = (0 ..< count).map { WindowHandle(id: WindowToken(pid: 1, windowId: $0 + 1)) }
         }
 
-        var state: OverviewRenderState {
-            OverviewRenderState(
-                searchQuery: "", selectedWindowHandle: handles[1], hoveredWindowHandle: handles[1],
-                closeButtonHovered: false, progress: 1, bounds: screen, palette: .default
-            )
-        }
-
-        func layout(
-            size: CGSize,
-            x: CGFloat = 100,
-            niri: Bool = false,
-            matchingIndices: Set<Int>? = nil
-        ) -> OverviewLayout {
+        func layout(size: CGSize, x: CGFloat = 100, matchingIndices: Set<Int>? = nil) -> OverviewLayout {
             let frame = CGRect(x: x, y: 100, width: size.width, height: size.height)
             let windows = handles.enumerated().map { index, handle in
                 var item = OverviewWindowItem(
@@ -269,7 +229,6 @@ final class OverviewDwindleControlsTests: XCTestCase {
                     matchesSearch: matchingIndices?.contains(index) ?? true
                 )
                 item.isDisplayed = index == 1
-                item.isTiled = niri
                 return item
             }
             var layout = OverviewLayout()
@@ -280,17 +239,17 @@ final class OverviewDwindleControlsTests: XCTestCase {
                 sectionFrame: screen, labelFrame: .zero, gridFrame: screen, isActive: true,
                 viewportFrame: screen, visibleFrame: screen, ribbonFrame: screen
             )])
-            if niri {
-                layout.niriColumnsByWorkspace[workspaceId] = [OverviewNiriColumn(
-                    workspaceId: workspaceId, columnIndex: 0, frame: frame,
-                    windowHandles: handles, isTabbed: true
-                )]
-            } else {
-                layout.dwindleGroupsByWorkspace[workspaceId] = [OverviewDwindleGroup(
-                    id: groupId, windowHandles: handles, activeHandle: handles[1]
-                )]
-            }
+            layout.dwindleGroupsByWorkspace[workspaceId] = [OverviewDwindleGroup(
+                id: groupId, windowHandles: handles, activeHandle: handles[1]
+            )]
             return layout
+        }
+
+        var state: OverviewRenderState {
+            OverviewRenderState(
+                searchQuery: "", selectedWindowHandle: handles[1], hoveredWindowHandle: handles[1],
+                closeButtonHovered: false, progress: 1, bounds: screen, palette: .default
+            )
         }
 
         func renderer(_ layout: OverviewLayout) -> OverviewLayerRenderer {

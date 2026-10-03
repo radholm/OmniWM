@@ -151,9 +151,7 @@ final class StopWindowRecoveryTests: XCTestCase {
         init() throws {
             controller.workspaceManager.applyMonitorConfigurationChange([monitor])
             workspace = try XCTUnwrap(WindowAdmissionTestSupport.workspace(
-                named: "91",
-                layoutType: .niri,
-                controller: controller
+                named: "1", layoutType: .dwindle, controller: controller
             ))
             controller.layoutRefreshController.fastFrameProvider = { _, _ in CGRect(
                 x: 100,

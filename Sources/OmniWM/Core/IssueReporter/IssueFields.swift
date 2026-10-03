@@ -20,7 +20,8 @@ enum IssueCategory: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .unspecified: "Unspecified"
-        case .layout: "Tiling layout (Niri / Dwindle)"
+        case .layout:
+            "Tiling layout (Dwindle)"
         case .focus: "Focus / focus-follows-mouse"
         case .multiMonitor: "Multi-monitor / workspaces"
         case .placement: "Window placement or sizing"
@@ -33,7 +34,8 @@ enum IssueCategory: String, CaseIterable, Identifiable {
     var localizedDisplayName: String {
         switch self {
         case .unspecified: String(localized: "Unspecified")
-        case .layout: String(localized: "Tiling layout (Niri / Dwindle)")
+        case .layout:
+            String(localized: "Tiling layout (Dwindle)")
         case .focus: String(localized: "Focus / focus-follows-mouse")
         case .multiMonitor: String(localized: "Multi-monitor / workspaces")
         case .placement: String(localized: "Window placement or sizing")
@@ -72,11 +74,11 @@ enum IssueRegression: String, CaseIterable, Identifiable {
 
 extension LayoutType {
     var normalizedForReport: LayoutType {
-        self == .defaultLayout ? .niri : self
+        .dwindle
     }
 
     static var reportChoices: [LayoutType] {
-        [.niri, .dwindle]
+        [.dwindle]
     }
 }
 
@@ -86,7 +88,7 @@ struct IssueComposition {
     var expected = ""
     var repro = ""
     var affectedApps = ""
-    var layout: LayoutType = .niri
+    var layout: LayoutType = .dwindle
     var regression: IssueRegression = .unknown
     var regressionVersion = ""
 }

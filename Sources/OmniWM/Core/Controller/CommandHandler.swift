@@ -53,14 +53,7 @@ final class CommandHandler {
     }
 
     static func isLayoutCompatible(_ compatibility: LayoutCompatibility, with layoutType: LayoutType) -> Bool {
-        switch (compatibility, layoutType) {
-        case (.niri, .dwindle),
-             (.dwindle, .niri),
-             (.dwindle, .defaultLayout):
-            false
-        default:
-            true
-        }
+        true
     }
 
     private func performAllowedCommand(_ command: HotkeyCommand, controller: WMController) -> ExternalCommandResult {
@@ -78,14 +71,10 @@ final class CommandHandler {
             return perform(action, controller: controller)
         case let .windowMovement(action):
             return perform(action, controller: controller)
-        case let .column(action):
-            return perform(action, controller: controller)
         case let .monitorFocus(action):
             return perform(action, controller: controller)
         case let .fullscreen(action):
             return perform(action, controller: controller)
-        case let .moveColumn(direction):
-            moveContainer(direction: direction)
         case let .sizing(action):
             return perform(action, controller: controller)
         case let .dwindle(action):
@@ -120,29 +109,26 @@ final class CommandHandler {
         guard let controller else { return nil }
         let layoutType = currentLayoutType()
         let handler: AnyObject = switch layoutType {
-        case .dwindle:
-            controller.layoutRefreshController.dwindleHandler
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            controller.layoutRefreshController.niriHandler
+            controller.layoutRefreshController.dwindleHandler
         }
         return handler as? T
     }
 
     private func moveWindow(direction: Direction) -> WindowMoveOutcome {
         switch currentLayoutType() {
-        case .dwindle:
-            controller?.dwindleLayoutHandler.moveWindow(direction: direction) ?? .blocked
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            moveWindowInNiri(direction: direction)
+            controller?.dwindleLayoutHandler.moveWindow(direction: direction) ?? .blocked
         }
     }
 
     private func focusWindow(direction: Direction) {
         guard let controller else { return }
         switch currentLayoutType() {
-        case .dwindle:
+        case .dwindle,
+             .defaultLayout:
             if controller.dwindleLayoutHandler.focusNeighbor(direction: direction) {
                 return
             }
@@ -152,62 +138,31 @@ final class CommandHandler {
                 return
             }
             _ = controller.dwindleLayoutHandler.wrapGroupFocus(direction: direction)
-        case .niri,
-             .defaultLayout:
-            if controller.niriLayoutHandler.focusNeighbor(direction: direction) != true,
-               controller.settings.focus.crossesMonitorAtEdge
-            {
-                _ = controller.workspaceNavigationHandler.focusMonitor(direction: direction)
-            }
         }
     }
 
     func moveWindowWithinContainer(direction: Direction) {
         switch currentLayoutType() {
-        case .dwindle:
+        case .dwindle,
+             .defaultLayout:
             controller?.dwindleLayoutHandler.moveGroupMember(direction: direction)
-        case .niri,
-             .defaultLayout:
-            controller?.niriLayoutHandler.moveWindowWithinContainer(direction: direction)
-        }
-    }
-
-    private func moveContainer(direction: Direction) {
-        switch currentLayoutType() {
-        case .dwindle:
-            _ = controller?.dwindleLayoutHandler.swapWindow(direction: direction)
-        case .niri,
-             .defaultLayout:
-            controller?.niriLayoutHandler.moveColumn(direction: direction)
         }
     }
 
     func focusWindowWrapping(direction: Direction) {
         switch currentLayoutType() {
-        case .dwindle:
-            _ = controller?.dwindleLayoutHandler.wrapGroupFocus(direction: direction)
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            if direction == .down {
-                controller?.niriLayoutHandler.focusWindowDownOrTopInNiri()
-            } else if direction == .up {
-                controller?.niriLayoutHandler.focusWindowUpOrBottomInNiri()
-            }
+            _ = controller?.dwindleLayoutHandler.wrapGroupFocus(direction: direction)
         }
     }
 
     func toggleFullscreen() {
         switch currentLayoutType() {
-        case .dwindle:
-            controller?.dwindleLayoutHandler.toggleFullscreen()
-        case .niri,
+        case .dwindle,
              .defaultLayout:
-            controller?.niriLayoutHandler.toggleFullscreen()
+            controller?.dwindleLayoutHandler.toggleFullscreen()
         }
-    }
-
-    private func moveWindowInNiri(direction: Direction) -> WindowMoveOutcome {
-        controller?.niriLayoutHandler.moveWindow(direction: direction) ?? .blocked
     }
 
     func toggleNativeFullscreenForFocused() {
@@ -281,25 +236,9 @@ final class CommandHandler {
     }
 
     private func currentLayoutType() -> LayoutType {
-        guard let controller else { return .niri }
-        guard let ws = controller.activeWorkspace() else { return .niri }
+        guard let controller else { return .dwindle }
+        guard let ws = controller.activeWorkspace() else { return .dwindle }
         return controller.settings.workspaces.layoutType(for: ws.name)
-    }
-
-    func toggleWorkspaceLayout() {
-        guard let controller else { return }
-        guard let workspace = controller.activeWorkspace() else { return }
-        let workspaceName = workspace.name
-
-        let currentLayout = controller.settings.workspaces.layoutType(for: workspaceName)
-
-        let newLayout: LayoutType = switch currentLayout {
-        case .niri,
-             .defaultLayout: .dwindle
-        case .dwindle: .niri
-        }
-
-        _ = setWorkspaceLayout(newLayout, forWorkspaceNamed: workspaceName)
     }
 
     @discardableResult

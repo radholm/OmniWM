@@ -9,13 +9,12 @@ extension WorkspaceManager {
         case .window: noteWindowInvalidation(for: event)
         case .focus: noteFocusEventInvalidation(for: event)
         case .session: noteSessionEventInvalidation(for: event)
-        case .viewport: break
         }
     }
 
     private func noteWindowInvalidation(for event: WMEvent) {
         switch event {
-        case let .windowAdmitted(_, workspaceId, _, _, _, _, _, _, _, _, _),
+        case let .windowAdmitted(_, workspaceId, _, _, _, _, _, _, _, _),
              let .windowModeChanged(_, workspaceId, _, _, _),
              let .hiddenStateChanged(_, workspaceId, _, _, _),
              let .windowMinimizedChanged(_, workspaceId, _, _),
@@ -34,8 +33,8 @@ extension WorkspaceManager {
              let .layoutOperationPerformed(workspaceId, _, _):
             noteInvalidation(workspaceId: workspaceId, domains: .layout)
 
-        case .niriPlacementsResolved,
-             .dwindlePlacementsResolved:
+        case
+            .dwindlePlacementsResolved:
             break
 
         case .topLevelInventoryObserved:
@@ -49,9 +48,6 @@ extension WorkspaceManager {
 
         case let .appVisibilityInvalidated(_, affectedWorkspaceIds, _):
             noteInvalidation(workspaceIds: affectedWorkspaceIds, domains: [.focus])
-
-        case .windowAdmissionHintsChanged:
-            break
 
         case let .windowRekeyed(_, _, workspaceId, _, _, _, _, _):
             noteInvalidation(workspaceId: workspaceId, domains: [.workspace, .layout, .focus])
@@ -153,22 +149,16 @@ extension WorkspaceManager {
              .nativeFocusOwnerChanged,
              .nativeFullscreenPlaceholderSelected,
              .nativeFullscreenTransition,
-             .niriPlacementsResolved,
              .dwindlePlacementsResolved,
              .scratchpadMembershipChanged,
              .scratchpadRevealChanged,
-             .selectionChanged,
              .spaceTopologyChanged,
              .suppressedFocusChanged,
              .systemModalFocusChanged,
              .topLevelInventoryObserved,
              .userCommand,
-             .viewportChanged,
-             .viewportCommitted,
-             .viewportForgotten,
              .visibleWorkspacesChanged,
              .windowAdmitted,
-             .windowAdmissionHintsChanged,
              .windowModeChanged,
              .windowRekeyed,
              .windowRemoved,

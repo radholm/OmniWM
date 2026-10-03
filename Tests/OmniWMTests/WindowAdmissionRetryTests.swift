@@ -33,8 +33,8 @@ final class WindowAdmissionRetryTests: XCTestCase {
         controller.axEventHandler.handleCGSEvent(.created(windowId: windowId, spaceId: 0))
         await controller.axEventHandler.lifecycleQueries.task?.value
 
-        let trace = controller.axEventHandler.createFocusTraceDump()
-        XCTAssertTrue(trace.contains("window=\(windowId) pid=nil reason=window_info_missing attempt=1"))
+        XCTAssertEqual(controller.axEventHandler.admissionRetryStateByWindowId[windowId]?.reason, .windowInfoMissing)
+        XCTAssertEqual(controller.axEventHandler.admissionRetryStateByWindowId[windowId]?.attempt, 1)
         controller.axEventHandler.handleCGSEvent(.destroyed(windowId: windowId, spaceId: 0))
         await controller.axEventHandler.lifecycleQueries.task?.value
     }
@@ -765,7 +765,6 @@ final class WindowAdmissionRetryTests: XCTestCase {
                     ),
                     newWindow: AXManagedWindowIdentity(token: newToken, axRef: newRef),
                     managedReplacementMetadata: nil,
-                    admissionHints: nil,
                     sizeConstraints: nil
                 )
             )
@@ -1016,7 +1015,6 @@ final class WindowAdmissionRetryTests: XCTestCase {
                     ),
                     newWindow: AXManagedWindowIdentity(token: newToken, axRef: newRef),
                     managedReplacementMetadata: nil,
-                    admissionHints: nil,
                     sizeConstraints: nil
                 ),
                 preparedSubscriptionRetainContribution: 1
@@ -1084,7 +1082,6 @@ final class WindowAdmissionRetryTests: XCTestCase {
                     ),
                     newWindow: AXManagedWindowIdentity(token: modalToken, axRef: modalRef),
                     managedReplacementMetadata: nil,
-                    admissionHints: nil,
                     sizeConstraints: nil
                 )
             )
@@ -1344,7 +1341,6 @@ final class WindowAdmissionRetryTests: XCTestCase {
                 token: token,
                 axRef: axRef,
                 ruleEffects: .none,
-                admissionHints: .none,
                 appFullscreen: false,
                 replacementMetadata: .init(
                     bundleId: nil,
@@ -1381,7 +1377,6 @@ final class WindowAdmissionRetryTests: XCTestCase {
                 oldWindow: .init(token: oldToken, axRef: oldAXRef),
                 newWindow: .init(token: newToken, axRef: newAXRef),
                 managedReplacementMetadata: nil,
-                admissionHints: nil,
                 sizeConstraints: nil
             ),
             exhausted: false,

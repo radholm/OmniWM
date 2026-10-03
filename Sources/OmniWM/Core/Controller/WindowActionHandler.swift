@@ -248,10 +248,6 @@ final class WindowActionHandler {
     @discardableResult
     func focusWorkspaceFromBar(named name: String) -> Bool {
         guard let controller else { return false }
-        if let currentWorkspace = controller.activeWorkspace() {
-            controller.workspaceNavigationHandler.saveNiriViewportState(for: currentWorkspace.id)
-        }
-
         guard let result = controller.workspaceManager.focusWorkspace(named: name) else { return false }
         return completeWorkspaceFocusFromBar(result, focusOrigin: .keyboardOrProgrammatic)
     }
@@ -262,10 +258,6 @@ final class WindowActionHandler {
         focusOrigin: ManagedFocusOrigin = .keyboardOrProgrammatic
     ) -> Bool {
         guard let controller else { return false }
-        if let currentWorkspace = controller.activeWorkspace() {
-            controller.workspaceNavigationHandler.saveNiriViewportState(for: currentWorkspace.id)
-        }
-
         guard let result = controller.workspaceManager.focusWorkspace(id: workspaceId) else { return false }
         return completeWorkspaceFocusFromBar(result, focusOrigin: focusOrigin)
     }

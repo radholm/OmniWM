@@ -293,11 +293,8 @@ final class SurfaceReconciler {
         for border: DesiredBorderSurface?,
         controller: WMController
     ) -> Bool {
-        guard let border,
-              let entry = controller.workspaceManager.entry(for: border.token)
-        else { return false }
-        return !controller.workspaceManager.animationDriver.hasMotion(in: entry.workspaceId)
-            && !controller.axManager.hasPendingFrameWrite(for: border.windowId)
+        guard let border else { return false }
+        return !controller.axManager.hasPendingFrameWrite(for: border.windowId)
     }
 
     private func applyFull(

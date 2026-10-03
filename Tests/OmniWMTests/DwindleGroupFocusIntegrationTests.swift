@@ -342,7 +342,6 @@ final class DwindleGroupFocusIntegrationTests: XCTestCase {
         _ = fixture.controller.workspaceManager.applySessionPatch(
             .init(
                 workspaceId: fixture.workspaceId,
-                viewportState: nil,
                 rememberedFocusToken: fixture.activeToken,
                 plannedSeq: fixture.controller.workspaceManager.worldSeq
             )
@@ -1043,7 +1042,6 @@ final class DwindleGroupFocusIntegrationTests: XCTestCase {
         _ = fixture.controller.workspaceManager.applySessionPatch(
             .init(
                 workspaceId: fixture.workspaceId,
-                viewportState: nil,
                 rememberedFocusToken: fixture.activeToken,
                 plannedSeq: fixture.controller.workspaceManager.worldSeq
             )

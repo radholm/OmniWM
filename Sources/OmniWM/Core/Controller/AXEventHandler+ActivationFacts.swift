@@ -127,7 +127,6 @@ extension AXEventHandler {
         controller: WMController
     ) {
         let facts = observation.facts
-        let source = facts.source
         let token = observation.token
         let pid = facts.pid
         let axRef = observation.focusedWindow.axRef
@@ -164,15 +163,6 @@ extension AXEventHandler {
             verifiedManagedParentToken: admissionAttempt.verifiedManagedParentToken
         )
         controller.surfaceReconciler.noteRestackOccurred()
-
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .externalFocusFallbackEntered(
-                    pid: pid,
-                    source: source
-                )
-            )
-        )
     }
 
     private func acceptsResolvedFocusedActivation(
@@ -383,9 +373,6 @@ extension AXEventHandler {
                     : verifiedManagedParentToken
             )
             controller.surfaceReconciler.noteRestackOccurred()
-            recordNiriCreateFocusTrace(
-                .init(kind: .provisionalExternalFocusEntered(pid: pid, source: source))
-            )
         }
         _ = scheduleFocusedAdmissionReadmit(
             continuation: .init(

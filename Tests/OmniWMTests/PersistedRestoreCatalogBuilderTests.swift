@@ -77,8 +77,6 @@ final class PersistedRestoreCatalogBuilderTests: XCTestCase {
             normalizedFloatingOrigin: CGPoint(x: 0.25, y: 0.5),
             restoreToFloating: true,
             rescueEligible: false,
-            niriPlacement: nil,
-            detachedNiriContainerSizingState: nil,
             dwindlePlacement: PersistedDwindlePlacement(
                 steps: [.init(orientation: .horizontal, ratio: 0.4, childIndex: 1)],
                 memberIndex: 2,

@@ -159,7 +159,6 @@ extension WMController {
                 layoutDecisionKind: .explicitLayout,
                 workspaceName: nil,
                 ruleEffects: .none,
-                admissionHints: .none,
                 heuristicReasons: [],
                 deferredReason: nil
             ),

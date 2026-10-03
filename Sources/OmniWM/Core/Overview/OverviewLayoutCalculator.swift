@@ -36,8 +36,6 @@ enum OverviewLayoutMetrics {
     static let closeButtonPadding: CGFloat = 6
     static let contentTopPadding: CGFloat = 20
     static let contentBottomPadding: CGFloat = 40
-    static let overflowPillHeight: CGFloat = 26
-    static let overflowPillWidth: CGFloat = 52
     static let dragAutoScrollBand: CGFloat = 56
 }
 
@@ -69,10 +67,8 @@ struct OverviewLayoutCalculator {
     func calculateLayout(
         workspaces: [OverviewWorkspaceLayoutItem],
         windows: [WindowHandle: OverviewWindowLayoutData],
-        niriSnapshotsByWorkspace: [WorkspaceDescriptor.ID: NiriOverviewWorkspaceSnapshot] = [:],
         dwindleGroupsByWorkspace: [WorkspaceDescriptor.ID: [OverviewDwindleGroup]] = [:],
         searchQuery: String,
-        stripPans: [WorkspaceDescriptor.ID: CGFloat] = [:],
         monitorId: Monitor.ID? = nil
     ) -> OverviewLayout {
         let context = geometry
@@ -91,7 +87,6 @@ struct OverviewLayoutCalculator {
                 for: workspace,
                 windows: windowsByWorkspace[workspace.id] ?? [],
                 geometry: geometry,
-                niriSnapshot: niriSnapshotsByWorkspace[workspace.id],
                 dwindleGroups: dwindleGroupsByWorkspace[workspace.id],
                 searchQuery: searchQuery,
                 currentY: &y,
@@ -120,10 +115,6 @@ struct OverviewLayoutCalculator {
         }
         layout.replaceWorkspaceSections(sections)
         layout.totalContentHeight = context.totalContentHeight(currentY: currentY)
-        for (workspaceId, pan) in stripPans {
-            layout.restoreStripPan(workspaceId, to: pan)
-        }
-        layout.refreshOverflow()
         return layout
     }
 
@@ -159,7 +150,6 @@ struct OverviewLayoutCalculator {
         for workspace: OverviewWorkspaceLayoutItem,
         windows: [(WindowHandle, OverviewWindowLayoutData)],
         geometry: OverviewLayoutGeometry,
-        niriSnapshot: NiriOverviewWorkspaceSnapshot?,
         dwindleGroups: [OverviewDwindleGroup]?,
         searchQuery: String,
         currentY: inout CGFloat,
@@ -170,19 +160,7 @@ struct OverviewLayoutCalculator {
             sections.append(geometry.buildEmptyWorkspaceSection(workspace: workspace, currentY: &currentY))
             return
         }
-        if let niriSnapshot,
-           let projection = geometry.buildNiriWorkspaceProjection(
-               workspace: workspace,
-               snapshot: niriSnapshot,
-               windows: windows,
-               searchQuery: searchQuery,
-               currentY: &currentY
-           )
-        {
-            sections.append(projection.section)
-            layout.niriColumnsByWorkspace[workspace.id] = projection.columns
-            layout.niriColumnDropZonesByWorkspace[workspace.id] = projection.columnDropZones
-        } else if let section = geometry.buildGenericWorkspaceSection(
+        if let section = geometry.buildGenericWorkspaceSection(
             workspace: workspace,
             windows: windows,
             dwindleGroups: dwindleGroups ?? [],

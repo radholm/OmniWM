@@ -52,7 +52,7 @@ struct TrackpadGesturesSettingsPanel: View {
         let gestures = settings.gestures.export()
         let enabled = action.isEnabled(in: gestures)
         let conflict = enabled ? nil : GestureAssignmentEditor.conflict(
-            enabling: action, settings: settings, monitors: monitors
+            enabling: action, settings: settings
         )
         return VStack(alignment: .leading, spacing: 8) {
             DisclosureGroup {
@@ -134,16 +134,12 @@ struct TrackpadGesturesSettingsPanel: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Button {
-                        editor.confirm(resolution, settings: settings, monitors: monitors)
+                        editor.confirm(resolution, settings: settings)
                     } label: {
                         Text(proposal.edit.summary)
                     }
                     .accessibilityLabel(resolution.title(for: proposal.edit))
                     .focused($focusedControl, equals: .resolution(resolution.id))
-                    if resolution.disablesMouseWheelScrolling {
-                        Text("Also turns off modifier + mouse-wheel column scrolling.")
-                            .foregroundStyle(.secondary)
-                    }
                 }
             }
             Button("Cancel", action: editor.cancel)
@@ -158,8 +154,6 @@ struct TrackpadGesturesSettingsPanel: View {
     @ViewBuilder
     private func gestureDetails(_ action: GestureAssignmentAction) -> some View {
         switch action {
-        case .columns:
-            columnDetails
         case .workspaces:
             Picker("Swipe axis", selection: Binding(
                 get: { settings.gestures.workspaceSwipeAxis },
@@ -169,9 +163,6 @@ struct TrackpadGesturesSettingsPanel: View {
                     Text(axis.localizedDisplayName).tag(axis)
                 }
             }
-            SettingsCaption(
-                localized: "When sharing fingers with column scrolling in Niri, workspace swipes use the perpendicular direction on each display. The selected axis applies without column scrolling."
-            )
             SettingsSliderRow(
                 label: "Swipe sensitivity",
                 value: Bindable(settings.gestures).workspaceSwipeSensitivity,
@@ -219,31 +210,6 @@ struct TrackpadGesturesSettingsPanel: View {
 
     private var columnDetails: some View {
         Group {
-            SettingsSliderRow(
-                label: String(localized: "Scroll sensitivity"),
-                value: Bindable(settings.gestures).scrollSensitivity,
-                range: 0.1 ... 100.0,
-                step: 0.1,
-                valueText: String(
-                    localized: "\(settings.gestures.scrollSensitivity.formatted(.number.precision(.fractionLength(1))))x"
-                )
-            )
-            Picker("Trackpad scroll style", selection: Bindable(settings.gestures).trackpadScrollStyle) {
-                ForEach(TrackpadScrollStyle.allCases) { style in
-                    Text(style.localizedDisplayName).tag(style)
-                }
-            }
-            SettingsCaption(settings.gestures.trackpadScrollStyle == .momentum
-                ? String(localized: "Free inertial scrolling with rubber-band edges.")
-                : String(localized: "Scroll snaps to the nearest column."))
-            Picker("Mouse scroll modifier", selection: Bindable(settings.gestures).scrollModifierKey) {
-                ForEach(ScrollModifierKey.allCases, id: \.self) { key in
-                    Text(key.localizedDisplayName).tag(key)
-                }
-            }
-            SettingsCaption(
-                localized: "Hold this modifier and scroll the mouse wheel to scroll columns. Turning off Scroll columns disables both trackpad and modified mouse-wheel column scrolling."
-            )
         }
     }
 
@@ -260,38 +226,30 @@ struct TrackpadGesturesSettingsPanel: View {
             )
             SettingsCaption(localized: "At 1.0x, sweeping the whole trackpad travels across the whole screen.")
             Toggle("Invert Direction (Natural)", isOn: Bindable(settings.gestures).invertDirection)
-            SettingsCaption(settings.gestures.invertDirection
-                ? String(localized: "Affects column scrolling and workspace swipes. Swipe right = scroll right.")
-                : String(localized: "Affects column scrolling and workspace swipes. Swipe right = scroll left."))
+            SettingsCaption("Affects workspace swipe direction.")
         }
     }
 
     private func description(for action: GestureAssignmentAction) -> String {
         switch action {
-        case .columns:
-            String(localized: "Scroll along the Niri layout direction. Also enables modified mouse-wheel scrolling.")
         case .workspaces:
-            if settings.gestures.workspaceSwipeAxisLockedToVertical {
-                String(localized: "Switch workspaces under the pointer; perpendicular to column scrolling in Niri.")
-            } else {
-                String(
-                    localized: "Switch workspaces under the pointer with \(settings.gestures.workspaceSwipeAxis.localizedSwipePhrase)."
-                )
-            }
+            return String(
+                localized: "Switch workspaces under the pointer with \(settings.gestures.workspaceSwipeAxis.localizedSwipePhrase)."
+            )
         case .overview:
-            String(localized: "Swipe up to open Overview and down to close it.")
+            return String(localized: "Swipe up to open Overview and down to close it.")
         case .move:
-            String(localized: "Drag without clicking to swap tiled windows on the same display.")
+            return String(localized: "Drag without clicking to swap tiled windows on the same display.")
         case .resize:
-            String(localized: "Drag without clicking to resize the nearest movable window edges.")
+            return String(localized: "Drag without clicking to resize the nearest movable window edges.")
         }
     }
 
     private func submit(_ action: GestureAssignmentAction, _ change: GestureAssignmentEdit.Change) {
-        editor.submit(.init(action: action, change: change), settings: settings, monitors: monitors)
+        editor.submit(.init(action: action, change: change), settings: settings)
     }
 
     private func refreshProposal() {
-        editor.refresh(settings: settings, monitors: monitors)
+        editor.refresh(settings: settings)
     }
 }

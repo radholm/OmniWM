@@ -8,14 +8,14 @@ import XCTest
 @MainActor
 final class GestureSettingsBatchTests: XCTestCase {
     func testReplacingOnlyActiveGesturePublishesCompleteStateWithoutAvailabilityTransition() {
-        for startsWithColumns in [true, false] {
+        for startsWithWorkspaces in [true, false] {
             withSettings { settings in
-                settings.gestures.scrollEnabled = startsWithColumns
-                settings.gestures.windowMoveEnabled = !startsWithColumns
+                settings.gestures.workspaceSwipeEnabled = startsWithWorkspaces
+                settings.gestures.windowMoveEnabled = !startsWithWorkspaces
                 settings.gestures.windowMoveFingerCount = .three
                 var candidate = settings.gestures.export()
-                candidate.scrollEnabled = !startsWithColumns
-                candidate.windowMoveEnabled = startsWithColumns
+                candidate.workspaceSwipeEnabled = !startsWithWorkspaces
+                candidate.windowMoveEnabled = startsWithWorkspaces
                 candidate.windowGestureSensitivity = 2.5
                 var published: [SettingsExport.Gestures] = []
                 var availability: [Bool] = []
@@ -26,7 +26,7 @@ final class GestureSettingsBatchTests: XCTestCase {
                 }
                 settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
 
-                XCTAssertNil(settings.updateGestureSettings(candidate, monitors: []))
+                XCTAssertNil(settings.updateGestureSettings(candidate))
 
                 XCTAssertEqual(published, [candidate])
                 XCTAssertTrue(availability.isEmpty)
@@ -39,6 +39,7 @@ final class GestureSettingsBatchTests: XCTestCase {
     func testAvailabilityCallbacksSeeFinalStateOnlyWhenAggregateChanges() {
         withSettings { settings in
             let gestures = settings.gestures
+            gestures.workspaceSwipeEnabled = true
             var candidate = gestures.export()
             var availability: [Bool] = []
             var availabilitySnapshots: [SettingsExport.Gestures] = []
@@ -52,8 +53,7 @@ final class GestureSettingsBatchTests: XCTestCase {
                 availability.append($0)
                 availabilitySnapshots.append(gestures.export())
             }
-
-            candidate.scrollEnabled = false
+            candidate.workspaceSwipeEnabled = false
             candidate.windowGestureSensitivity = 2
             gestures.apply(candidate)
             let disabled = candidate
@@ -95,7 +95,6 @@ final class GestureSettingsBatchTests: XCTestCase {
             equivalent.windowResizeEnabled = nil
             equivalent.windowResizeFingerCount = nil
             equivalent.windowGestureSensitivity = .infinity
-            equivalent.scrollSensitivity = .nan
             gestures.apply(equivalent)
 
             XCTAssertEqual(changes, 0)
@@ -105,10 +104,11 @@ final class GestureSettingsBatchTests: XCTestCase {
 
     func testRejectedAssignmentPublishesNothing() {
         withSettings { settings in
+            settings.gestures.workspaceSwipeEnabled = true
             let original = settings.gestures.export()
             var candidate = original
             candidate.windowMoveEnabled = true
-            candidate.windowMoveFingerCount = candidate.fingerCount
+            candidate.windowMoveFingerCount = candidate.workspaceSwipeFingerCount
             var changes = 0
             var availability: [Bool] = []
             let originalOnChange = settings.gestures.onChange
@@ -118,7 +118,7 @@ final class GestureSettingsBatchTests: XCTestCase {
             }
             settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
 
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
 
             XCTAssertEqual(settings.gestures.export(), original)
             XCTAssertEqual(changes, 0)
@@ -129,6 +129,7 @@ final class GestureSettingsBatchTests: XCTestCase {
     func testDirectEditsStillPublishImmediatelyAfterAnApplication() {
         withSettings { settings in
             let gestures = settings.gestures
+            gestures.workspaceSwipeEnabled = true
             gestures.apply(gestures.export())
             var changes = 0
             var availability: [Bool] = []
@@ -138,8 +139,7 @@ final class GestureSettingsBatchTests: XCTestCase {
                 originalOnChange?()
             }
             settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
-
-            gestures.scrollEnabled = false
+            gestures.workspaceSwipeEnabled = false
             gestures.windowResizeFingerCount = .four
             gestures.windowResizeEnabled = true
             gestures.windowResizeEnabled = true
@@ -151,8 +151,9 @@ final class GestureSettingsBatchTests: XCTestCase {
 
     func testWholeExportStillPublishesOneAggregateAvailabilityChange() {
         withSettings { settings in
+            settings.gestures.workspaceSwipeEnabled = true
             var export = settings.toExport()
-            export.gestures.scrollEnabled = false
+            export.gestures.workspaceSwipeEnabled = false
             export.gestures.windowMoveEnabled = true
             var availability: [Bool] = []
             settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
@@ -172,7 +173,6 @@ final class GestureSettingsBatchTests: XCTestCase {
 
     func testOverviewSwitchChangesEffectiveAvailabilityWhileOtherGesturesRemainUsable() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             settings.gestures.overviewGestureEnabled = true
             var availability: [Bool] = []
             settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
@@ -192,8 +192,9 @@ final class GestureSettingsBatchTests: XCTestCase {
 
     func testWholeExportBatchesOverviewAndGestureAvailability() {
         withSettings { settings in
+            settings.gestures.workspaceSwipeEnabled = true
             var export = settings.toExport()
-            export.gestures.scrollEnabled = false
+            export.gestures.workspaceSwipeEnabled = false
             export.gestures.overviewGestureEnabled = true
             export.overview.enabled = false
             var availability: [Bool] = []

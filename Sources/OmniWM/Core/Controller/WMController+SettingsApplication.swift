@@ -25,7 +25,6 @@ extension WMController {
 
         updateWorkspaceConfig()
         updateMonitorOrientations()
-        updateMonitorNiriSettings()
         updateMonitorDwindleSettings()
         updateMonitorGapSettings()
         updateAppRules()
@@ -86,7 +85,6 @@ extension WMController {
 
         let width = TabRailStyle(appIcons: enabled).reservedWidth
         workspaceManager.withEngineMutationScope {
-            niriEngine?.updateTabIndicatorWidth(width, motion: motionPolicy.snapshot())
             dwindleEngine?.tabRailWidth = width
         }
         workspaceManager.invalidateAllLayouts()
@@ -132,22 +130,6 @@ extension WMController {
     }
 
     private func applyPersistedLayoutSettings(_ settings: SettingsStore) {
-        if niriEngine == nil {
-            enableNiriLayout(
-                centerFocusedColumn: settings.niri.centerFocusedColumn,
-                alwaysCenterSingleColumn: settings.niri.alwaysCenterSingleColumn
-            )
-        }
-        updateNiriConfig(
-            visibleContainerCount: settings.niri.visibleContainerCount,
-            infiniteLoop: settings.niri.infiniteLoop,
-            centerFocusedColumn: settings.niri.centerFocusedColumn,
-            alwaysCenterSingleColumn: settings.niri.alwaysCenterSingleColumn,
-            singleWindowFit: settings.niri.singleWindowFit,
-            containerPrimarySpanPresets: settings.niri.containerPrimarySpanPresets,
-            defaultContainerPrimarySpan: settings.niri.defaultContainerPrimarySpan
-        )
-
         if dwindleEngine == nil {
             enableDwindleLayout()
         }

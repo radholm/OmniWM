@@ -55,11 +55,6 @@ final class WindowRuleReevaluationScheduler {
                   self.pendingWindowRuleReevaluationGeneration == generation,
                   let controller = self.controller
             else { return }
-            guard controller.niriLayoutHandler.scrollAnimationByDisplay.isEmpty else {
-                self.pendingWindowRuleReevaluationTask = nil
-                self.schedule(targets: self.pendingWindowRuleReevaluationTargets)
-                return
-            }
             let targets = self.pendingWindowRuleReevaluationTargets
             let outcome = await self.reevaluate(controller, targets)
             guard !Task.isCancelled, self.pendingWindowRuleReevaluationGeneration == generation else { return }

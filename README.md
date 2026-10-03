@@ -1,6 +1,6 @@
 # OmniWM
 
-OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling window manager for Apple Silicon Macs running macOS 26 or later. It combines Niri-style orientation-aware scrolling containers and Hyprland-style Dwindle BSP layouts, selectable per workspace, with multi-monitor routing and optional local CLI/IPC automation.
+OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling window manager for Apple Silicon Macs running macOS 26 or later. It provides Hyprland-style Dwindle BSP tiling, floating windows, multi-monitor routing, and optional local CLI/IPC automation.
 
 **[Website](https://omniwm.app)** · **[Documentation](https://omniwm.app/guides/quick-start/)** · **[Install](https://omniwm.app/guides/install/)** · **[Compatibility](https://omniwm.app/help/known-limitations/)**
 
@@ -535,8 +535,8 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
 - Overview
 - Unified command palette for windows, app menus, clipboard history, OmniWM commands, applications, and files
 - Menu Anywhere
-- Niri-style tabbed containers and Dwindle tile groups
-- Niri-style scrolling and Hyprland-style Dwindle BSP layouts
+- Dwindle tile groups
+- Hyprland-style Dwindle BSP tiling
 - Status-bar icon concealment (similar to Ice)
 - Keep Awake (similar to Caffeine)
 - Interactive workspace and app-icon bar
@@ -676,7 +676,6 @@ For setup, installation options, commands, queries, rules, subscriptions, and se
 2. In System Settings > Desktop & Dock > Mission Control, turn **ON** `Displays have separate Spaces`
 3. Log out of macOS and log back in for that change to take effect unless you had it on already
 4. Grant Accessibility and Input Monitoring in the launch permissions window, and optionally Screen Recording. Return to that window and click **Start OmniWM** or **Continue Without Screen Recording**; use **Check Again** if a required permission still appears missing
-5. Windows will automatically tile in orientation-aware Niri containers: monitors using horizontal orientation show columns that scroll left and right, while vertical orientation shows rows that scroll up and down
 6. Keep one macOS Space per display and navigate with OmniWM workspaces; extra native Spaces are tolerated (their windows are left to macOS, not tiled)
 7. Use the defaults in [Keyboard Shortcuts](#keyboard-shortcuts) to navigate, and customize them in `Settings > Hotkeys`
 8. Click the menu bar icon to access Settings, including `Settings > General > Updates`
@@ -700,19 +699,17 @@ The setup assistant opens automatically when OmniWM first sees multiple displays
 
 Custom arrangements are remembered for each set of connected displays, so home and work can keep different positions for the same laptop display. Reconnecting a saved set restores its arrangement automatically. If there is no exact match, OmniWM inherits the smallest saved arrangement containing every connected display; an uncovered set or an invalid grid follows macOS. Editing, resetting, or finishing setup saves only the connected set, leaving any larger arrangement unchanged. Simply connecting displays or opening Settings does not save an arrangement. Workspace assignments and other per-monitor settings remain separate.
 
-**Move Window Across Monitor at Edge** sends a window beyond a workspace edge to the adjacent routed display and always follows it. Dedicated monitor-move actions work independently of this setting and use **Follow Window to Monitor**, which also controls focus after ordinary window or column transfers to another workspace.
+**Move Window Across Monitor at Edge** sends a window beyond a workspace edge to the adjacent routed display and always follows it. Dedicated monitor-move actions work independently of this setting and use **Follow Window to Monitor**, which also controls focus after ordinary window transfers to another workspace.
 
 Workspace homes can be **Main**, **Secondary**, **Tertiary**, or a specific display. By default Main is the display with the macOS menu bar and Secondary and Tertiary are the next displays in arrangement order. The **Monitor Roles** list in **Settings > Monitors** lets you rank displays instead: the highest-ranked connected display is Main, then Secondary, then Tertiary, and disconnected entries are skipped, so two external displays can hold fixed roles at your desk while the built-in display takes over when you unplug. The Quake terminal's **Main Monitor** option follows the same ranking.
 
 ### Layout Modes
 
-OmniWM offers two layout engines that you can switch between per workspace:
-
-**Niri (Orientation-Aware Scrolling Containers)** - On monitors using horizontal orientation, windows form vertical columns that scroll left and right; in vertical orientation, they form horizontal rows that scroll up and down. Each container can hold multiple windows or be "tabbed" (multiple windows, one visible at a time).
+OmniWM uses the Dwindle layout engine:
 
 **Hyprland Dwindle (BSP)** - Binary space partition layout that recursively divides screen space. Each new window splits the space in half, and a tile can group multiple windows as tabs. Best for traditional tiling with predictable layouts.
 
-Use the `Toggle Workspace Layout` shortcut below to switch layouts per workspace or configure them in GUI settings.
+Configure Dwindle behavior in Settings > Dwindle Layout.
 
 ### Keyboard Shortcuts
 
@@ -720,7 +717,6 @@ All shortcuts are customizable in Settings > Hotkeys. `Hyper` is the literal `Co
 
 Layout legend:
 - `Shared` works in any active layout.
-- `Niri` works only when the active workspace uses the Niri layout.
 - `Dwindle` works only when the active workspace uses the Dwindle layout.
 
 Settings > Hotkeys lists all actions that can be assigned a shortcut, including advanced actions.
@@ -740,11 +736,8 @@ Settings > Hotkeys lists all actions that can be assigned a shortcut, including 
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
 | Move Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
 | Move Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
-| Move Column to Workspace 1-9 | `Unassigned` | `Niri` |
-| Move Column to Workspace Up | `Control + Option + Shift + Page Up` | `Niri` |
-| Move Column to Workspace Down | `Control + Option + Shift + Page Down` | `Niri` |
 
-When you create workspace 10 or higher, Settings > Hotkeys adds its Switch, Move, and Move Column actions as `Unassigned`.
+When you create workspace 10 or higher, Settings > Hotkeys adds its Switch and Move actions as `Unassigned`.
 
 #### Focus
 
@@ -752,15 +745,7 @@ When you create workspace 10 or higher, Settings > Hotkeys adds its Switch, Move
 |--------|------------------|--------|
 | Focus Left / Right / Up / Down | `Option + Arrow Keys` | `Shared` |
 | Focus Down or Top / Up or Bottom | `Unassigned` | `Shared` |
-| Focus Top Window / Bottom Window | `Unassigned` | `Niri` |
-| Focus Window or Workspace Down / Up | `Unassigned` | `Niri` |
 | Focus Previous Window | `Option + Tab` | `Shared` |
-| Traverse Backward | `Unassigned` | `Niri` |
-| Traverse Forward | `Unassigned` | `Niri` |
-| Focus First Column | `Option + Home` | `Niri` |
-| Focus Last Column | `Option + End` | `Niri` |
-| Focus Column 1-9 | `Control + Option + 1-9` | `Niri` |
-| Focus Window 1-9 in Column | `Unassigned` | `Niri` |
 | Toggle Command Palette | `Control + Option + Space` | `Shared` |
 | Open Menu Anywhere | `Control + Option + M` | `Shared` |
 | Set Mark on Focused Window | `Unassigned` | `Shared` |
@@ -778,8 +763,6 @@ When you create workspace 10 or higher, Settings > Hotkeys adds its Switch, Move
 |--------|------------------|--------|
 | Move Left / Right / Up / Down | `Option + Shift + Arrow Keys` | `Shared` |
 | Reorder Window Up / Down | `Unassigned` | `Shared` |
-| Move Window Down or to Workspace Down / Up or to Workspace Up | `Unassigned` | `Niri` |
-| Consume Window into Column / Expel Window from Column | `Unassigned` | `Niri` |
 
 #### Monitor
 
@@ -817,33 +800,6 @@ The window-to-monitor actions send the focused window directly to the current wo
 | Toggle Focused Window Floating | `Unassigned` | `Shared` |
 | Assign Focused Window to Scratchpad 1-10 | `Unassigned` | `Shared` |
 | Toggle Scratchpad 1-10 | `Unassigned` | `Shared` |
-| Toggle Workspace Layout | `Option + Shift + L` | `Shared` |
-
-#### Container and Column
-
-| Action | Default Shortcut | Layout |
-|--------|------------------|--------|
-| Move Container Left / Right | `Control + Option + Shift + Left / Right Arrow` | `Shared` |
-| Move Container Up / Down | `Unassigned` | `Dwindle` |
-| Toggle Column Tabbed | `Option + T` | `Niri` |
-| Toggle Container Full Primary Span | `Option + Shift + F` | `Niri` |
-| Expand Container to Available Primary Span | `Control + Option + F` | `Niri` |
-| Move Column to First / Last | `Control + Option + Home / End` | `Niri` |
-| Move Column to Index 1-9 | `Unassigned` | `Niri` |
-| Shrink / Grow Container Primary Span | `Option + -` / `Option + =` | `Niri` |
-| Shrink / Grow Window Secondary Span | `Option + Shift + -` / `Option + Shift + =` | `Niri` |
-| Shrink / Grow Window Primary Span | `Unassigned` | `Niri` |
-| Reset Window Secondary Span | `Control + Option + R` | `Niri` |
-| Cycle Window Primary Span Forward / Backward | `Unassigned` | `Niri` |
-| Cycle Window Secondary Span Forward / Backward | `Unassigned` | `Niri` |
-| Center Column | `Unassigned` | `Niri` |
-| Center Visible Columns | `Unassigned` | `Niri` |
-
-Niri grow/shrink actions use a configurable increment, defaulting to 5% instead of 10%. Change **Resize Increment** in Niri settings or `[niri].resizeStepPercent` in TOML (1–100). Explicit `omniwmctl` size arguments keep their specified amounts.
-
-`Consume or Expel Window Left / Right` exist as automation-only actions. They are reachable from `omniwmctl` but never appear in Settings > Hotkeys, because they intentionally cannot be bound to a shortcut.
-
-The daily `Focus` and `Move` shortcuts adapt to the active layout and Niri orientation. In horizontal Niri orientation, `Move Left / Right` consumes or expels across columns while `Move Up / Down` reorders within a column. Vertical orientation rotates those roles: `Move Up / Down` consumes or expels across rows while `Move Left / Right` reorders within a row.
 
 #### Dwindle Groups
 
@@ -860,7 +816,7 @@ Dwindle groups use the existing Focus and Move bindings, so there are no separat
 
 Moving a tab directly from one existing group into another is intentionally a two-step operation: extract it first, then move the resulting singleton toward the destination group. A singleton at a genuine workspace edge can still use the normal cross-monitor Move behavior; a rejected group mutation does not fall through to tile swapping or monitor movement.
 
-The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Niri column or Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
+The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
 
 #### Quake Terminal (Inside Terminal)
 
@@ -937,11 +893,9 @@ See all windows at once with thumbnails:
 - `Alt (Option) + Shift + Mouse Scroll` temporarily zooms the current overview; the next opening starts from the configured baseline
 - `Arrow Keys` navigate spatially; `Left` / `Right` stay within the current workspace. `Tab` / `Shift + Tab` cycle forward or backward through matching windows, and keyboard navigation automatically scrolls the selected thumbnail into view
 - Assigned structural move, reorder, consume/expel, and workspace-transfer shortcuts operate on the selected thumbnail while Overview is open
-- In Niri workspaces, reorder windows and columns, consume or expel windows, move windows into or out of columns, move windows across workspaces and monitors, and move whole columns between Niri workspaces
 - Adjacent-workspace fallback actions can create the next compatible unused numeric workspace when moving past the current workspace edge
 - In Dwindle workspaces, Overview supports moving windows across workspaces and closing them without adding Overview-only tree placement controls
 - A successful move keeps the moved window selected and activates its destination workspace and monitor behind Overview
-- Drag a thumbnail onto a workspace, an exact window position, or a Niri column gap; layouts without an exact placement equivalent fall back to moving it to the destination workspace. Press and release without dragging to focus it
 - `Command + W` closes the selected window once per press and keeps Overview open; selection advances only after the window has closed
 - `Enter`, `Escape`, the configured Overview shortcut, and clicking the backdrop dismiss Overview and focus the current selection; `Escape` does not clear search first
 - If another application takes focus, Overview dismisses without stealing focus back
@@ -1005,12 +959,10 @@ Conceal selected menu-bar icons and reach them from a panel:
 
 - **Workspaces** - Create named workspaces in Settings to organize by project or context (You can use emojis 🥳)
 - **App Rules** - Exclude problematic apps from tiling or assign them to specific workspaces
-- **Mouse** - Hold the configured mouse-move modifier and drag to swap tiled windows. Niri swaps individual windows; add `Shift` to insert into a column. Dwindle swaps whole tiles, including their tab groups. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and targets a workspace, window position, or Niri column gap
-- **Mouse Resize** - Hold the configured right-mouse resize modifier (`Option` by default) and right-drag a tiled window to resize it in either layout
-- **Scroll Gestures (Mouse)** - Hold `Option + Shift + Mouse Scroll Wheel` (default, configurable) to scroll along the active Niri primary axis: left/right in horizontal orientation or up/down in vertical orientation
-- **Trackpad Gestures** - Use 2/3/4-finger gestures (configurable) along the active Niri primary axis; direction can be inverted
-- **Window Move & Resize (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: drag without clicking to move or resize the tiled window under the cursor in either layout; lift your fingers to drop. Defaults are four fingers to move and three to resize. Column scrolling is on by default with three fingers, so the Resize row first offers **Set Up…**; pick another finger count (two fingers can intercept normal scrolling in apps) or turn off **Scroll columns**. Choose finger counts unused by other enabled gestures; **Set Up…** previews conflicts and lets you choose which gestures to turn off before applying the assignment. Turn off matching macOS gestures in System Settings → Trackpad → More Gestures to prevent them firing alongside window gestures.
-- **Workspace Swipe (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: swipe with a configurable finger count (2/3/4) and axis (horizontal/vertical) to switch to the next/previous workspace on the monitor under the cursor, one switch per swipe; when sharing fingers with enabled column scrolling in Niri, workspace swipes use the perpendicular axis on each display; otherwise they use the selected axis. For vertical swipes with three or four fingers, first turn off Mission Control in  → System Settings → Trackpad → More Gestures so macOS does not intercept the gesture.
+- **Mouse** - Hold the configured mouse-move modifier and drag to swap whole tiles, including their tab groups. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and moves it to another workspace.
+- **Mouse Resize** - Hold the configured right-mouse resize modifier (`Option` by default) and right-drag a tiled window to resize it in Dwindle
+- **Window Move & Resize (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: drag without clicking to move or resize the tiled window under the cursor in Dwindle; lift your fingers to drop. Defaults are four fingers to move and three to resize. Choose finger counts unused by other enabled gestures; **Set Up…** previews conflicts and lets you choose which gestures to turn off before applying the assignment. Turn off matching macOS gestures in System Settings → Trackpad → More Gestures to prevent them firing alongside window gestures.
+- **Workspace Swipe (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: swipe with a configurable finger count (2/3/4) and axis (horizontal/vertical) to switch to the next/previous workspace on the monitor under the cursor, one switch per swipe. For vertical swipes with three or four fingers, first turn off Mission Control in  → System Settings → Trackpad → More Gestures so macOS does not intercept the gesture.
 
 ## Configuration
 
@@ -1073,7 +1025,6 @@ app-name substring, title substring or regex, and AX role/subrole. More-specific
 
 - **Layout (Automatic / Tile / Float)** - Leave classification automatic, or force matching windows to tile or float
 - **Assign to Workspace** - Use a valid workspace assignment as the initial default whenever the matching app currently has no tracked windows. Additional windows open on the workspace active when creation began. Automatic rule reevaluation leaves managed windows in place, while explicit rule application can move them. Readmission, structural replacements, and unique persisted boot-restore matches preserve their existing placement continuity.
-- **Initial Container Primary Span (Niri)** - Start matching resizable windows at 5–100% when they create or claim a new container; the container remains freely resizable afterward
 - **Minimum Size** - Prevent the layout engine from sizing windows below a threshold
 
 Structural admission runs before ordinary rule ranking. Help tags, input-method surfaces, and WindowServer
@@ -1084,18 +1035,6 @@ roots, non-`AXWindow` roles, and otherwise unsupported AX subroles require an id
 use the same precise shape, but only a user rule can opt them in; built-in rules cannot. A broad bundle/title
 rule or Automatic layout does not cross these gates.
 
-Initial container primary span is a one-time seed. It controls width in horizontal orientation and height in
-vertical orientation. Niri's Single Window Fit still takes visual precedence for a lone window, and physical
-minimum-size constraints can clamp the resolved pixel size without changing the stored initial proportion.
-
-The equivalent TOML rule uses a proportion:
-
-```toml
-[[appRules]]
-bundleId = "net.kovidgoyal.kitty"
-initialContainerPrimarySpan = 0.5
-```
-
 ## Building from Source
 
 Follow the [contributor quick start](CONTRIBUTING.md#quick-start) for Xcode requirements, automatic dependency setup, and a separate **OmniWM Dev** app with independent settings. The guide covers rebuilding, switching back to your normal app, and verifying a pull request.
@@ -1105,11 +1044,6 @@ Follow the [contributor quick start](CONTRIBUTING.md#quick-start) for Xcode requ
 - **[omacosy](https://github.com/paulsp94/omacosy)** is an Omarchy-inspired macOS desktop setup that supports OmniWM as a tiling window manager, with a custom status bar and coordinated desktop themes.
 - **[OmniWM Computer Use](https://github.com/nick-s5/omniwm-computer-use)** is a community-maintained Codex skill for focus-safe Computer Use, browser automation, and app testing through `omniwmctl` across OmniWM workspaces and displays.
 - **[OmniCast](https://github.com/imprisonedmind/omni-cast)** is a community-maintained Raycast extension for controlling OmniWM with plain-English search and commands through `omniwmctl`.
-
-## Related Forks
-
-- **[Nehir](https://github.com/apphane-dev/nehir)** is an endorsed OmniWM fork focused on a narrower, more opinionated Niri-style scrolling-column workflow. It may be friendlier for beginners who want guided defaults and a smaller feature surface, while OmniWM remains the broader upstream project with multiple layout modes and the full feature set.
-- **[choru-k/OmniWM](https://github.com/choru-k/OmniWM)** is an interesting personal OmniWM fork experimenting with opt-in workflow layers on top of upstream OmniWM, including zone anchors for the Niri strip, a configurable F13-F20 leader-key chord menu, tabbed-column keyboard cycling, and trackpad-friendly modifier resizing. It is best read as a power-user workflow branch rather than a replacement for the main OmniWM release.
 
 ## Community
 

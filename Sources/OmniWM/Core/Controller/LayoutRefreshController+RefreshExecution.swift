@@ -13,7 +13,6 @@ extension LayoutRefreshController {
         defer { layoutState.isIncrementalRefreshInProgress = false }
         return executeRelayout(
             refresh: refresh,
-            useScrollAnimationPath: false,
             recoverFocus: true,
             generation: generation
         )
@@ -21,7 +20,6 @@ extension LayoutRefreshController {
 
     func executeRelayout(
         refresh: ScheduledRefresh,
-        useScrollAnimationPath: Bool,
         recoverFocus: Bool,
         generation: UInt64
     ) -> Bool {
@@ -36,7 +34,6 @@ extension LayoutRefreshController {
         }
         let buildStart = CACurrentMediaTime()
         var plan = buildRelayoutEffectPlan(
-            useScrollAnimationPath: useScrollAnimationPath,
             recoverFocus: recoverFocus,
             affectedWorkspaceIds: resolvedScheduledWorkspaceIds(refresh)
         )
@@ -86,7 +83,6 @@ extension LayoutRefreshController {
         defer { layoutState.isImmediateLayoutInProgress = false }
         return executeRelayout(
             refresh: refresh,
-            useScrollAnimationPath: !niriHandler.scrollAnimationByDisplay.isEmpty,
             recoverFocus: false,
             generation: generation
         )

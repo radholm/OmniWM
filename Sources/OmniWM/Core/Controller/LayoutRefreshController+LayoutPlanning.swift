@@ -14,7 +14,6 @@ extension LayoutRefreshController {
     }
 
     func buildRelayoutEffectPlan(
-        useScrollAnimationPath: Bool,
         recoverFocus: Bool,
         affectedWorkspaceIds: Set<WorkspaceDescriptor.ID>,
         emptyScopeUsesActiveWorkspaces: Bool = true
@@ -32,17 +31,10 @@ extension LayoutRefreshController {
             effects.visibility = .init()
             return EffectPlan(effects: effects)
         }
-        let (niriWorkspaces, dwindleWorkspaces) = partitionWorkspacesByLayoutType(layoutWorkspaceIds)
 
+        let dwindleWorkspaces = layoutWorkspaceIds
         let workspacePlans = buildWorkspacePlansInBatch {
             var plans: [WorkspaceLayoutPlan] = []
-            plans.reserveCapacity(niriWorkspaces.count + dwindleWorkspaces.count)
-            if !niriWorkspaces.isEmpty {
-                plans.append(contentsOf: self.niriHandler.layoutWithNiriEngine(
-                    activeWorkspaces: niriWorkspaces,
-                    useScrollAnimationPath: useScrollAnimationPath
-                ))
-            }
             if !dwindleWorkspaces.isEmpty {
                 plans.append(
                     contentsOf: self.dwindleHandler.layoutWithDwindleEngine(activeWorkspaces: dwindleWorkspaces)
@@ -74,15 +66,12 @@ extension LayoutRefreshController {
         var dwindleWorkspaces: Set<WorkspaceDescriptor.ID> = []
         var focusedWorkspacesToRecover: Set<WorkspaceDescriptor.ID> = []
         var workspacesAllowingPreferredRecovery: Set<WorkspaceDescriptor.ID> = []
-        let niriRemovalSeeds = makeNiriRemovalSeeds(from: payloads)
 
         for payload in payloads {
             switch payload.layoutType {
-            case .dwindle:
-                dwindleWorkspaces.insert(payload.workspaceId)
-            case .niri,
+            case .dwindle,
                  .defaultLayout:
-                break
+                dwindleWorkspaces.insert(payload.workspaceId)
             }
 
             if payload.shouldRecoverFocus {
@@ -95,14 +84,6 @@ extension LayoutRefreshController {
 
         let workspacePlans = buildWorkspacePlansInBatch {
             var plans: [WorkspaceLayoutPlan] = []
-            plans.reserveCapacity(dwindleWorkspaces.count + niriRemovalSeeds.count)
-            if !niriRemovalSeeds.isEmpty {
-                plans.append(contentsOf: self.niriHandler.layoutWithNiriEngine(
-                    activeWorkspaces: Set(niriRemovalSeeds.keys),
-                    useScrollAnimationPath: true,
-                    removalSeeds: niriRemovalSeeds
-                ))
-            }
             if !dwindleWorkspaces.isEmpty {
                 plans.append(
                     contentsOf: self.dwindleHandler.layoutWithDwindleEngine(activeWorkspaces: dwindleWorkspaces)
@@ -119,31 +100,6 @@ extension LayoutRefreshController {
         )
 
         return EffectPlan(workspacePlans: workspacePlans, effects: effects)
-    }
-
-    func partitionWorkspacesByLayoutType(
-        _ workspaces: Set<WorkspaceDescriptor.ID>
-    ) -> (niri: Set<WorkspaceDescriptor.ID>, dwindle: Set<WorkspaceDescriptor.ID>) {
-        guard let controller else { return ([], []) }
-
-        var niriWorkspaces: Set<WorkspaceDescriptor.ID> = []
-        var dwindleWorkspaces: Set<WorkspaceDescriptor.ID> = []
-
-        for wsId in workspaces {
-            guard let ws = controller.workspaceManager.descriptor(for: wsId) else {
-                continue
-            }
-            let layoutType = controller.settings.workspaces.layoutType(for: ws.name)
-            switch layoutType {
-            case .dwindle:
-                dwindleWorkspaces.insert(wsId)
-            case .niri,
-                 .defaultLayout:
-                niriWorkspaces.insert(wsId)
-            }
-        }
-
-        return (niriWorkspaces, dwindleWorkspaces)
     }
 
     func liveLayoutWorkspaceIds(
@@ -178,7 +134,6 @@ extension LayoutRefreshController {
         recoverFocus: Bool
     ) -> EffectPlan {
         buildRelayoutEffectPlan(
-            useScrollAnimationPath: false,
             recoverFocus: recoverFocus,
             affectedWorkspaceIds: affectedWorkspaceIds,
             emptyScopeUsesActiveWorkspaces: false

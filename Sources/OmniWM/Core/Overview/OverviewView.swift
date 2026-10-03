@@ -25,7 +25,6 @@ final class OverviewView: NSView {
     var onClearSearch: (() -> Void)?
     var onStripPan: ((CGPoint, CGFloat) -> Void)?
     var onWorkspaceSelected: ((WorkspaceDescriptor.ID) -> Void)?
-    var onOverflowPillPressed: ((OverviewOverflowPill) -> Void)?
     var onDismiss: (() -> Void)?
     var onScroll: ((CGFloat) -> Void)?
     var onScrollEvent: ((OverviewScrollInput.Event) -> Void)?
@@ -204,10 +203,6 @@ final class OverviewView: NSView {
             return
         }
         let layoutPoint = layerRenderer.layoutPoint(at: point, layout: layout)
-        if let pill = layout.overflowPill(at: layoutPoint) {
-            onOverflowPillPressed?(pill)
-            return
-        }
         if let control = layerRenderer.tabControl(at: point, layout: layout) {
             if let handle = control.steppedHandle(at: point) {
                 onTabSelected?(handle)

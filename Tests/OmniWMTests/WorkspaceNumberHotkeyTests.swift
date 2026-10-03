@@ -15,7 +15,6 @@ final class WorkspaceNumberHotkeyTests: XCTestCase {
         XCTAssertEqual(switchSpec.defaultBinding, .unassigned)
 
         XCTAssertEqual(ActionCatalog.spec(for: .workspace(.moveTo(11)))?.id, "moveToWorkspace.11")
-        XCTAssertEqual(ActionCatalog.spec(for: .column(.moveToWorkspace(9)))?.id, "moveColumnToWorkspace.9")
         XCTAssertEqual(HotkeyCommand.workspace(.switchTo(9)).displayName, "Switch to Workspace 10")
     }
 
@@ -33,12 +32,9 @@ final class WorkspaceNumberHotkeyTests: XCTestCase {
         )
 
         let ids = bindings.map(\.id)
-        XCTAssertEqual(ids.count, HotkeyBindingRegistry.defaults().count + 6)
+        XCTAssertEqual(ids.count, HotkeyBindingRegistry.defaults().count + 4)
         XCTAssertEqual(ids.rows(after: "moveToWorkspace.8", count: 4), [
             "switchWorkspace.9", "moveToWorkspace.9", "switchWorkspace.11", "moveToWorkspace.11"
-        ])
-        XCTAssertEqual(ids.rows(after: "moveColumnToWorkspace.8", count: 2), [
-            "moveColumnToWorkspace.9", "moveColumnToWorkspace.11"
         ])
         let added = bindings.filter { HotkeyBindingRegistry.defaults().map(\.id).contains($0.id) == false }
         XCTAssertTrue(added.allSatisfy(\.binding.isUnassigned))
@@ -75,9 +71,7 @@ final class WorkspaceNumberHotkeyTests: XCTestCase {
     func testSettingsStoreAddsRowsWhenWorkspaceIsCreatedAndDropsThemWhenRemoved() throws {
         let settings = makeSettingsStore()
         let original = settings.workspaces.configurations
-        settings.workspaces.configurations = original + [
-            WorkspaceConfiguration(id: UUID(), name: "10", monitorAssignment: .main, layoutType: .niri)
-        ]
+        settings.workspaces.configurations = original + [WorkspaceConfiguration(name: "10", layoutType: .dwindle)]
         XCTAssertNotNil(settings.hotkeyBindings.first { $0.id == "moveToWorkspace.9" })
 
         let chord = KeyBinding(keyCode: UInt32(kVK_ANSI_0), modifiers: UInt32(optionKey))
@@ -100,9 +94,6 @@ final class WorkspaceNumberHotkeyTests: XCTestCase {
 
         let workspace = try XCTUnwrap(manager.createDynamicWorkspace(named: "10", on: monitor.id))
         XCTAssertFalse(settings.workspaces.configuredNames().contains("10"))
-        for id in ["switchWorkspace.9", "moveToWorkspace.9", "moveColumnToWorkspace.9"] {
-            XCTAssertNotNil(settings.hotkeyBindings.first { $0.id == id })
-        }
         XCTAssertEqual(reregistrations, 1)
 
         let chord = KeyBinding(keyCode: UInt32(kVK_ANSI_0), modifiers: UInt32(optionKey))

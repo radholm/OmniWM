@@ -39,7 +39,7 @@ extension AXEventHandler {
         admissionRetryStateByWindowId.values.contains { state in
             guard !state.exhausted,
                   !state.identityRebindTargetDestroyed,
-                  case let .identityRebind(oldWindow, _, metadata, _, _) = state.trigger
+                  case let .identityRebind(oldWindow, _, metadata, _) = state.trigger
             else {
                 return false
             }
@@ -75,18 +75,6 @@ extension AXEventHandler {
             return true
         }
         guard let controller else { return false }
-        if let intent = controller.intentLedger.openReplacementFocusIntent(
-            pid: causality.focusedToken.pid,
-            workspaceId: causality.workspaceId
-        ), case let .replacementFocus(payload) = intent.kind {
-            if payload.anchorToken != causality.focusedToken {
-                return controller.workspaceManager.entry(for: payload.anchorToken)?.workspaceId
-                    == causality.workspaceId
-            }
-            if !payload.isBurstOpen {
-                return false
-            }
-        }
         return controller.workspaceManager.entry(for: causality.focusedToken)?.workspaceId
             == causality.workspaceId
     }

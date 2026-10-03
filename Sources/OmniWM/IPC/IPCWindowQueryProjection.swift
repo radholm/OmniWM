@@ -33,16 +33,13 @@ struct IPCWindowQueryProjection {
     func result() -> IPCWindowsQueryResult {
         let windows = IPCQuerySelection.orderedWorkspaces(controller: controller).flatMap { workspace in
             let topology = controller.workspaceManager.layoutTopology(for: workspace.id)
-            return WorkspaceEntryOrdering.orderedEntries(
-                controller.workspaceManager.entries(in: workspace.id),
-                topology: topology
-            )
-            .filter { entry in
-                matchesWindowQuery(entry)
-            }
-            .map { entry in
-                windowSnapshot(from: entry, isFullscreen: topology.isFullscreen(entry.token))
-            }
+            return controller.workspaceManager.entries(in: workspace.id)
+                .filter { entry in
+                    matchesWindowQuery(entry)
+                }
+                .map { entry in
+                    windowSnapshot(from: entry, isFullscreen: topology.isFullscreen(entry.token))
+                }
         }
 
         return IPCWindowsQueryResult(windows: windows)

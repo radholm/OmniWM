@@ -12,11 +12,6 @@ extension WorkspaceNavigationHandler {
         focusOrigin: ManagedFocusOrigin = .keyboardOrProgrammatic
     ) {
         guard let controller else { return }
-        let sourceWorkspaceId = mutation.sourceWorkspaceId
-
-        if let sourceMonitor = controller.workspaceManager.monitor(for: sourceWorkspaceId) {
-            controller.layoutRefreshController.stopScrollAnimation(for: sourceMonitor.displayId)
-        }
         if focusPolicy == .retainCurrent {
             controller.layoutRefreshController.commitWorkspaceTransition(
                 affectedWorkspaces: mutation.affectedWorkspaceIds,
@@ -73,9 +68,6 @@ extension WorkspaceNavigationHandler {
         else { return }
 
         switch controller.workspaceManager.activeLayoutKind(for: workspaceId) {
-        case .niri:
-            guard let node = controller.niriEngine?.findNode(for: token, in: workspaceId) else { return }
-            commitWorkspaceSelection(nodeId: node.id, focusedToken: token, in: workspaceId)
         case .dwindle:
             guard let engine = controller.dwindleEngine,
                   engine.findNode(for: token, in: workspaceId) != nil
@@ -87,42 +79,6 @@ extension WorkspaceNavigationHandler {
                 focusAfterLayout: false
             )
         }
-    }
-
-    func transferredWindowNiriViewportState(
-        token: WindowToken,
-        workspaceId: WorkspaceDescriptor.ID
-    ) -> ViewportState? {
-        guard let controller else { return nil }
-        guard controller.workspaceManager.activeLayoutKind(for: workspaceId) == .niri else { return nil }
-        guard let engine = controller.niriEngine,
-              let movedNode = engine.findNode(for: token, in: workspaceId),
-              let monitor = controller.workspaceManager.monitor(for: workspaceId)
-        else {
-            return nil
-        }
-
-        var state = controller.workspaceManager.niriViewportState(for: workspaceId)
-        state.selectedNodeId = movedNode.id
-        controller.workspaceManager.withEngineMutationScope {
-            engine.activateWindow(movedNode.id, in: workspaceId)
-            if engine.singleWindowLayoutContext(in: workspaceId) != nil {
-                controller.niriLayoutHandler.resetViewportForSingleWindowFit(state: &state)
-            } else {
-                engine.ensureSelectionVisible(
-                    node: movedNode,
-                    context: .init(
-                        workspaceId: workspaceId,
-                        motion: controller.motionPolicy.snapshot(),
-                        workingFrame: controller.niriWorkingFrame(for: monitor),
-                        gaps: controller.innerGap(for: monitor),
-                        orientation: controller.settings.monitors.effectiveOrientation(for: monitor)
-                    ),
-                    state: &state
-                )
-            }
-        }
-        return state
     }
 
     private struct WorkspaceMoveFocusCompletion {

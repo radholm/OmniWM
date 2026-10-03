@@ -10,7 +10,6 @@ enum AnimationTickTrace {
         let effectId: UInt64
         let displayId: CGDirectDisplayID
         let timing: DisplayTickTiming
-        let scrollMs: Double
         let dwindleMs: Double
         let closingMs: Double
         let reconcileMs: Double
@@ -25,7 +24,6 @@ enum AnimationTickTrace {
             effectId: UInt64 = 0,
             displayId: CGDirectDisplayID,
             timing: DisplayTickTiming,
-            scrollMs: Double,
             dwindleMs: Double,
             closingMs: Double,
             reconcileMs: Double,
@@ -39,7 +37,6 @@ enum AnimationTickTrace {
             self.effectId = effectId
             self.displayId = displayId
             self.timing = timing
-            self.scrollMs = scrollMs
             self.dwindleMs = dwindleMs
             self.closingMs = closingMs
             self.reconcileMs = reconcileMs
@@ -57,13 +54,12 @@ enum AnimationTickTrace {
     ) { record in
         let timing = String(
             format: "interval=%.2fms expected=%.2fms entry_slack=%.2fms completion_slack=%.2fms"
-                + " scroll=%.2fms dwindle=%.2fms closing=%.2fms reconcile=%.2fms total=%.2fms"
+                + " dwindle=%.2fms closing=%.2fms reconcile=%.2fms total=%.2fms"
                 + " surface=%.3fms transaction_scope=%.3fms idle_stop=%.3fms park_audit=%.3fms",
             record.timing.intervalMs,
             record.timing.expectedMs,
             record.timing.entrySlackMs,
             record.timing.completionSlackMs,
-            record.scrollMs,
             record.dwindleMs,
             record.closingMs,
             record.reconcileMs,

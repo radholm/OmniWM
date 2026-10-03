@@ -149,13 +149,6 @@ extension WMController {
             onMonitor: workspaceManager.monitorId(for: request.workspaceId),
             requestId: request.requestId
         )
-        recordNiriCreateFocusTrace(
-            .pendingFocusStarted(
-                requestId: request.requestId,
-                token: request.token,
-                workspaceId: request.workspaceId
-            )
-        )
 
         return request
     }

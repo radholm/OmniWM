@@ -10,21 +10,12 @@ extension OverviewController {
     }
 
     func activateWorkspace(_ workspaceId: WorkspaceDescriptor.ID) {
-        guard case .open = state, let wmController else { return }
+        guard case .open = state, wmController != nil else { return }
         guard !hasActiveDragSession else { return }
-        commitOverviewPans()
-        let workspaceManager = wmController.workspaceManager
-        let previousWorkspaceId = workspaceManager.monitorForWorkspace(workspaceId)
-            .flatMap { workspaceManager.activeWorkspace(on: $0.id)?.id }
         guard onActivateWorkspace?(workspaceId) == true else {
             dismiss(reason: .cancel, animated: true)
             return
         }
-        refreshCachedOverviewProjection(
-            affectedWorkspaceIds: Set([previousWorkspaceId, workspaceId].compactMap { $0 }),
-            settledNiriFrames: true,
-            revealingSelection: false
-        )
         dismiss(reason: .workspaceActivation, animated: true)
     }
 
@@ -36,16 +27,8 @@ extension OverviewController {
     }
 
     func prepareActivation(_ handle: WindowHandle) {
-        guard let wmController, let workspaceId = activationWorkspaceId(for: handle) else { return }
-        let workspaceManager = wmController.workspaceManager
-        let previousWorkspaceId = workspaceManager.monitorForWorkspace(workspaceId)
-            .flatMap { workspaceManager.activeWorkspace(on: $0.id)?.id }
+        guard wmController != nil, let workspaceId = activationWorkspaceId(for: handle) else { return }
         onPrepareActivation?(handle, workspaceId)
-        refreshCachedOverviewProjection(
-            affectedWorkspaceIds: Set([previousWorkspaceId, workspaceId].compactMap { $0 }),
-            selectedHandle: handle,
-            settledNiriFrames: true
-        )
     }
 
     func activationWorkspaceId(for handle: WindowHandle) -> WorkspaceDescriptor.ID? {

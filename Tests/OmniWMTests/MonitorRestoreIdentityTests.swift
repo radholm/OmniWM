@@ -231,7 +231,8 @@ final class MonitorRestoreIdentityTests: XCTestCase {
                 floatingFrame: nil,
                 normalizedFloatingOrigin: nil,
                 restoreToFloating: false,
-                rescueEligible: false
+                rescueEligible: false,
+                dwindlePlacement: nil
             )
         )
         let plan = PersistedRestorePlanner.plan(

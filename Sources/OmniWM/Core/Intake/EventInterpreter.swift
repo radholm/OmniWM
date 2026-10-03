@@ -65,9 +65,6 @@ final class EventInterpreter: EventIntakeSink {
                 windowIdUnderPointer: windowIdUnderPointer
             )
 
-        case let .mouseScroll(payload):
-            controller.mouseEventHandler.dispatchScrollWheel(payload)
-
         case let .nativeFullscreenTransitionExpired(originalToken, generation):
             _ = controller.workspaceManager.expireNativeFullscreenTransition(
                 originalToken: originalToken,

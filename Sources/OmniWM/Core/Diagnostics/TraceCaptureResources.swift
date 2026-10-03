@@ -18,7 +18,6 @@ struct TraceCaptureResources {
         MainRunLoopActivityTrace.shared,
         RawAXNotificationTrace.shared,
         FrameApplyTrace.shared,
-        NiriLayoutTrace.shared,
         ParkVisibilityAudit.shared,
         ScrollTickTrace.shared,
         AXWriteLatencyTrace.shared,

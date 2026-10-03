@@ -141,14 +141,17 @@ private struct PlacedMonitor {
         case .left,
              .right: row == origin.row
         case .up,
-             .down: column == origin.column
+             .down:
+            column == origin.column
         }
     }
 
     func offset(from origin: PlacedMonitor, direction: Direction) -> Int {
         switch direction {
-        case .right: column - origin.column
-        case .left: origin.column - column
+        case .right:
+            column - origin.column
+        case .left:
+            origin.column - column
         case .down: row - origin.row
         case .up: origin.row - row
         }

@@ -22,32 +22,12 @@ enum TitleMatcherMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum AppRulePrimarySpanPercent {
-    static func percent(from proportion: Double) -> Double {
-        proportion * 100
-    }
-
-    static func proportion(from percent: Double) -> Double {
-        percent / 100
-    }
-
-    static func displayText(for proportion: Double, locale: Locale = .current) -> String {
-        let percent = percent(from: proportion)
-        if percent.isNaN { return "NaN" }
-        if percent.isInfinite { return percent.sign == .minus ? "−∞" : "∞" }
-
-        return percent.formatted(.number.precision(.fractionLength(0 ... 2)).locale(locale))
-    }
-}
-
 struct AppRuleDraft: Identifiable, Equatable {
     let id: UUID
     var bundleId: String
     var layoutAction: WindowRuleLayoutAction
     var assignToWorkspaceEnabled: Bool
     var assignToWorkspace: String
-    var initialContainerPrimarySpanEnabled: Bool
-    var initialContainerPrimarySpan: Double
     var minWidthEnabled: Bool
     var minWidth: Double
     var minHeightEnabled: Bool
@@ -68,8 +48,6 @@ struct AppRuleDraft: Identifiable, Equatable {
         layoutAction = .auto
         assignToWorkspaceEnabled = false
         assignToWorkspace = ""
-        initialContainerPrimarySpanEnabled = false
-        initialContainerPrimarySpan = 0.5
         minWidthEnabled = false
         minWidth = 400
         minHeightEnabled = false
@@ -91,8 +69,6 @@ struct AppRuleDraft: Identifiable, Equatable {
         layoutAction = rule.effectiveLayoutAction
         assignToWorkspaceEnabled = rule.assignToWorkspace != nil
         assignToWorkspace = rule.assignToWorkspace ?? ""
-        initialContainerPrimarySpanEnabled = rule.initialContainerPrimarySpan != nil
-        initialContainerPrimarySpan = rule.initialContainerPrimarySpan ?? 0.5
         minWidthEnabled = rule.minWidth != nil
         minWidth = rule.minWidth ?? 400
         minHeightEnabled = rule.minHeight != nil
@@ -120,8 +96,6 @@ struct AppRuleDraft: Identifiable, Equatable {
             lhs.layoutAction == rhs.layoutAction &&
             lhs.assignToWorkspaceEnabled == rhs.assignToWorkspaceEnabled &&
             lhs.assignToWorkspace == rhs.assignToWorkspace &&
-            lhs.initialContainerPrimarySpanEnabled == rhs.initialContainerPrimarySpanEnabled &&
-            nanStableEqual(lhs.initialContainerPrimarySpan, rhs.initialContainerPrimarySpan) &&
             lhs.minWidthEnabled == rhs.minWidthEnabled &&
             nanStableEqual(lhs.minWidth, rhs.minWidth) &&
             lhs.minHeightEnabled == rhs.minHeightEnabled &&
@@ -194,23 +168,17 @@ struct AppRuleDraft: Identifiable, Equatable {
         return nil
     }
 
-    var initialContainerPrimarySpanError: String? {
-        AppRuleDraftValidation.initialContainerPrimarySpanError(
-            for: initialContainerPrimarySpanEnabled ? initialContainerPrimarySpan : nil
-        )
-    }
-
     var effectHint: String? {
         let rule = makeRule()
         guard rule.hasIdentifyingMatcher, !rule.hasEffect else { return nil }
         return String(
-            localized: "This rule matches windows but has no effect — set a layout, workspace, initial container primary span, or minimum size."
+            localized: "This rule matches windows but has no effect — set a layout, workspace, or minimum size."
         )
     }
 
     var isValid: Bool {
         let rule = makeRule()
-        return bundleIdError == nil && titleRegexError == nil && initialContainerPrimarySpanError == nil &&
+        return bundleIdError == nil && titleRegexError == nil &&
             minSizeError == nil
             && rule.hasIdentifyingMatcher && rule.hasEffect
     }
@@ -242,7 +210,6 @@ struct AppRuleDraft: Identifiable, Equatable {
             axSubrole: axSubroleEnabled ? trimmedRuleValue(axSubrole) : nil,
             layout: layoutAction == .auto ? nil : layoutAction,
             assignToWorkspace: assignToWorkspaceEnabled ? trimmedRuleValue(assignToWorkspace) : nil,
-            initialContainerPrimarySpan: initialContainerPrimarySpanEnabled ? initialContainerPrimarySpan : nil,
             minWidth: minWidthEnabled ? minWidth : nil,
             minHeight: minHeightEnabled ? minHeight : nil
         )
@@ -258,13 +225,6 @@ enum AppRuleDraftValidation {
         let trimmed = bundleId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, IPCRuleValidator.bundleIdError(for: trimmed) != nil else { return nil }
         return String(localized: "Invalid bundle ID format")
-    }
-
-    static func initialContainerPrimarySpanError(for value: Double?) -> String? {
-        guard IPCRuleValidator.initialContainerPrimarySpanError(for: value) != nil else { return nil }
-        return String(
-            localized: "Initial container primary span must be a finite proportion from 0.05 through 1.0 (5% through 100%)"
-        )
     }
 
     static func titleRegexError(for pattern: String?) -> String? {

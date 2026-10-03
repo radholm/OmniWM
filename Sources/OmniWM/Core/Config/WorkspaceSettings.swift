@@ -21,14 +21,8 @@ final class WorkspaceSettings {
         configurations.map(\.name)
     }
 
-    func layoutType(for workspaceName: String) -> LayoutType {
-        if let config = configurations.first(where: { $0.name == workspaceName }) {
-            if config.layoutType == .defaultLayout {
-                return defaultLayoutType
-            }
-            return config.layoutType
-        }
-        return defaultLayoutType
+    func layoutType(for _: String) -> LayoutType {
+        .dwindle
     }
 
     func displayName(for workspaceName: String) -> String {

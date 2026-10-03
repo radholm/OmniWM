@@ -93,62 +93,7 @@ struct OverviewTabControl {
 
 extension OverviewLayout {
     func backgroundFrame(for section: OverviewWorkspaceSection) -> CGRect {
-        guard !section.visibleFrame.isEmpty, !section.ribbonFrame.isEmpty else { return section.visibleFrame }
-        var bounds = section.visibleFrame
-        for column in niriColumnsByWorkspace[section.workspaceId] ?? [] {
-            bounds = bounds.union(column.frame)
-        }
-        for window in section.windows where window.isTiled {
-            bounds = bounds.union(window.overviewFrame)
-        }
-        return CGRect(
-            x: bounds.minX,
-            y: section.visibleFrame.minY,
-            width: bounds.width,
-            height: section.visibleFrame.height
-        )
-    }
-
-    func overflowPills(for section: OverviewWorkspaceSection) -> [OverviewOverflowPill] {
-        guard !section.ribbonFrame.isEmpty else { return [] }
-        let height = OverviewLayoutMetrics.overflowPillHeight * OverviewLayoutCalculator.clampedScale(scale)
-        let width = OverviewLayoutMetrics.overflowPillWidth * OverviewLayoutCalculator.clampedScale(scale)
-        return [
-            (OverviewOverflowPill.Edge.leading, section.hiddenColumnsBefore),
-            (.trailing, section.hiddenColumnsAfter)
-        ]
-        .compactMap { edge, count in
-            guard count > 0 else { return nil }
-            let frame: CGRect
-            if section.orientation == .horizontal {
-                frame = CGRect(
-                    x: edge == .leading ? section.ribbonFrame.minX : section.ribbonFrame.maxX - width,
-                    y: section.ribbonFrame.midY - height / 2,
-                    width: width,
-                    height: height
-                )
-            } else {
-                frame = CGRect(
-                    x: section.ribbonFrame.midX - width / 2,
-                    y: edge == .leading ? section.ribbonFrame.minY : section.ribbonFrame.maxY - height,
-                    width: width,
-                    height: height
-                )
-            }
-            return OverviewOverflowPill(
-                workspaceId: section.workspaceId,
-                edge: edge,
-                count: count,
-                frame: frame,
-                orientation: section.orientation
-            )
-        }
-    }
-
-    func overflowPill(at point: CGPoint) -> OverviewOverflowPill? {
-        let adjustedPoint = CGPoint(x: point.x, y: point.y + scrollOffset)
-        return workspaceSections.lazy.flatMap { overflowPills(for: $0) }
-            .first { $0.frame.contains(adjustedPoint) }
+        section.visibleFrame
     }
 
     func tabControls(for section: OverviewWorkspaceSection) -> [OverviewTabControl] {

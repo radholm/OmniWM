@@ -253,12 +253,8 @@ enum WorkspaceBarMenuBuilder {
     }
 
     private static func layoutItems(for target: WorkspaceBarWorkspaceMenuTarget) -> [WorkspaceBarMenuItem] {
-        [(LayoutType.niri, ActiveLayoutKind.niri), (.dwindle, .dwindle)].map { layout, kind in
-            .action(
-                layout.localizedDisplayName,
-                .setLayout(target.id, layout),
-                isChecked: target.layout == kind
-            )
-        }
+        [
+            .action(LayoutType.dwindle.localizedDisplayName, .setLayout(target.id, .dwindle), isChecked: true)
+        ]
     }
 }

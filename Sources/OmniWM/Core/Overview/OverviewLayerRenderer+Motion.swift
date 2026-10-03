@@ -9,10 +9,6 @@ extension OverviewLayerRenderer {
         ribbonLayers.values.flatMap { [$0.wallpaper, $0.shade] }
     }
 
-    var columnMotionLayers: [CALayer] {
-        columnLayers.values.flatMap { $0.values.flatMap { [$0] + ($0.sublayers ?? []) } }
-    }
-
     var tabMotionLayers: [CALayer] {
         tabControlLayers.values.flatMap { [$0] + ($0.sublayers ?? []) + ($0.mask.map { [$0] } ?? []) }
     }
@@ -39,7 +35,7 @@ extension OverviewLayerRenderer {
         for layers in windowLayers.values { layers.cancelAnimation() }
         for mask in ribbonMasks.values { OverviewLayerMotion.remove(from: mask) }
         for control in tabMotionLayers { OverviewLayerMotion.remove(from: control) }
-        for layer in columnMotionLayers + ribbonMotionLayers { OverviewLayerMotion.remove(from: layer) }
+        for layer in ribbonMotionLayers { OverviewLayerMotion.remove(from: layer) }
     }
 
     func freezingReflow(in layout: OverviewLayout) -> OverviewLayout {
@@ -47,7 +43,7 @@ extension OverviewLayerRenderer {
         var frozen = layout
         frozen.scrollOffset = -OverviewLayerMotion.displayedFrame(of: content).minY
         OverviewRenderer.withoutAnimation {
-            for control in tabMotionLayers + columnMotionLayers + ribbonMotionLayers {
+            for control in tabMotionLayers + ribbonMotionLayers {
                 control.frame = OverviewLayerMotion.displayedFrame(of: control)
                 OverviewLayerMotion.remove(from: control)
             }
@@ -62,16 +58,6 @@ extension OverviewLayerRenderer {
             }
             return section
         })
-        for section in frozen.workspaceSections {
-            frozen.niriColumnsByWorkspace[section.workspaceId] = frozen.niriColumnsByWorkspace[section.workspaceId]?
-                .map {
-                    var column = $0
-                    if let layer = columnLayers[section.workspaceId]?[column.columnIndex] {
-                        column.frame = layer.frame.offsetBy(dx: section.ribbonFrame.minX, dy: section.ribbonFrame.minY)
-                    }
-                    return column
-                }
-        }
         return frozen
     }
 

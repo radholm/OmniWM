@@ -46,7 +46,8 @@ extension WindowActionHandler {
 
         let targetWorkspaceId = anchorWorkspaceId
         switch layoutType(for: targetWorkspaceId) {
-        case .dwindle:
+        case .dwindle,
+             .defaultLayout:
             return summonWindowRightInDwindle(
                 token: token,
                 sourceWorkspaceId: targetEntry.workspaceId,
@@ -54,79 +55,7 @@ extension WindowActionHandler {
                 focusedToken: anchorToken,
                 focusOrigin: focusOrigin
             )
-        case .niri,
-             .defaultLayout:
-            return summonWindowRightInNiri(
-                token: token,
-                sourceWorkspaceId: targetEntry.workspaceId,
-                targetWorkspaceId: targetWorkspaceId,
-                focusedToken: anchorToken,
-                focusOrigin: focusOrigin
-            )
         }
-    }
-
-    @discardableResult
-    private func summonWindowRightInNiri(
-        token: WindowToken,
-        sourceWorkspaceId: WorkspaceDescriptor.ID,
-        targetWorkspaceId: WorkspaceDescriptor.ID,
-        focusedToken: WindowToken,
-        focusOrigin: ManagedFocusOrigin
-    ) -> Bool {
-        guard let controller,
-              let handle = controller.workspaceManager.handle(for: token),
-              let engine = controller.niriEngine,
-              let focusedNode = engine.findNode(for: focusedToken, in: targetWorkspaceId),
-              let focusedColumn = engine.findColumn(containing: focusedNode, in: targetWorkspaceId),
-              let focusedColumnIndex = engine.columnIndex(of: focusedColumn, in: targetWorkspaceId)
-        else {
-            return false
-        }
-
-        let insertIndex = focusedColumnIndex + 1
-        let sourceLayoutType = layoutType(for: sourceWorkspaceId)
-
-        if sourceWorkspaceId == targetWorkspaceId {
-            guard controller.niriLayoutHandler.insertWindowInNewColumn(
-                handle: handle,
-                insertIndex: insertIndex,
-                in: targetWorkspaceId
-            ) else {
-                return false
-            }
-            commitSummonedWindowFocus(token, in: targetWorkspaceId, origin: focusOrigin, scrollsNiri: true)
-            return true
-        }
-
-        guard controller.workspaceNavigationHandler.moveWindow(
-            handle: handle,
-            toWorkspaceId: targetWorkspaceId
-        ).didMutate else {
-            return false
-        }
-
-        if sourceLayoutType == .dwindle {
-            commitSummonedWindowFocus(
-                token,
-                in: targetWorkspaceId,
-                origin: focusOrigin,
-                rememberedFocusToken: focusedToken,
-                scrollsNiri: true
-            )
-            return true
-        }
-
-        guard controller.niriLayoutHandler.insertWindowInNewColumn(
-            handle: handle,
-            insertIndex: insertIndex,
-            in: targetWorkspaceId,
-            sizingPolicy: .inheritSource
-        ) else {
-            return false
-        }
-        commitSummonedWindowFocus(token, in: targetWorkspaceId, origin: focusOrigin, scrollsNiri: true)
-        return true
     }
 
     @discardableResult
@@ -185,26 +114,13 @@ extension WindowActionHandler {
         _ token: WindowToken,
         in workspaceId: WorkspaceDescriptor.ID,
         origin focusOrigin: ManagedFocusOrigin,
-        rememberedFocusToken: WindowToken? = nil,
-        scrollsNiri startNiriScrollAnimation: Bool = false
+        rememberedFocusToken: WindowToken? = nil
     ) {
         guard let controller else { return }
-
-        _ = controller.workspaceManager.applySessionPatch(
-            .init(
-                workspaceId: workspaceId,
-                viewportState: nil,
-                rememberedFocusToken: rememberedFocusToken ?? token,
-                plannedSeq: controller.workspaceManager.worldSeq
-            )
-        )
         controller.layoutRefreshController.requestLayoutCommandRelayout(
             affectedWorkspaceIds: [workspaceId]
         ) { [weak controller] in
             controller?.focusWindow(token, origin: focusOrigin)
-        }
-        if startNiriScrollAnimation {
-            controller.layoutRefreshController.startScrollAnimation(for: workspaceId)
         }
     }
 
@@ -214,15 +130,6 @@ extension WindowActionHandler {
         origin focusOrigin: ManagedFocusOrigin
     ) {
         guard let controller else { return }
-
-        _ = controller.workspaceManager.applySessionPatch(
-            .init(
-                workspaceId: workspaceId,
-                viewportState: nil,
-                rememberedFocusToken: token,
-                plannedSeq: controller.workspaceManager.worldSeq
-            )
-        )
 
         let newestFocusIntentId = controller.intentLedger.newestFocusIntentId()
         controller.layoutRefreshController.requestLayoutCommandRelayout(

@@ -22,7 +22,7 @@ Both commands recreate the file from the running settings if it was deleted, so 
 
 ## Settings window
 
-Most settings are editable in the SwiftUI Settings window, organized into 14 sections (General, Troubleshooting, Niri Layout, Dwindle Layout, Monitors, Workspaces, Overview, Borders, Workspace Bar, Hidden Bar, Hotkeys, Mouse & Trackpad, Quake Terminal, Report an Issue). **App Rules** opens as its own window from the status menu. Clipboard retention limits and scratchpad labels are edited in TOML; clipboard history can be enabled from the [Command Palette's Clipboard mode](/features/command-palette/#clipboard-history).
+Most settings are editable in the SwiftUI Settings window, organized into 13 sections (General, Troubleshooting, Dwindle Layout, Monitors, Workspaces, Overview, Borders, Workspace Bar, Hidden Bar, Hotkeys, Mouse & Trackpad, Quake Terminal, Report an Issue). **App Rules** opens as its own window from the status menu. Clipboard retention limits and scratchpad labels are edited in TOML; clipboard history can be enabled from the [Command Palette's Clipboard mode](/features/command-palette/#clipboard-history).
 
 **Start at Login** is managed by macOS, and **System-wide Window Corners** changes a macOS preference. Neither is stored in `settings.toml`.
 
@@ -36,11 +36,10 @@ Most settings are editable in the SwiftUI Settings window, organized into 14 sec
 
 ### Automatic version upgrades
 
-A file without `schemaVersion` is a legacy version 0 file; OmniWM v0.6.4 emitted version 1 files. OmniWM guarantees automatic upgrades for settings emitted by v0.6.2 through v0.6.4 and upgrades valid version 2 and 3 files as well. Version 0 files pass through all four migration steps in memory. Version 1, 2, and 3 files start at their next step without rerunning earlier migrations. Only the final strict version 4 file is written:
+A file without `schemaVersion` is a legacy version 0 file; OmniWM v0.6.4 emitted version 1 files. OmniWM upgrades valid Dwindle configurations with supported command bindings from version 0 through 3. Unsupported layout values and command ids must be corrected before loading. Version 0 files pass through all four migration steps in memory. Version 1, 2, and 3 files start at their next step without rerunning earlier migrations. Only the final strict version 4 file is written:
 
 - Missing settings introduced since version 0 receive their compatibility defaults. In particular, `focus.raiseOnMouseFocus` becomes `true` to preserve the old behavior; `gaps.fullscreenUsesOuterGaps` and `workspaceBar.hideInNativeFullscreen` become `false`; and `scratchpads.labels` starts empty.
 - The version 0 hotkey step adds the required scratchpad slot entries. The old `assignFocusedWindowToScratchpad` and `toggleScratchpadWindow` ids become their slot 1 equivalents while preserving the configured triggers; an explicitly configured slot 1 id wins if both forms are present.
-- The retired `consumeOrExpelWindowLeft` and `consumeOrExpelWindowRight` actions are removed. Diagnostics suggest the current replacement commands.
 - The version 1 to version 2 step adds the 18 `switchWorkspaceSlot.N` and `moveToWorkspaceSlot.N` entries plus `closeFocusedWindow`, all unassigned unless already present. Final validation still rejects any unrelated unknown, duplicate, or missing hotkey id.
 - The version 2 to version 3 step moves a nonempty `monitorRoutingOverrides` array into one `routing.arrangements` entry with a stable UUID. An empty array becomes no arrangements. All original monitor rows and their unrecognized fields remain intact, including rows for disconnected displays; the migration does not query displays. Custom routing can inherit that arrangement for a connected subset. A missing, non-array, or malformed old routing field rejects the configuration without rewriting it.
 - The version 3 to version 4 step adds the Set Mark and Remove Mark hotkey actions as unassigned entries. Existing hotkey bindings keep their assignments.
@@ -55,7 +54,7 @@ Older schema-less files are attempted through the same migration, but are outsid
 
 ## Runtime state lives elsewhere
 
-Volatile runtime state is kept out of the config file so `settings.toml` stays clean for dotfile management. Clipboard history, update-check timestamps, the persisted window restore catalog (including Niri column and Dwindle tree placements), the Quake terminal's custom frame, and the last palette mode live in `${XDG_STATE_HOME:-$HOME/.local/state}/omniwm`. `XDG_STATE_HOME` is honored only when it is an absolute path beginning with `/`; otherwise OmniWM uses `~/.local/state/omniwm`.
+Volatile runtime state is kept out of the config file so `settings.toml` stays clean for dotfile management. Clipboard history, update-check timestamps, the persisted window restore catalog (including Dwindle tree placements), the Quake terminal's custom frame, and the last palette mode live in `${XDG_STATE_HOME:-$HOME/.local/state}/omniwm`. `XDG_STATE_HOME` is honored only when it is an absolute path beginning with `/`; otherwise OmniWM uses `~/.local/state/omniwm`.
 
 The separate **OmniWM Dev** app uses `omniwm-dev` instead of `omniwm` for both its config and state directories. See [Building from Source](/developers/building/) for the development build workflow.
 
@@ -71,7 +70,6 @@ The full schema is documented key by key in the [Settings Reference](/config/set
 | [`[routing]`](/config/settings-reference/#routing) | macOS vs. custom routing and saved arrangements per connected display set |
 | [`[monitors]`](/config/settings-reference/#monitors) | Optional ranking that decides which connected display is Main, Secondary, and so on |
 | [`[gaps]`](/config/settings-reference/#gaps) | Inner and outer gaps |
-| [`[niri]`](/config/settings-reference/#niri) | Scrolling (Niri) layout options |
 | [`[dwindle]`](/config/settings-reference/#dwindle) | Dwindle (BSP) layout options |
 | [`[borders]`](/config/settings-reference/#borders) | Focused-window border |
 | [`[overview]`](/config/settings-reference/#overview) | Overview zoom and colors |
@@ -86,4 +84,4 @@ The full schema is documented key by key in the [Settings Reference](/config/set
 | [`[[hotkeys]]`](/config/settings-reference/#hotkeys) | One entry per assignable action |
 | [`[[workspaces]]`](/config/settings-reference/#workspaces) | Workspace definitions |
 | [`[[appRules]]`](/config/settings-reference/#apprules) | Per-app window rules |
-| [`[[monitor*Overrides]]`](/config/settings-reference/#per-monitor-overrides) | Per-monitor bar, orientation, Niri, Dwindle, and gap overrides |
+| [`[[monitor*Overrides]]`](/config/settings-reference/#per-monitor-overrides) | Per-monitor bar, orientation, Dwindle, and gap overrides |

@@ -393,10 +393,7 @@ final class RescanScopeTests: XCTestCase {
             reason: .windowDestroyed,
             windowRemovalPayload: .init(
                 workspaceId: workspaceId,
-                layoutType: .niri,
-                removedNodeId: nil,
-                removedNiriColumn: false,
-                niriOldFrames: [:],
+                layoutType: .dwindle,
                 shouldRecoverFocus: false,
                 allowsPreferredRecoveryToken: false
             )
@@ -645,10 +642,7 @@ final class RescanScopeTests: XCTestCase {
                 reason: .windowDestroyed,
                 windowRemovalPayload: .init(
                     workspaceId: workspaceId,
-                    layoutType: .niri,
-                    removedNodeId: nil,
-                    removedNiriColumn: false,
-                    niriOldFrames: [:],
+                    layoutType: .dwindle,
                     shouldRecoverFocus: false,
                     allowsPreferredRecoveryToken: false
                 )
@@ -713,10 +707,7 @@ final class RescanScopeTests: XCTestCase {
                 reason: .windowDestroyed,
                 windowRemovalPayload: .init(
                     workspaceId: newerWorkspaceId,
-                    layoutType: .niri,
-                    removedNodeId: nil,
-                    removedNiriColumn: false,
-                    niriOldFrames: [:],
+                    layoutType: .dwindle,
                     shouldRecoverFocus: false,
                     allowsPreferredRecoveryToken: false
                 )
@@ -847,7 +838,6 @@ final class RescanScopeTests: XCTestCase {
                         axRef: helperTrackedAXRef
                     ),
                     managedReplacementMetadata: nil,
-                    admissionHints: nil,
                     sizeConstraints: nil
                 ),
                 exhausted: false
@@ -1258,12 +1248,11 @@ final class RescanScopeTests: XCTestCase {
         let workspaceId = try XCTUnwrap(
             WindowAdmissionTestSupport.workspace(
                 named: "1",
-                layoutType: .niri,
+                layoutType: .dwindle,
                 controller: controller
             )
         )
         XCTAssertTrue(controller.workspaceManager.setActiveWorkspace(workspaceId, on: monitor.id))
-        controller.niriLayoutHandler.enableNiriLayout()
         await WindowAdmissionTestSupport.drainLayoutRefreshes(controller)
         let token = WindowToken(pid: 705, windowId: 7_005)
         _ = WindowAdmissionTestSupport.track(
@@ -1399,10 +1388,7 @@ final class RescanScopeTests: XCTestCase {
             reason: .windowDestroyed,
             windowRemovalPayload: .init(
                 workspaceId: workspaceId,
-                layoutType: .niri,
-                removedNodeId: nil,
-                removedNiriColumn: false,
-                niriOldFrames: [:],
+                layoutType: .dwindle,
                 shouldRecoverFocus: false,
                 allowsPreferredRecoveryToken: false
             )

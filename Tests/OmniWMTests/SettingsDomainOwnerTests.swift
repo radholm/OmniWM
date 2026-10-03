@@ -15,7 +15,6 @@ final class SettingsDomainOwnerTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let settings = makeSettings(directory: directory)
         let focus = settings.focus
-        let niri = settings.niri
         let bar = settings.workspaceBar
         let workspaces = settings.workspaces
         let observed = Mutex(0)
@@ -28,14 +27,12 @@ final class SettingsDomainOwnerTests: XCTestCase {
         XCTAssertEqual(observed.withLock { $0 }, 0)
         var values = settings.toExport()
         values.focus.followsMouse.toggle()
-        values.niri.visibleContainerCount = 4
         values.workspaceBar.showLabels.toggle()
         let savedBeforeImport = try Data(contentsOf: settings.settingsFileURL)
 
         settings.applyExport(values)
 
         XCTAssertTrue(settings.focus === focus)
-        XCTAssertTrue(settings.niri === niri)
         XCTAssertTrue(settings.workspaceBar === bar)
         XCTAssertTrue(settings.workspaces === workspaces)
         XCTAssertEqual(observed.withLock { $0 }, 1)
@@ -79,7 +76,7 @@ final class SettingsDomainOwnerTests: XCTestCase {
         XCTAssertEqual(observed.withLock { $0 }, 0)
         var values = settings.toExport()
         let inherited = WorkspaceConfiguration(name: "2", layoutType: .defaultLayout)
-        let explicit = WorkspaceConfiguration(name: "1", layoutType: .niri)
+        let explicit = WorkspaceConfiguration(name: "1", layoutType: .dwindle)
         values.workspaceConfigurations = [inherited, explicit, inherited]
 
         settings.applyExport(values)
@@ -88,12 +85,12 @@ final class SettingsDomainOwnerTests: XCTestCase {
         XCTAssertEqual(settings.workspaces.configurations, [explicit, inherited])
         XCTAssertEqual(settings.workspaces.configuredNames(), ["1", "2"])
         XCTAssertEqual(settings.workspaces.layoutType(for: "2"), .dwindle)
-        XCTAssertEqual(settings.workspaces.layoutType(for: "1"), .niri)
         XCTAssertEqual(settings.workspaces.layoutType(for: "3"), .dwindle)
         XCTAssertEqual(settings.workspaces.displayName(for: "3"), "3")
-        binding.wrappedValue = .niri
-        XCTAssertEqual(settings.workspaces.layoutType(for: "2"), .niri)
-        XCTAssertEqual(try SettingsTOMLCodec.decode(Data(contentsOf: settings.settingsFileURL)), settings.toExport())
+        XCTAssertEqual(
+            try SettingsTOMLCodec.decode(SettingsTOMLCodec.encode(settings.toExport())),
+            settings.toExport()
+        )
     }
 
     private func makeSettings(directory: URL) -> SettingsStore {

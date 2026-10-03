@@ -47,9 +47,6 @@ extension MouseEventHandler {
     }
 
     private func adoptNativeTitleBarFallback(_ entry: WindowState, controller: WMController) -> Bool {
-        guard !controller.niriLayoutHandler.hasScrollAnimation(for: entry.workspaceId) else {
-            return false
-        }
         guard let observedFrame = terminalNativeWindowFrame(for: entry),
               !nativeWindowFrameMatchesManagedTarget(observedFrame, entry: entry)
         else { return false }
@@ -83,9 +80,6 @@ extension MouseEventHandler {
         _ entry: WindowState, drag: MouseInputState.NativeTitleBarDrag
     ) -> Bool {
         var drag = drag
-        if controller?.niriLayoutHandler.hasScrollAnimation(for: entry.workspaceId) == true {
-            return false
-        }
         let observedFrame = terminalNativeWindowFrame(for: entry)
         if let observedFrame,
            nativeWindowFrameMatchesManagedTarget(observedFrame, entry: entry)

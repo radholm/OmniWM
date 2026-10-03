@@ -155,44 +155,6 @@ final class OverviewStructuralMotionTests: XCTestCase {
     }
 
     @MainActor
-    func testRenderedChevronsKeepTheirHitTargetsWhileControlResizesAndFreezes() throws {
-        for shrinking in [true, false] {
-            let fixture = Fixture()
-            var initial = fixture.layout(x: shrinking ? 330 : 400, tabbed: true)
-            initial.scrollOffset = 40
-            fixture.renderer.updateLayout(initial, state: fixture.state, caretAnimated: false, update: .immediate)
-            fixture.renderer.updatePresentation(initial, state: fixture.state)
-            let expected = try XCTUnwrap(initial.tabControls(for: initial.workspaceSections[0]).first)
-            var destination = fixture.layout(x: shrinking ? 400 : 330, tabbed: true)
-            destination.scrollOffset = 60
-            fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .structural)
-            let control = try XCTUnwrap(fixture.renderer.tabControlLayers[fixture.handle])
-            let card = try XCTUnwrap(fixture.renderer.windowLayers[fixture.handle])
-            for _ in 0 ..< 2 {
-                for symbol in ["‹", "›"] {
-                    let text = try XCTUnwrap(control.sublayers?.compactMap { $0 as? CATextLayer }
-                        .first { $0.string as? String == symbol })
-                    let glyph = OverviewLayerMotion.displayedFrame(of: text)
-                    let frame = OverviewLayerMotion.displayedFrame(of: control)
-                    let content = OverviewLayerMotion.displayedFrame(of: fixture.renderer.content)
-                    let point = CGPoint(
-                        x: content.minX + card.displayedFrame.minX + frame.minX + glyph.midX,
-                        y: content.minY + card.displayedFrame.minY + frame.minY + glyph.midY
-                    )
-                    let hit = try XCTUnwrap(fixture.renderer.tabControl(at: point, layout: destination))
-                    XCTAssertEqual(
-                        hit.steppedHandle(at: point),
-                        symbol == "‹" ? expected.previousHandle : expected.nextHandle
-                    )
-                }
-                destination = fixture.renderer.freezingReflow(in: destination)
-                fixture.renderer.cancelAnimation()
-                fixture.renderer.updatePresentation(destination, state: fixture.state)
-            }
-        }
-    }
-
-    @MainActor
     func testInteractiveTakeoverFreezesDisplayedOverviewEndpoint() throws {
         let fixture = Fixture()
         let card = try XCTUnwrap(fixture.renderer.windowLayers[fixture.handle])
@@ -308,40 +270,6 @@ final class OverviewStructuralMotionTests: XCTestCase {
     }
 
     @MainActor
-    func testViewportPanMovesColumnChromeWithCardsInBothOrientations() throws {
-        for orientation in [Monitor.Orientation.horizontal, .vertical] {
-            let fixture = Fixture()
-            let initial = fixture.layout(x: 120, tabbed: true, orientation: orientation)
-            fixture.renderer.updateLayout(initial, state: fixture.state, caretAnimated: false, update: .immediate)
-            fixture.renderer.updatePresentation(initial, state: fixture.state)
-            let card = try XCTUnwrap(fixture.renderer.windowLayers[fixture.handle])
-            let start = card.displayedFrame
-            let column = try XCTUnwrap(fixture.renderer.columnLayers[fixture.workspaceId]?[0])
-            let destination = fixture.layout(
-                x: orientation == .horizontal ? 330 : 120,
-                y: orientation == .vertical ? 280 : 120,
-                tabbed: true,
-                orientation: orientation
-            )
-            fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
-
-            XCTAssertTrue(fixture.renderer.columnLayers[fixture.workspaceId]?[0] === column)
-            let columnFrame = OverviewLayerMotion.displayedFrame(of: column)
-                .offsetBy(dx: fixture.ribbon.minX, dy: fixture.ribbon.minY)
-            XCTAssertEqual(columnFrame, start)
-            XCTAssertEqual(card.displayedFrame, start)
-            XCTAssertTrue(try XCTUnwrap(column.superlayer).masksToBounds)
-            XCTAssertEqual(column.superlayer?.frame, fixture.ribbon)
-            XCTAssertNil(card.root.animation(forKey: "overview.opacity"))
-            let spring = try XCTUnwrap(column.animation(forKey: "overview.position") as? CASpringAnimation)
-            XCTAssertEqual(spring.stiffness, pow(2 * .pi / 0.25, 2), accuracy: 0.0001)
-            XCTAssertEqual(spring.damping, 2 * sqrt(spring.stiffness * spring.mass), accuracy: 0.0001)
-            fixture.renderer.cancelReflow()
-            XCTAssertNil(column.animation(forKey: "overview.position"))
-        }
-    }
-
-    @MainActor
     func testViewportEntrySlidesAnExistingCardWithoutStructuralArrivalFade() throws {
         let fixture = Fixture()
         let initial = fixture.layout(x: 650)
@@ -400,8 +328,13 @@ final class OverviewStructuralMotionTests: XCTestCase {
         fixture.renderer.updatePresentation(initial, state: fixture.state)
         let retained = try XCTUnwrap(fixture.renderer.ribbonLayers[fixture.workspaceId])
         for destination in [
-            fixture.layout(x: 70, tabbed: true, visibleFrame: base),
-            fixture.layout(x: 410, width: 240, tabbed: true, visibleFrame: base)
+            fixture.layout(x: 70, tabbed: true, visibleFrame: CGRect(x: 180, y: 100, width: 220, height: 250)),
+            fixture.layout(
+                x: 410,
+                width: 240,
+                tabbed: true,
+                visibleFrame: CGRect(x: 200, y: 100, width: 240, height: 250)
+            )
         ] {
             fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
             let current = try XCTUnwrap(fixture.renderer.ribbonLayers[fixture.workspaceId])
@@ -440,50 +373,12 @@ final class OverviewStructuralMotionTests: XCTestCase {
 
         XCTAssertEqual(background.frame, displayed)
         XCTAssertEqual(
-            frozen.niriColumnsByWorkspace[fixture.workspaceId]?.first?.frame,
-            initial.niriColumnsByWorkspace[fixture.workspaceId]?.first?.frame
-        )
-        XCTAssertEqual(
             frozen.window(for: fixture.handle)?.overviewFrame,
             initial.window(for: fixture.handle)?.overviewFrame
         )
         XCTAssertFalse(fixture.renderer.isReflowing)
         XCTAssertNil(background.animation(forKey: "overview.position"))
         XCTAssertNil(background.animation(forKey: "overview.bounds"))
-    }
-
-    @MainActor
-    func testAnimatedWallpaperCoversCardsWhileCrossingEitherRibbonEdgeAndShrinking() throws {
-        for (start, end) in [
-            (CGRect(x: 120, y: 120, width: 200, height: 180), CGRect(x: 410, y: 120, width: 240, height: 180)),
-            (CGRect(x: 410, y: 120, width: 240, height: 180), CGRect(x: 120, y: 120, width: 200, height: 180)),
-            (CGRect(x: 330, y: 120, width: 200, height: 180), CGRect(x: -80, y: 120, width: 240, height: 180)),
-            (CGRect(x: -80, y: 120, width: 240, height: 180), CGRect(x: 330, y: 120, width: 200, height: 180))
-        ] {
-            let fixture = Fixture()
-            let base = CGRect(x: 200, y: 100, width: 200, height: 250)
-            let initial = fixture.layout(x: start.minX, width: start.width, tabbed: true, visibleFrame: base)
-            fixture.renderer.updateLayout(initial, state: fixture.state, caretAnimated: false, update: .immediate)
-            fixture.renderer.updatePresentation(initial, state: fixture.state)
-            let destination = fixture.layout(x: end.minX, width: end.width, tabbed: true, visibleFrame: base)
-            fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
-            let card = try XCTUnwrap(fixture.renderer.windowLayers[fixture.handle])
-            let column = try XCTUnwrap(fixture.renderer.columnLayers[fixture.workspaceId]?[0])
-            for fraction: CGFloat in [0, 0.25, 0.5, 0.75, 1] {
-                let cardFrame = interpolatedAnimationFrame(card.root, fraction: fraction).intersection(fixture.ribbon)
-                let columnFrame = interpolatedAnimationFrame(column, fraction: fraction)
-                    .offsetBy(dx: fixture.ribbon.minX, dy: fixture.ribbon.minY).intersection(fixture.ribbon)
-                for background in fixture.renderer.ribbonMotionLayers {
-                    let clip = try XCTUnwrap(background.superlayer)
-                    XCTAssertTrue(clip.masksToBounds)
-                    XCTAssertEqual(clip.cornerRadius, OverviewRenderStyle.Metrics.ribbonCornerRadius)
-                    let frame = interpolatedAnimationFrame(background, fraction: fraction).intersection(clip.bounds)
-                    XCTAssertTrue(frame.contains(cardFrame), "Background \(frame) must contain card \(cardFrame)")
-                    XCTAssertTrue(frame.contains(columnFrame))
-                    XCTAssertTrue(fixture.ribbon.contains(frame))
-                }
-            }
-        }
     }
 
     @MainActor
@@ -499,47 +394,6 @@ final class OverviewStructuralMotionTests: XCTestCase {
             y: fromPosition.y + (layer.position.y - fromPosition.y) * fraction - height * layer.anchorPoint.y,
             width: width, height: height
         )
-    }
-
-    @MainActor
-    func testRibbonTakeoverPreservesIntermediateBoundsWhenContentCrossesDesktopEdges() throws {
-        let fixture = Fixture()
-        let base = CGRect(x: 200, y: 100, width: 200, height: 250)
-        let initial = fixture.layout(x: 120, tabbed: true, visibleFrame: base)
-        fixture.renderer.updateLayout(initial, state: fixture.state, caretAnimated: false, update: .immediate)
-        fixture.renderer.updatePresentation(initial, state: fixture.state)
-        let destination = fixture.layout(x: 410, width: 240, tabbed: true, visibleFrame: base)
-        fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
-        let intermediateCard = CGRect(x: 265, y: 120, width: 220, height: 180)
-        let intermediateBackground = CGRect(x: 160, y: 100, width: 365, height: 250)
-        for card in fixture.renderer.windowLayers.values {
-            setDisplayedFrame(intermediateCard, on: card.root)
-        }
-        let column = try XCTUnwrap(fixture.renderer.columnLayers[fixture.workspaceId]?[0])
-        setDisplayedFrame(intermediateCard.offsetBy(dx: -fixture.ribbon.minX, dy: -fixture.ribbon.minY), on: column)
-        for layer in fixture.renderer.ribbonMotionLayers { setDisplayedFrame(intermediateBackground, on: layer) }
-
-        let frozen = fixture.renderer.freezingReflow(in: destination)
-        fixture.renderer.cancelAnimation()
-        fixture.renderer.updatePresentation(frozen, state: fixture.state)
-
-        XCTAssertEqual(frozen.window(for: fixture.handle)?.overviewFrame, intermediateCard)
-        XCTAssertEqual(frozen.niriColumnsByWorkspace[fixture.workspaceId]?.first?.frame, intermediateCard)
-        for layer in fixture.renderer.ribbonMotionLayers {
-            XCTAssertEqual(layer.frame, intermediateBackground)
-            let clip = try XCTUnwrap(layer.superlayer)
-            XCTAssertTrue(clip.masksToBounds)
-            XCTAssertEqual(clip.frame, fixture.ribbon)
-            XCTAssertEqual(clip.bounds, fixture.ribbon)
-            XCTAssertTrue(layer.frame.intersection(clip.bounds).contains(intermediateCard.intersection(fixture.ribbon)))
-            XCTAssertNil(layer.animation(forKey: "overview.position"))
-            XCTAssertNil(layer.animation(forKey: "overview.bounds"))
-        }
-        fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
-        for layer in fixture.renderer.ribbonMotionLayers {
-            XCTAssertEqual(OverviewLayerMotion.displayedFrame(of: layer), intermediateBackground)
-            XCTAssertEqual(layer.frame, destination.backgroundFrame(for: destination.workspaceSections[0]))
-        }
     }
 
     @MainActor
@@ -588,7 +442,7 @@ final class OverviewStructuralMotionTests: XCTestCase {
         let initial = fixture.layout(x: 220, width: 160, visibleFrame: base)
         fixture.renderer.updateLayout(initial, state: fixture.state, caretAnimated: false, update: .immediate)
         fixture.renderer.updatePresentation(initial, state: fixture.state)
-        let destination = fixture.layout(x: 70, visibleFrame: base)
+        let destination = fixture.layout(x: 70, visibleFrame: base.offsetBy(dx: -20, dy: 0))
         fixture.renderer.updateLayout(destination, state: fixture.state, caretAnimated: false, update: .viewport)
         for card in fixture.renderer.windowLayers.values { card.cancelAnimation() }
         XCTAssertTrue(fixture.renderer.isReflowing)
@@ -642,7 +496,7 @@ final class OverviewStructuralMotionTests: XCTestCase {
             orientation: Monitor.Orientation = .horizontal,
             visibleFrame: CGRect? = nil
         ) -> OverviewLayout {
-            var item = OverviewWindowItem(
+            let item = OverviewWindowItem(
                 handle: handle ?? self.handle,
                 windowId: 1,
                 workspaceId: workspaceId,
@@ -653,7 +507,6 @@ final class OverviewStructuralMotionTests: XCTestCase {
                 overviewFrame: CGRect(x: x, y: y, width: width, height: 180),
                 matchesSearch: true
             )
-            item.isTiled = true
             var section = OverviewWorkspaceSection(
                 workspaceId: workspaceId,
                 name: "Workspace",
@@ -671,13 +524,11 @@ final class OverviewStructuralMotionTests: XCTestCase {
                 var inactive = self.layout(x: x, y: y, width: width, handle: tabHandle).allWindows[0]
                 inactive.isDisplayed = false
                 section.windows.append(inactive)
-                layout.niriColumnsByWorkspace[workspaceId] = [OverviewNiriColumn(
-                    workspaceId: workspaceId,
-                    columnIndex: 0,
-                    frame: item.overviewFrame,
-                    windowHandles: [self.handle, tabHandle],
-                    isTabbed: true
-                )]
+                layout.dwindleGroupsByWorkspace[workspaceId] = [
+                    OverviewDwindleGroup(
+                        id: UUID(), windowHandles: [self.handle, tabHandle], activeHandle: self.handle
+                    )
+                ]
             }
             layout.replaceWorkspaceSections([section])
             return layout

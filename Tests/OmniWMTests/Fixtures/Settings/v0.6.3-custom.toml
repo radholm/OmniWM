@@ -1,7 +1,6 @@
 monitorBarOverrides = []
 monitorDwindleOverrides = []
 monitorGapOverrides = []
-monitorNiriOverrides = []
 monitorOrientationOverrides = []
 monitorRoutingOverrides = []
 
@@ -63,14 +62,9 @@ systemHyperTrigger = "None"
 updateChecksEnabled = true
 
 [gestures]
-fingerCount = 3
 invertDirection = true
 mouseMoveModifierKey = "option"
 mouseResizeModifierKey = "option"
-scrollEnabled = true
-scrollModifierKey = "optionShift"
-scrollSensitivity = 5.0
-trackpadScrollStyle = "snap"
 workspaceSwipeAxis = "vertical"
 workspaceSwipeEnabled = false
 workspaceSwipeFingerCount = 3
@@ -84,14 +78,6 @@ rehideIntervalSeconds = 5.0
 constrainToArrangement = false
 enabled = true
 margin = 1
-
-[niri]
-alwaysCenterSingleColumn = false
-centerFocusedColumn = "never"
-containerPrimarySpanPresets = [0.3333333333333333, 0.5, 0.6666666666666666]
-infiniteLoop = false
-singleWindowFit = "fill"
-visibleContainerCount = 2
 
 [overview]
 zoom = 1.0
@@ -168,12 +154,18 @@ yOffset = 0.0
 assignToWorkspace = "dev"
 bundleId = "com.example.Terminal"
 id = "22222222-2222-2222-2222-222222222222"
-initialContainerPrimarySpan = 0.65
 layout = "float"
 minHeight = 480.0
 minWidth = 720.0
 titleRegex = "^Project"
 
+[[hotkeys]]
+binding = "Option+J"
+id = "assignFocusedWindowToScratchpad"
+
+[[hotkeys]]
+binding = "Option+K"
+id = "toggleScratchpadWindow"
 [[hotkeys]]
 binding = "Option+1"
 id = "switchWorkspace.0"
@@ -280,43 +272,11 @@ id = "focusPrevious"
 
 [[hotkeys]]
 binding = "Unassigned"
-id = "focusDownOrLeft"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusUpOrRight"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowTop"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowBottom"
-
-[[hotkeys]]
-binding = "Unassigned"
 id = "focusWindowDownOrTop"
 
 [[hotkeys]]
 binding = "Unassigned"
 id = "focusWindowUpOrBottom"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowOrWorkspaceDown"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowOrWorkspaceUp"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "centerColumn"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "centerVisibleColumns"
 
 [[hotkeys]]
 binding = "Control+Option+Shift+Up Arrow"
@@ -325,50 +285,6 @@ id = "moveWindowToWorkspaceUp"
 [[hotkeys]]
 binding = "Control+Option+Shift+Down Arrow"
 id = "moveWindowToWorkspaceDown"
-
-[[hotkeys]]
-binding = "Control+Option+Shift+Page Up"
-id = "moveColumnToWorkspaceUp"
-
-[[hotkeys]]
-binding = "Control+Option+Shift+Page Down"
-id = "moveColumnToWorkspaceDown"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.0"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.1"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.2"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.3"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.4"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.5"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.6"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.7"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.8"
 
 [[hotkeys]]
 binding = "Option+Shift+Left Arrow"
@@ -393,22 +309,6 @@ id = "moveWindowDown"
 [[hotkeys]]
 binding = "Unassigned"
 id = "moveWindowUp"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveWindowDownOrToWorkspaceDown"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveWindowUpOrToWorkspaceUp"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "consumeWindowIntoColumn"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "expelWindowFromColumn"
 
 [[hotkeys]]
 binding = "Control+Command+Tab"
@@ -464,147 +364,19 @@ id = "toggleNativeFullscreen"
 
 [[hotkeys]]
 binding = "Control+Option+Shift+Left Arrow"
-id = "moveColumn.left"
+id = "moveGroup.left"
 
 [[hotkeys]]
 binding = "Control+Option+Shift+Right Arrow"
-id = "moveColumn.right"
+id = "moveGroup.right"
 
 [[hotkeys]]
 binding = "Unassigned"
-id = "moveColumn.up"
+id = "moveGroup.up"
 
 [[hotkeys]]
 binding = "Unassigned"
-id = "moveColumn.down"
-
-[[hotkeys]]
-binding = "Control+Option+Home"
-id = "moveColumnToFirst"
-
-[[hotkeys]]
-binding = "Control+Option+End"
-id = "moveColumnToLast"
-
-[[hotkeys]]
-binding = "Option+T"
-id = "toggleColumnTabbed"
-
-[[hotkeys]]
-binding = "Option+Home"
-id = "focusColumnFirst"
-
-[[hotkeys]]
-binding = "Option+End"
-id = "focusColumnLast"
-
-[[hotkeys]]
-binding = "Control+Option+1"
-id = "focusColumn.0"
-
-[[hotkeys]]
-binding = "Control+Option+2"
-id = "focusColumn.1"
-
-[[hotkeys]]
-binding = "Control+Option+3"
-id = "focusColumn.2"
-
-[[hotkeys]]
-binding = "Control+Option+4"
-id = "focusColumn.3"
-
-[[hotkeys]]
-binding = "Control+Option+5"
-id = "focusColumn.4"
-
-[[hotkeys]]
-binding = "Control+Option+6"
-id = "focusColumn.5"
-
-[[hotkeys]]
-binding = "Control+Option+7"
-id = "focusColumn.6"
-
-[[hotkeys]]
-binding = "Control+Option+8"
-id = "focusColumn.7"
-
-[[hotkeys]]
-binding = "Control+Option+9"
-id = "focusColumn.8"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.1"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.2"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.3"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.4"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.5"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.6"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.7"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.8"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "focusWindowInColumn.9"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.1"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.2"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.3"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.4"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.5"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.6"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.7"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.8"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToIndex.9"
+id = "moveGroup.down"
 
 [[hotkeys]]
 binding = "Option+Period"
@@ -613,58 +385,6 @@ id = "cycleSizeForward"
 [[hotkeys]]
 binding = "Option+Comma"
 id = "cycleSizeBackward"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "cycleWindowPrimarySpanForward"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "cycleWindowPrimarySpanBackward"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "cycleWindowSecondarySpanForward"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "cycleWindowSecondarySpanBackward"
-
-[[hotkeys]]
-binding = "Option+Shift+F"
-id = "toggleContainerFullPrimarySpan"
-
-[[hotkeys]]
-binding = "Control+Option+F"
-id = "expandContainerToAvailablePrimarySpan"
-
-[[hotkeys]]
-binding = "Control+Option+R"
-id = "resetWindowSecondarySpan"
-
-[[hotkeys]]
-binding = "Option+Minus"
-id = "setContainerPrimarySpan.decrease10Percent"
-
-[[hotkeys]]
-binding = "Option+Equal"
-id = "setContainerPrimarySpan.increase10Percent"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "setWindowPrimarySpan.decrease10Percent"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "setWindowPrimarySpan.increase10Percent"
-
-[[hotkeys]]
-binding = "Option+Shift+Minus"
-id = "setWindowSecondarySpan.decrease10Percent"
-
-[[hotkeys]]
-binding = "Option+Shift+Equal"
-id = "setWindowSecondarySpan.increase10Percent"
 
 [[hotkeys]]
 binding = "Option+Shift+B"
@@ -759,10 +479,6 @@ binding = "Option+Grave"
 id = "toggleQuakeTerminal"
 
 [[hotkeys]]
-binding = "Option+Shift+L"
-id = "toggleWorkspaceLayout"
-
-[[hotkeys]]
 binding = "Option+Shift+O"
 id = "toggleOverview"
 
@@ -779,13 +495,6 @@ name = "dev"
 [workspaces.monitorAssignment]
 type = "secondary"
 
-[[hotkeys]]
-binding = "Option+J"
-id = "assignFocusedWindowToScratchpad"
-
-[[hotkeys]]
-binding = "Option+K"
-id = "toggleScratchpadWindow"
 [futureExtension]
 enabled = true
 

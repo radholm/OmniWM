@@ -53,11 +53,10 @@ For windows, `is-visible` is true only when the workspace is visible, the window
 | Value | Meaning |
 |-------|---------|
 | `workspace-inactive` | Parked for an inactive workspace. |
-| `tab-inactive` | Hidden as an inactive member of a Dwindle group or Niri tabbed column. |
-| `layout-transient` | Other layout-owned hiding, including Niri columns outside the viewport and active members awaiting reveal. |
+| `tab-inactive` | Hidden as an inactive member of a Dwindle group. |
 | `scratchpad` | Hidden by the scratchpad. |
 
-Workspace and scratchpad hiding retain their reasons. For other layout hiding, an inactive tab reports `tab-inactive` even when its column is also outside the viewport. An active member awaiting reveal keeps `layout-transient` until its hidden state clears. `hiddenReason` is omitted when no hidden state is recorded; `layout-transient` can persist in a settled layout and is not an animation-completion signal.
+Workspace and scratchpad hiding retain their reasons. Inactive Dwindle group members report `tab-inactive`; other temporary layout hiding reports `layout-transient`. `hiddenReason` is omitted when no hidden state is recorded. It is not an animation-completion signal.
 
 `is-app-hidden` exposes the PID-scoped macOS hide state independently of `layout-reason` and `hidden-reason`; selecting `is-app-hidden` returns the JSON field `isAppHidden`.
 
@@ -69,7 +68,6 @@ The three workspace flags answer different questions. `is-focused` marks the wor
 
 **Display fields:** `id`, `name`, `is-main`, `is-current`, `frame`, `visible-frame`, `has-notch`, `orientation`, `inner-gap`, `outer-gap-left`, `outer-gap-right`, `outer-gap-top`, `outer-gap-bottom`, `fullscreen-uses-outer-gaps`, `active-workspace`
 
-`fullscreen-uses-outer-gaps` reports the resolved per-display policy used by OmniWM Full Screen, Niri maximized, and the Single Window “Full Screen” fit. It does not affect native macOS Full Screen.
 
 `frame` and `visible-frame` use AppKit global screen coordinates as reported by `NSScreen`: the origin is the bottom-left corner of the main display and `y` grows upward, so a display above the main one has a larger `y` than the main display. Window `frame` values use the same coordinate space.
 

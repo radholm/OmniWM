@@ -17,35 +17,6 @@ final class GestureSettings {
     nonisolated static let workspaceSwipeSensitivityRange = 0.5 ... 4.0
     nonisolated static let workspaceWallpaperParallaxAmountRange = 0.02 ... 0.5
 
-    private nonisolated static let scrollSensitivityRange = 0.1 ... 100.0
-
-    private nonisolated static func normalizedScrollSensitivity(_ value: Double) -> Double {
-        guard value.isFinite else { return defaults.scrollSensitivity }
-        return min(max(value, scrollSensitivityRange.lowerBound), scrollSensitivityRange.upperBound)
-    }
-
-    var scrollEnabled = GestureSettings.defaults.scrollEnabled {
-        didSet {
-            guard oldValue != scrollEnabled else { return }
-            notifyChange()
-        }
-    }
-
-    var scrollSensitivity = GestureSettings.defaults.scrollSensitivity {
-        didSet {
-            let normalized = GestureSettings.normalizedScrollSensitivity(scrollSensitivity)
-            guard normalized == scrollSensitivity else {
-                scrollSensitivity = normalized
-                return
-            }
-            notifyChange()
-        }
-    }
-
-    var scrollModifierKey = GestureSettings.defaults.scrollModifierKey {
-        didSet { notifyChange() }
-    }
-
     var mouseMoveModifierKey = GestureSettings.defaults.mouseMoveModifierKey {
         didSet { notifyChange() }
     }
@@ -54,15 +25,7 @@ final class GestureSettings {
         didSet { notifyChange() }
     }
 
-    var fingerCount = GestureSettings.defaults.fingerCount {
-        didSet { notifyChange() }
-    }
-
     var invertDirection = GestureSettings.defaults.invertDirection {
-        didSet { notifyChange() }
-    }
-
-    var trackpadScrollStyle = GestureSettings.defaults.trackpadScrollStyle {
         didSet { notifyChange() }
     }
 
@@ -178,24 +141,11 @@ final class GestureSettings {
         }
     }
 
-    var workspaceSwipeAxisLockedToVertical: Bool {
-        scrollEnabled && workspaceSwipeFingerCount == fingerCount
-    }
-
-    var effectiveWorkspaceSwipeAxis: WorkspaceSwipeAxis {
-        workspaceSwipeAxisLockedToVertical ? .vertical : workspaceSwipeAxis
-    }
-
     func export() -> SettingsExport.Gestures {
         SettingsExport.Gestures(
-            scrollEnabled: scrollEnabled,
-            scrollSensitivity: scrollSensitivity,
-            scrollModifierKey: scrollModifierKey,
             mouseMoveModifierKey: mouseMoveModifierKey,
             mouseResizeModifierKey: mouseResizeModifierKey,
-            fingerCount: fingerCount,
             invertDirection: invertDirection,
-            trackpadScrollStyle: trackpadScrollStyle,
             workspaceSwipeEnabled: workspaceSwipeEnabled,
             workspaceSwipeFingerCount: workspaceSwipeFingerCount,
             workspaceSwipeAxis: workspaceSwipeAxis,
@@ -222,14 +172,9 @@ final class GestureSettings {
     func apply(_ gestures: SettingsExport.Gestures) {
         let previous = export()
         isApplying = true
-        scrollEnabled = gestures.scrollEnabled
-        scrollSensitivity = gestures.scrollSensitivity
-        scrollModifierKey = gestures.scrollModifierKey
         mouseMoveModifierKey = gestures.mouseMoveModifierKey
         mouseResizeModifierKey = gestures.mouseResizeModifierKey
-        fingerCount = gestures.fingerCount
         invertDirection = gestures.invertDirection
-        trackpadScrollStyle = gestures.trackpadScrollStyle
         workspaceSwipeEnabled = gestures.workspaceSwipeEnabled
         workspaceSwipeFingerCount = gestures.workspaceSwipeFingerCount
         workspaceSwipeAxis = gestures.workspaceSwipeAxis

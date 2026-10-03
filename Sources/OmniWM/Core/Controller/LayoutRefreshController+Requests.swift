@@ -60,20 +60,6 @@ extension LayoutRefreshController {
         )
     }
 
-    func renderInteractiveResize(for workspaceId: WorkspaceDescriptor.ID) {
-        guard let controller,
-              let engine = controller.niriEngine,
-              let monitor = controller.workspaceManager.monitor(for: workspaceId)
-        else { return }
-        _ = niriHandler.applyFramesOnDemand(
-            wsId: workspaceId,
-            state: controller.workspaceManager.niriViewportState(for: workspaceId),
-            engine: engine,
-            monitor: monitor,
-            animationTime: nil
-        )
-    }
-
     func renderDwindleInteractiveResize(for workspaceId: WorkspaceDescriptor.ID) {
         guard let controller,
               let monitor = controller.workspaceManager.monitor(for: workspaceId)
@@ -215,11 +201,6 @@ extension LayoutRefreshController {
             if layoutState.isIncrementalRefreshInProgress || layoutState.isImmediateLayoutInProgress {
                 return
             }
-            if !niriHandler.scrollAnimationByDisplay.isEmpty
-                || !dwindleHandler.dwindleAnimationByDisplay.isEmpty
-            {
-                return
-            }
         }
         let refresh = ScheduledRefresh(
             kind: .relayout,
@@ -249,17 +230,5 @@ extension LayoutRefreshController {
             self.layoutState.pendingDebounceTask = nil
             self.startNextRefreshIfNeeded()
         }
-    }
-
-    func selectTabInNiri(
-        info: TabRailInfo,
-        visualIndex: Int,
-        expectedToken: WindowToken?
-    ) {
-        niriHandler.selectTabInNiri(
-            info: info,
-            visualIndex: visualIndex,
-            expectedToken: expectedToken
-        )
     }
 }

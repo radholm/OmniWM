@@ -46,7 +46,7 @@ extension ActionCatalog {
                 category: .move,
                 binding: .unassigned,
                 visibility: .advanced,
-                keywords: ["move", "reorder", "group", "tab", "column", "container"]
+                keywords: ["move", "reorder", "group", "tab"]
             ),
             action(
                 id: "moveWindowUp",
@@ -54,54 +54,7 @@ extension ActionCatalog {
                 category: .move,
                 binding: .unassigned,
                 visibility: .advanced,
-                keywords: ["move", "reorder", "group", "tab", "column", "container"]
-            ),
-            action(
-                id: "moveWindowDownOrToWorkspaceDown",
-                command: .windowMovement(.downOrToWorkspaceDown),
-                category: .move,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "moveWindowUpOrToWorkspaceUp",
-                command: .windowMovement(.upOrToWorkspaceUp),
-                category: .move,
-                binding: .unassigned,
-                visibility: .advanced
-            )
-        ])
-    }
-
-    static func appendColumnMembershipBindings(_ specs: inout [ActionSpec]) {
-        specs.append(contentsOf: [
-            action(
-                id: "consumeOrExpelWindowLeft",
-                command: .windowMovement(.consumeOrExpelLeft),
-                category: .move,
-                binding: .unassigned,
-                visibility: .unassignable
-            ),
-            action(
-                id: "consumeOrExpelWindowRight",
-                command: .windowMovement(.consumeOrExpelRight),
-                category: .move,
-                binding: .unassigned,
-                visibility: .unassignable
-            ),
-            action(
-                id: "consumeWindowIntoColumn",
-                command: .windowMovement(.consumeIntoColumn),
-                category: .move,
-                binding: .unassigned,
-                visibility: .advanced
-            ),
-            action(
-                id: "expelWindowFromColumn",
-                command: .windowMovement(.expelFromColumn),
-                category: .move,
-                binding: .unassigned,
-                visibility: .advanced
+                keywords: ["move", "reorder", "group", "tab"]
             )
         ])
     }

@@ -11,7 +11,6 @@ struct RuleReevaluationWindow {
     let existingEntry: WindowState?
     let evaluation: WMController.WindowDecisionEvaluation
     let ruleEffects: ManagedWindowRuleEffects
-    let admissionHints: ManagedWindowAdmissionHints
     let mode: TrackedWindowMode
     let placementOrigin: WorkspacePlacementOrigin
     let createPlacementContext: WindowCreatePlacementContext?

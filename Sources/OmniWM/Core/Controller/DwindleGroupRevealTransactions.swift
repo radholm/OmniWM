@@ -343,7 +343,6 @@ extension DwindleGroupRevealTransactions {
         _ = controller.workspaceManager.applySessionPatch(
             .init(
                 workspaceId: transaction.workspaceId,
-                viewportState: nil,
                 rememberedFocusToken: rollbackToken,
                 plannedSeq: controller.workspaceManager.worldSeq
             )

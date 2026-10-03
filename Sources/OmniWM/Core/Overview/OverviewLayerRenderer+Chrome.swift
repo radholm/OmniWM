@@ -9,12 +9,10 @@ extension OverviewLayerRenderer {
         guard workspaceChromeNeedsUpdate(layout) else { return [] }
         chromeLayout = layout
         workspaceChrome.sublayers = nil
-        overflowPills.sublayers = nil
         var tabHandles: Set<WindowHandle> = []
         var newMaskMotion: [OverviewLayerMotion] = []
         chromeSections.removeAll(keepingCapacity: true)
         let workspaceIds = Set(layout.workspaceSections.map(\.workspaceId))
-        for id in columnLayers.keys where !workspaceIds.contains(id) { columnLayers.removeValue(forKey: id) }
         for id in ribbonLayers.keys where !workspaceIds.contains(id) { ribbonLayers.removeValue(forKey: id) }
         for section in layout.workspaceSections {
             let sectionLayer = CALayer()
@@ -27,7 +25,6 @@ extension OverviewLayerRenderer {
             label.frame = section.labelFrame
             label.contentsScale = contentsScale
             sectionLayer.addSublayer(label)
-            addColumnChrome(section, layout: layout, to: sectionLayer)
             for control in layout.tabControls(for: section) {
                 guard let window = layout.window(for: control.handle),
                       let card = windowLayers[control.handle] else { continue }
@@ -38,9 +35,6 @@ extension OverviewLayerRenderer {
                     newMaskMotion.append(motion)
                 }
                 tabHandles.insert(control.handle)
-            }
-            for pill in layout.overflowPills(for: section) {
-                overflowPills.addSublayer(makeOverflowPillLayer(pill))
             }
         }
         if let target = layout.newWorkspaceTarget {
@@ -145,17 +139,10 @@ extension OverviewLayerRenderer {
         clip.addSublayer(shade)
     }
 
-    func makeOverflowPillLayer(_ pill: OverviewOverflowPill) -> CALayer {
-        let leading = pill.orientation == .horizontal ? "←" : "↓"
-        let trailing = pill.orientation == .horizontal ? "→" : "↑"
-        let label = pill.edge == .leading ? "\(leading) \(pill.count)" : "\(pill.count) \(trailing)"
-        return makeControlLayer(frame: pill.frame, label: label)
-    }
-
     func makeControlLayer(frame: CGRect, label: String) -> CALayer {
         let layer = CALayer()
         layer.frame = frame
-        layer.backgroundColor = Colors.overflowPillBackground
+        layer.backgroundColor = Colors.ribbonControlBackground
         layer.cornerRadius = min(frame.height / 2, 12)
         let text = OverviewRenderer.textLayer(size: 12, color: Colors.textWhite, alignment: .center)
         text.string = label
@@ -166,7 +153,7 @@ extension OverviewLayerRenderer {
     }
 
     private func updateTabControlLayer(_ layer: CALayer, control: OverviewTabControl) {
-        layer.backgroundColor = Colors.overflowPillBackground
+        layer.backgroundColor = Colors.ribbonControlBackground
         layer.cornerRadius = min(layer.bounds.height / 2, 12)
         if layer.sublayers == nil {
             layer.sublayers = OverviewTabControl.Segment.allCases.map { _ in
@@ -187,7 +174,6 @@ extension OverviewLayerRenderer {
 
     func workspaceChromeNeedsUpdate(_ layout: OverviewLayout) -> Bool {
         guard let previous = chromeLayout,
-              previous.niriColumnsByWorkspace == layout.niriColumnsByWorkspace,
               previous.dwindleGroupsByWorkspace == layout.dwindleGroupsByWorkspace,
               previous.newWorkspaceTarget?.frame == layout.newWorkspaceTarget?.frame,
               previous.workspaceSections.count == layout.workspaceSections.count
@@ -197,8 +183,6 @@ extension OverviewLayerRenderer {
                 || previous.isActive != next.isActive || previous.labelFrame != next.labelFrame
                 || previous.visibleFrame != next.visibleFrame
                 || previous.ribbonFrame != next.ribbonFrame
-                || previous.hiddenColumnsBefore != next.hiddenColumnsBefore
-                || previous.hiddenColumnsAfter != next.hiddenColumnsAfter
                 || previous.windows.count != next.windows.count
                 || zip(previous.windows, next.windows)
                 .contains { pair in
@@ -281,35 +265,6 @@ extension OverviewLayerRenderer {
         case let .floatingPlacement(_, _, previewFrame):
             rect = previewFrame
             dropTarget.fillColor = nil
-        case let .niriWindowInsert(_, handle, position):
-            guard let window = layout.window(for: handle) else { return }
-            let orientation = layout.workspaceSections.first { $0.workspaceId == window.workspaceId }?
-                .orientation ?? .horizontal
-            rect = orientation == .horizontal
-                ? CGRect(
-                    x: window.overviewFrame.minX,
-                    y: position == .before ? window.overviewFrame.maxY - Metrics.dropLineHeight : window
-                        .overviewFrame.minY,
-                    width: window.overviewFrame.width,
-                    height: Metrics.dropLineHeight
-                )
-                : CGRect(
-                    x: position == .before ? window.overviewFrame.maxX - Metrics.dropLineHeight : window.overviewFrame
-                        .minX,
-                    y: window.overviewFrame.minY,
-                    width: Metrics.dropLineHeight,
-                    height: window.overviewFrame.height
-                )
-        case let .niriColumnInsert(workspaceId, insertIndex):
-            guard let zone = layout.niriColumnDropZonesByWorkspace[workspaceId]?
-                .first(where: { $0.insertIndex == insertIndex }) else { return }
-            guard let section = layout.workspaceSections.first(where: { $0.workspaceId == workspaceId }) else { return }
-            let axis = OverviewRibbonAxis(section.orientation)
-            rect = axis.frame(
-                start: (axis.minimum(zone.frame) + axis.maximum(zone.frame) - Metrics.dropLineWidth) / 2,
-                span: Metrics.dropLineWidth,
-                across: zone.frame
-            ).intersection(section.ribbonFrame)
         case .newWorkspace:
             guard let target = layout.newWorkspaceTarget else { return }
             rect = target.frame

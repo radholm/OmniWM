@@ -124,18 +124,6 @@ extension StateReducer {
         plan.focusSession = next
     }
 
-    static func setViewport(
-        _ next: ViewportState,
-        for workspaceId: WorkspaceDescriptor.ID,
-        currentSnapshot: ReconcileSnapshot,
-        plan: inout ActionPlan
-    ) {
-        if let current = currentSnapshot.viewports[workspaceId], current == next {
-            return
-        }
-        plan.viewport = .set(workspaceId: workspaceId, state: next)
-    }
-
     static func rekeyedFocusSession(
         from focusSession: FocusSessionSnapshot,
         oldToken: WindowToken,

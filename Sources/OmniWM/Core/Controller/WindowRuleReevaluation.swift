@@ -84,9 +84,6 @@ struct WindowRuleReevaluation {
         let ruleEffects = evaluation.decision.disposition == .undecided
             ? existingEntry?.ruleEffects ?? evaluation.decision.ruleEffects
             : evaluation.decision.ruleEffects
-        let admissionHints = evaluation.decision.disposition == .undecided
-            ? existingEntry?.admissionHints ?? evaluation.decision.admissionHints
-            : evaluation.decision.admissionHints
 
         guard let effectiveTrackedMode = controller.trackedModePreservingAutomaticFallbackState(
             decision: evaluation.decision,
@@ -113,7 +110,7 @@ struct WindowRuleReevaluation {
 
         return RuleReevaluationWindow(
             token: token, axRef: axRef, existingEntry: existingEntry,
-            evaluation: evaluation, ruleEffects: ruleEffects, admissionHints: admissionHints,
+            evaluation: evaluation, ruleEffects: ruleEffects,
             mode: effectiveTrackedMode, placementOrigin: placementOrigin,
             createPlacementContext: createPlacementContext
         )
@@ -146,31 +143,6 @@ struct WindowRuleReevaluation {
             )
             : nil
         let workspaceId = workspaceForReevaluatedWindow(window, structuralMatch: structuralMatch)
-
-        if window.existingEntry == nil,
-           let windowId = UInt32(exactly: window.token.windowId),
-           let structuralMatch,
-           controller.axEventHandler.rekeyStructuralManagedReplacement(
-               match: structuralMatch,
-               identity: .init(
-                   token: window.token,
-                   axRef: window.axRef
-               ),
-               windowId: windowId,
-               candidate: .init(
-                   bundleId: window.evaluation.facts.ax
-                       .bundleId,
-                   mode: window.mode,
-                   facts: window.evaluation.facts
-               ),
-               admissionHints: window.admissionHints
-           )
-        {
-            affectedWorkspaceIds.insert(workspaceId)
-            relayoutNeeded = true
-            ruleRelayoutNeeded = true
-            return
-        }
 
         admitIfNeeded(window, workspaceId: workspaceId)
         updateTracking(window)
@@ -219,7 +191,6 @@ struct WindowRuleReevaluation {
                 to: workspaceId,
                 mode: window.existingEntry?.mode ?? window.mode,
                 ruleEffects: window.ruleEffects,
-                admissionHints: window.admissionHints,
                 lifetimeAuthority: WMController.ruleReevaluationLifetimeAuthority(
                     existing: window.existingEntry?.lifetimeAuthority,
                     observedInTopLevelInventory: topLevelInventoryTokens.contains(window.token)
@@ -232,10 +203,6 @@ struct WindowRuleReevaluation {
 
     private func updateTracking(_ window: RuleReevaluationWindow) {
         if window.existingEntry != nil {
-            _ = controller.workspaceManager.updateAdmissionHints(
-                window.admissionHints,
-                for: window.token
-            )
         }
         if window.existingEntry == nil {
             controller.axEventHandler.discardCreatePlacementContext(for: window.token.windowId)

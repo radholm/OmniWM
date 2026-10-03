@@ -16,20 +16,10 @@ final class WorkspaceBarDragControllerTests: XCTestCase {
         let controller = WorkspaceBarDragController()
         let geometry = WorkspaceBarDropGeometry(workspaces: [
             .init(
-                id: source,
-                name: "1",
-                layout: .niri,
-                hitFrame: CGRect(x: 0, y: 0, width: 100, height: 24),
-                icons: [],
-                columnCount: 1
+                id: source, name: "1", hitFrame: CGRect(x: 0, y: 0, width: 100, height: 24), icons: []
             ),
             .init(
-                id: destination,
-                name: "2",
-                layout: .niri,
-                hitFrame: CGRect(x: 200, y: 0, width: 100, height: 24),
-                icons: [],
-                columnCount: 0
+                id: destination, name: "2", hitFrame: CGRect(x: 200, y: 0, width: 100, height: 24), icons: []
             )
         ])
         controller.geometryProvider = { geometry }
@@ -177,7 +167,7 @@ final class WorkspaceBarDragControllerTests: XCTestCase {
         XCTAssertEqual(restingFrames.count, 4)
 
         presentation.sourceTokens = [windows[0].id]
-        presentation.highlights = [.workspace(workspaceId), .gap(workspaceId, beforeIcon: 1)]
+        presentation.highlights = [.workspace(workspaceId), .icon(workspaceId, windows[1].id)]
         hostingView.layoutSubtreeIfNeeded()
 
         XCTAssertEqual(try relativeFrames(interaction, workspaceId: workspaceId), restingFrames)

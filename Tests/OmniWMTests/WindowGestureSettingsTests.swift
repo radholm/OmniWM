@@ -12,7 +12,6 @@ final class WindowGestureSettingsTests: XCTestCase {
             for other in [
                 TrackpadGestureMode.windowMove,
                 .windowResize,
-                .columnScroll,
                 .workspaceSwitch(axis: .horizontal),
                 .workspaceSwitch(axis: .vertical),
                 .overview(.open)
@@ -20,7 +19,6 @@ final class WindowGestureSettingsTests: XCTestCase {
                 where mode != other
             {
                 withSettings { settings in
-                    settings.gestures.scrollEnabled = false
                     var original = settings.gestures.export()
                     enable(other, in: &original)
                     settings.gestures.apply(original)
@@ -31,7 +29,7 @@ final class WindowGestureSettingsTests: XCTestCase {
                     settings.gestures.onChange = { changes += 1 }
                     settings.onTrackpadGestureAvailabilityChanged = { availability.append($0) }
 
-                    let conflict = settings.updateGestureSettings(candidate, monitors: [])
+                    let conflict = settings.updateGestureSettings(candidate)
 
                     XCTAssertNotNil(conflict, "\(mode) / \(other)")
                     XCTAssertEqual(conflict?.fingerCount, 4)
@@ -45,17 +43,16 @@ final class WindowGestureSettingsTests: XCTestCase {
 
     func testFingerReassignmentRejectsConflictAndAcceptsUnusedCount() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             settings.gestures.windowMoveEnabled = true
             settings.gestures.windowResizeEnabled = true
             var candidate = settings.gestures.export()
             candidate.windowMoveFingerCount = .three
 
-            XCTAssertNotNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNotNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.windowMoveFingerCount, .four)
 
             candidate.windowMoveFingerCount = .two
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             XCTAssertEqual(settings.gestures.windowMoveFingerCount, .two)
         }
     }
@@ -70,32 +67,29 @@ final class WindowGestureSettingsTests: XCTestCase {
             var candidate = settings.gestures.export()
             candidate.windowMoveEnabled = false
 
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             XCTAssertFalse(settings.gestures.windowMoveEnabled)
             XCTAssertNotNil(GestureSettingsValidation.conflict(
-                gestures: settings.gestures.export(), orientationOverrides: [], monitors: []
+                gestures: settings.gestures.export()
             ))
 
             candidate.windowResizeEnabled = false
-            XCTAssertNil(settings.updateGestureSettings(candidate, monitors: []))
+            XCTAssertNil(settings.updateGestureSettings(candidate))
             XCTAssertFalse(settings.gestures.windowResizeEnabled)
         }
     }
 
     func testAvailabilityTracksAllEnabledGesturesWithoutDuplicateNotifications() {
         withSettings { settings in
-            settings.gestures.scrollEnabled = false
             var states: [Bool] = []
             settings.onTrackpadGestureAvailabilityChanged = { states.append($0) }
 
             settings.gestures.windowMoveEnabled = true
             settings.gestures.windowMoveEnabled = true
             settings.gestures.windowResizeEnabled = true
-            settings.gestures.scrollEnabled = true
             settings.gestures.workspaceSwipeEnabled = true
             settings.gestures.overviewGestureEnabled = true
             settings.gestures.windowMoveEnabled = false
-            settings.gestures.scrollEnabled = false
             settings.gestures.workspaceSwipeEnabled = false
             settings.gestures.overviewGestureEnabled = false
             XCTAssertTrue(settings.effectiveTrackpadGesturesEnabled)
@@ -108,10 +102,10 @@ final class WindowGestureSettingsTests: XCTestCase {
 
     func testExportApplicationBatchesTransitionsAcrossWindowGestures() {
         withSettings { settings in
+            settings.gestures.windowMoveEnabled = true
             var states: [Bool] = []
             settings.onTrackpadGestureAvailabilityChanged = { states.append($0) }
             var export = settings.toExport()
-            export.gestures.scrollEnabled = false
             export.gestures.windowMoveEnabled = true
             settings.applyExport(export)
             XCTAssertTrue(states.isEmpty)
@@ -210,9 +204,6 @@ final class WindowGestureSettingsTests: XCTestCase {
         case .windowResize:
             gestures.windowResizeEnabled = true
             gestures.windowResizeFingerCount = .four
-        case .columnScroll:
-            gestures.scrollEnabled = true
-            gestures.fingerCount = .four
         case let .workspaceSwitch(axis):
             gestures.workspaceSwipeEnabled = true
             gestures.workspaceSwipeFingerCount = .four

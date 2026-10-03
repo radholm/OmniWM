@@ -68,7 +68,12 @@ final class WorkspaceBarMenuModelTests: XCTestCase {
     }
 
     func testWorkspaceMenuOffersFocusMoveRenameLayoutAndMonitorMove() {
-        let target = WorkspaceBarWorkspaceMenuTarget(id: ws2, monitorId: mainMonitor, isConfigured: true, layout: .niri)
+        let target = WorkspaceBarWorkspaceMenuTarget(
+            id: ws2,
+            monitorId: mainMonitor,
+            isConfigured: true,
+            layout: .dwindle
+        )
         let items = WorkspaceBarMenuBuilder.workspaceMenu(for: target, facts: facts(focusedWorkspace: ws1))
 
         XCTAssertEqual(items.first, .action("Focus Workspace", .focusWorkspace(ws2)))
@@ -77,10 +82,6 @@ final class WorkspaceBarMenuModelTests: XCTestCase {
             .moveFocusedWindow(toWorkspace: ws2)
         ))
         XCTAssertEqual(action(items, titled: "Rename…"), .action("Rename…", .renameWorkspace(ws2)))
-        XCTAssertEqual(action(items, titled: "Layout"), .submenu("Layout", [
-            .action(LayoutType.niri.localizedDisplayName, .setLayout(ws2, .niri), isChecked: true),
-            .action(LayoutType.dwindle.localizedDisplayName, .setLayout(ws2, .dwindle))
-        ]))
         XCTAssertEqual(action(items, titled: "Move Workspace to Monitor"), .submenu(
             "Move Workspace to Monitor",
             [.action("Side", .moveWorkspaceToMonitor(ws2, sideMonitor))]
@@ -92,7 +93,7 @@ final class WorkspaceBarMenuModelTests: XCTestCase {
             id: ws1,
             monitorId: mainMonitor,
             isConfigured: false,
-            layout: .niri
+            layout: .dwindle
         )
         let items = WorkspaceBarMenuBuilder.workspaceMenu(for: target, facts: facts(displays: 1, focusedWorkspace: ws1))
 

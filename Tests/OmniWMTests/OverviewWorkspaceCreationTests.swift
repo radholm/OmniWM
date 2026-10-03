@@ -8,33 +8,6 @@ import XCTest
 
 @MainActor
 final class OverviewWorkspaceCreationTests: XCTestCase {
-    func testCreationUsesNextLocalIDSkippingGlobalIDsWithoutChangingConfiguration() throws {
-        let fixture = makeFixture(workspaceNames: ["2"], secondaryWorkspaceNames: ["3", "4"])
-        let manager = fixture.controller.workspaceManager
-        let configurations = fixture.controller.settings.workspaces.configurations
-        let visible = manager.activeVisibleWorkspaceMap()
-
-        let first = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[0].id)
-        )
-        let second = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[1].id)
-        )
-
-        XCTAssertEqual(first.name, "5")
-        XCTAssertEqual(second.name, "6")
-        XCTAssertEqual(manager.monitorId(for: first.id), fixture.monitors[0].id)
-        XCTAssertEqual(manager.monitorId(for: second.id), fixture.monitors[1].id)
-        XCTAssertEqual(fixture.controller.settings.workspaces.configurations, configurations)
-        XCTAssertEqual(manager.activeVisibleWorkspaceMap(), visible)
-        XCTAssertEqual(
-            fixture.controller.niriEngine?.monitor(for: fixture.monitors[0].id)?.containsWorkspace(first.id), true
-        )
-        XCTAssertEqual(
-            fixture.controller.niriEngine?.monitor(for: fixture.monitors[1].id)?.containsWorkspace(second.id), true
-        )
-    }
-
     func testEmptyMonitorStartsAtOneAndSkipsGlobalIDs() throws {
         let fixture = makeFixture(workspaceNames: ["1", "2", "7"])
 
@@ -92,10 +65,10 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
             )
         }
         settings.workspaces.configurations = workspaceNames.map {
-            WorkspaceConfiguration(name: $0, monitorAssignment: .main, layoutType: .niri)
+            WorkspaceConfiguration(name: $0, monitorAssignment: .main, layoutType: .dwindle)
         } + secondaryWorkspaceNames.map {
             WorkspaceConfiguration(
-                name: $0, monitorAssignment: .specificDisplay(OutputId(from: monitors[1])), layoutType: .niri
+                name: $0, monitorAssignment: .specificDisplay(OutputId(from: monitors[1])), layoutType: .dwindle
             )
         }
         let controller = WMController(
@@ -106,8 +79,6 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
         )
         controller.workspaceManager.applyMonitorConfigurationChange(monitors)
         controller.workspaceManager.applySettings()
-        controller.niriEngine = NiriLayoutEngine()
-        controller.syncMonitorsToNiriEngine()
         return (controller, monitors)
     }
 }

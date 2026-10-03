@@ -60,7 +60,6 @@ final class SettingsExportApplicationTests: XCTestCase {
         let settings = makeSettings(directory: directory)
         settings.ipcEnabled = false
         settings.focus.followsMouse = false
-        settings.gestures.scrollEnabled = false
         settings.gestures.workspaceSwipeEnabled = false
         settings.appearanceMode = .light
         var events: [String] = []
@@ -68,13 +67,13 @@ final class SettingsExportApplicationTests: XCTestCase {
             events.append("ipc")
             XCTAssertTrue(enabled)
             XCTAssertTrue(settings.focus.followsMouse)
-            XCTAssertFalse(settings.gestures.scrollEnabled)
+            XCTAssertFalse(settings.gestures.workspaceSwipeEnabled)
             XCTAssertEqual(settings.appearanceMode, .light)
         }
         settings.onTrackpadGestureAvailabilityChanged = { available in
             events.append("gestures")
             XCTAssertTrue(available)
-            XCTAssertTrue(settings.gestures.scrollEnabled)
+            XCTAssertTrue(settings.gestures.workspaceSwipeEnabled)
             XCTAssertEqual(settings.appearanceMode, .dark)
         }
         defer {
@@ -84,11 +83,10 @@ final class SettingsExportApplicationTests: XCTestCase {
         var export = settings.toExport()
         export.focus.followsMouse = true
         export.ipcEnabled = true
-        export.gestures.scrollEnabled = true
+        export.gestures.workspaceSwipeEnabled = true
         export.appearanceMode = .dark
 
         settings.applyExport(export)
-
         XCTAssertEqual(events, ["ipc", "gestures"])
     }
 
@@ -96,12 +94,10 @@ final class SettingsExportApplicationTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let settings = makeSettings(directory: directory)
-        settings.gestures.scrollEnabled = true
-        settings.gestures.workspaceSwipeEnabled = false
+        settings.gestures.workspaceSwipeEnabled = true
         var states: [Bool] = []
         settings.onTrackpadGestureAvailabilityChanged = { states.append($0) }
         var export = settings.toExport()
-        export.gestures.scrollEnabled = false
         export.gestures.workspaceSwipeEnabled = true
 
         settings.applyExport(export)
@@ -109,7 +105,7 @@ final class SettingsExportApplicationTests: XCTestCase {
         export.gestures.workspaceSwipeEnabled = false
         settings.applyExport(export)
         XCTAssertEqual(states, [false])
-        settings.gestures.scrollEnabled = true
+        settings.gestures.workspaceSwipeEnabled = true
         XCTAssertEqual(states, [false, true])
     }
 

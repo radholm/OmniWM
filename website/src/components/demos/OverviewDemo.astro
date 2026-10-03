@@ -27,10 +27,9 @@ import Keycap from './Keycap.astro';
     <Keycap id="ov-k" keys={['⌥', '⇧', 'O']} label="Overview" />
     <Keycap id="ov-z" keys={['⌥', '⇧', 'scroll']} label="Zoom" />
     <Keycap id="ov-m" keys={['⌥', '⇧', '2']} label="To workspace 2" />
-    <Keycap id="ov-c" keys={['⌥', '⇧', '←']} label="Merge into column" />
     <Keycap id="ov-e" keys={['⏎']} label="Focus" />
   </div>
-  <p class="caption">Every workspace at once — zoom with the scroll wheel, then move and merge windows with your shortcuts.</p>
+  <p class="caption">Every workspace at once — zoom with the scroll wheel, then move windows with your shortcuts.</p>
 </div>
 
 <style is:global>
@@ -128,20 +127,6 @@ import Keycap from './Keycap.astro';
     &.ws2hop .card-discord,
     &.ws2hop .card-figma {
       transform: translateX(-4cqw);
-    }
-
-    &.consumed .card-discord,
-    &.consumed .card-figma {
-      transform: none;
-    }
-
-    &.consumed .card-figma {
-      height: 6cqh;
-    }
-
-    &.consumed .ov-notes {
-      transform: translate(1cqw, 8.5cqh) scale(0.395, 0.14);
-      z-index: 7;
     }
 
     &.landed .ov-zed,
@@ -301,9 +286,6 @@ import Keycap from './Keycap.astro';
         { at: 5600, sel: "[data-key-id='ov-m']", add: 'is-pressed' },
         { at: 5700, add: 'ws2hop' },
         { at: 5850, sel: "[data-key-id='ov-m']", remove: 'is-pressed' },
-        { at: 7100, sel: "[data-key-id='ov-c']", add: 'is-pressed' },
-        { at: 7200, add: 'consumed' },
-        { at: 7350, sel: "[data-key-id='ov-c']", remove: 'is-pressed' },
         { at: 9300, sel: '.ov-notes', remove: 'is-selected' },
         { at: 9300, sel: '.ov-safari', add: 'is-selected' },
         { at: 10100, sel: "[data-key-id='ov-e']", add: 'is-pressed' },

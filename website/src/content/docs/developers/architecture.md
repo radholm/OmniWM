@@ -73,9 +73,8 @@ Sources/
 │   │   │   ├── LayoutBoundary.swift EffectPlan + layout snapshot/geometry types
 │   │   │   ├── LayoutTopology.swift Read-only layout structure projection
 │   │   │   ├── SideHiding.swift     Off-screen placement geometry
-│   │   │   ├── Niri/                Orientation-aware scrolling-container engine
 │   │   │   └── Dwindle/             Binary-partition layout engine
-│   │   ├── Animation/               Springs, cubic easing, deceleration, viewport motion, policy
+│   │   ├── Animation/               Springs, cubic easing, deceleration, motion policy
 │   │   ├── Config/                  SettingsStore, TOML codec, runtime state, per-monitor settings
 │   │   ├── Rules/                   Window rule engine and structural lookup tables
 │   │   ├── Input/                   Action catalog, bindings, Carbon hotkeys
@@ -285,7 +284,7 @@ capture control bypass it because they do not mutate window-manager world state.
 │  STAGE 2 — WORLD   (Core/World, Core/Reconcile, Core/Workspace)        │
 │  WorldStore.commit(WMEvent): the SINGLE synchronous writer.           │
 │    EventNormalizer → StateReducer (pure) → resolve → InvariantChecks. │
-│    Owns WindowModel, focus, viewports, monitor sessions, space        │
+│    Owns WindowModel, focus, monitor sessions, space        │
 │    topology, and BOTH layout engines; commits advance seq.          │
 │    Output: an ActionPlan (state deltas).                              │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -387,13 +386,11 @@ Some apps (Ghostty, browsers) destroy and recreate windows during internal opera
     let windows: WindowModel.ReadView              // read-only registry facade
     private(set) var seq: UInt64 = 0               // monotonic mutation counter
     private(set) var focus = FocusSessionSnapshot()
-    private(set) var viewports: [WorkspaceDescriptor.ID: ViewportState] = [:]
     private(set) var scratchpads = ScratchpadState()
     private(set) var hiddenAppPIDs: Set<pid_t> = []
     private var appVisibilityGenerationByPID: [pid_t: UInt64] = [:]
     private(set) var monitorSessions: [Monitor.ID: MonitorSession] = [:]
     private(set) var spaceTopology = SpaceTopology()
-    private(set) var niriEngine: NiriLayoutEngine?
     private(set) var dwindleEngine: DwindleLayoutEngine?
     // ... InvalidationMarks bookkeeping
 }
@@ -413,7 +410,7 @@ Some apps (Ghostty, browsers) destroy and recreate windows during internal opera
 
 **macOS application visibility.** App hiding is PID-scoped world state, owned by `WorldStore.hiddenAppPIDs` and changed only by `.hiddenApplicationsChanged` commits. `appVisibilityGenerationByPID` advances on every visibility transition or explicit invalidation so delayed reveal intents can reject stale work. This state is orthogonal to per-window `LayoutReason` (`standard` / `nativeFullscreen`) and `HiddenState` (workspace parking, layout-transient hiding, or scratchpad): hiding an app masks its windows from layout projection without destroying their durable layout identity or fullscreen state.
 
-**macOS application visibility diagnostics.** An active runtime capture records the ordered NSWorkspace notification, intake dispatch, authoritative generation change, AX hard-fence transition, visibility-refresh lifecycle, and explicit reveal-intent result in the bounded `AppVisibilityTrace`. The capture's start/end reports independently compare WorldStore visibility, AX suppression, macOS process visibility, pending reveal intent, per-window fullscreen/parking state, and the Niri/Dwindle projection masks. These are read-only observations rather than another visibility authority; detailed records are capture-gated, and no layout, animation, AX-write, or SkyLight hot loop performs visibility trace work.
+**macOS application visibility diagnostics.** An active runtime capture records the ordered NSWorkspace notification, intake dispatch, authoritative generation change, AX hard-fence transition, visibility-refresh lifecycle, and explicit reveal-intent result in the bounded `AppVisibilityTrace`. The capture's start/end reports independently compare WorldStore visibility, AX suppression, macOS process visibility, pending reveal intent, per-window fullscreen/parking state, and the Dwindle projection masks. These are read-only observations rather than another visibility authority; detailed records are capture-gated, and no layout, animation, AX-write, or SkyLight hot loop performs visibility trace work.
 
 **Engine mutation sanction.** The two layout engines are private to the world. They may only be mutated when `isEngineMutationSanctioned` is true — i.e. inside `commit`. Callers not already inside a commit enter one through the `WorkspaceManager` scope wrappers: `withEngineMutationScope { … }` for ad-hoc engine mutations, and `withBatchedLayoutBuild { … }` for plan-building (Stage 3), which calls into the engines (`syncWindows`/`removeWindows`/`restoreInitialPlacements`) inside a single `layout_build` commit. `commit` sets each engine's `isMutationSanctioned` flag and the engines assert on any out-of-scope mutation.
 
@@ -441,21 +438,21 @@ A scoped scan may update missing-window counters only for explicit app roots who
 
 Scoped reconciliation reduces application-root enumeration and full AX-fact work relative to a global scan; it does not make refresh proportional only to changed windows. Topology refresh still checks native-Space membership for each tracked managed window, and selected AX roots still enumerate their window lists. Its latency and allocation benefit remains unproven until measured.
 
-**Plan-building runs inside a commit.** `buildRelayoutEffectPlan` calls `NiriLayoutHandler.layoutWithNiriEngine` (and the Dwindle equivalent), which run `syncWindows`/`removeWindows`/`restoreInitialPlacements` on the engines inside `workspaceManager.withBatchedLayoutBuild` — a single synchronous `layout_build` commit that also stamps each plan's `plannedSeq`. The layout engines return raw `[WindowToken: CGRect]` frame maps; the handlers wrap those into a `WorkspaceLayoutPlan` → `WorkspaceLayoutDiff` → `EffectPlan` (`Core/Layout/LayoutBoundary.swift`).
+**Plan-building runs inside a commit.** `buildRelayoutEffectPlan` calls `DwindleLayoutHandler.layoutWithDwindleEngine`, which updates Dwindle trees inside `workspaceManager.withBatchedLayoutBuild` — a single synchronous `layout_build` commit that also stamps each plan's `plannedSeq`. The layout engine returns raw `[WindowToken: CGRect]` frame maps; the handler wraps those into a `WorkspaceLayoutPlan` → `WorkspaceLayoutDiff` → `EffectPlan` (`Core/Layout/LayoutBoundary.swift`).
 
-**Monitor geometry has three explicit frames.** `LayoutMonitorSnapshot` carries a normal `workingFrame`, a `borderSafeFillFrame`, and a `fullscreenLayoutFrame`. When focus borders are enabled, `WMController` rounds the configured border width upward to a physical pixel and floors the runtime inner gap plus each final normalized outer strut to that clearance. Raw global and per-monitor settings are not rewritten; Dwindle's monitor-local `useGlobalGaps = false` path passes through the same runtime resolver. Normal tiled and valid custom-fit windows use `workingFrame`; Niri maximized windows and Niri/Dwindle single-window fill use `borderSafeFillFrame`; true layout fullscreen remains borderless and uses `fullscreenLayoutFrame` unchanged.
+**Monitor geometry has three explicit frames.** `LayoutMonitorSnapshot` carries a normal `workingFrame`, a `borderSafeFillFrame`, and a `fullscreenLayoutFrame`. When focus borders are enabled, `WMController` rounds the configured border width upward to a physical pixel and floors the runtime inner gap plus each final normalized outer strut to that clearance. Raw global and per-monitor settings are not rewritten; Dwindle's monitor-local `useGlobalGaps = false` path passes through the same runtime resolver. Normal tiled and valid custom-fit windows use `workingFrame`; Dwindle single-window fill use `borderSafeFillFrame`; true layout fullscreen remains borderless and uses `fullscreenLayoutFrame` unchanged.
 
 **Frame application.** `executeEffectPlan` hands each plan's diff to `LayoutDiffExecutor`, which calls `AXManager.applyFramesParallel`. Only after the plan's sequence is accepted, its workspace-scoped `nativeFullscreenSlots` projection is handed directly to `SurfaceReconciler`; settled plans also schedule the normal Stage 4 scene reconciliation.
 
 ### 3.6 Stage 4 — Surface Reconciliation
 
-Auxiliary UI — the focus border, per-monitor workspace bars, shared Niri/Dwindle tab rails, native-fullscreen placeholder panels, and parking-edge masks — is no longer pushed ad hoc by individual managers. `SurfaceReconciler` (`Core/Surface/SurfaceReconciler.swift`) derives all of it in one place:
+Auxiliary UI — the focus border, per-monitor workspace bars, shared Dwindle tab rails, native-fullscreen placeholder panels, and parking-edge masks — is no longer pushed ad hoc by individual managers. `SurfaceReconciler` (`Core/Surface/SurfaceReconciler.swift`) derives all of it in one place:
 
 1. State-mutating paths request either a full-scene reconcile or a border-only reconcile. External focus-owner projection, floating border geometry, suppression, system-modal state, restack, color, and display-scale changes take the border-only route. Managed selection changes remain full-scene because workspace bars and native-fullscreen placeholders also consume that state. A coalesced full-scene request always wins. Both scopes drain through one `CFRunLoopPerformBlock` on the main run loop.
 2. On a full drain, `runFullReconcile` builds a fresh `WorldView` (a read-only facade over the world), and `SurfaceDerivation.derive` produces a `DesiredSurfaceScene` (optional border, tab rails, placeholders, bars, and `parkingEdgeMasks`). The border-only route derives and applies only the border while retaining the other applied surfaces. A forced restack additionally re-applies ordering to the already-derived tab rails and native-fullscreen placeholders without rebuilding their desired state.
 3. The desired scene is diffed (by value equality) against the last applied scene; only changed surfaces are touched, routed to `BorderSurfaceApplier`, `WorkspaceBarManager.apply(_:)`, `TabRailManager`, `NativeFullscreenPlaceholderManager`, and `ParkingEdgeMaskManager`.
 
-Native-fullscreen placeholders have a split projection. `WorldView` derives stable lifecycle/content descriptors from every fullscreen record, including hidden descriptors retained through workspace switches and temporary entry loss. Niri and Dwindle attach exact rendered slot frames and layout visibility to each accepted `WorkspaceLayoutDiff`: Niri uses its current frame map plus `hiddenHandles`; Dwindle uses its interpolated frame map and active group member. `SurfaceReconciler` joins the two by `record.originalToken`, validates the current token, and uses the geometry-only move path only when token, workspace, selection, and visibility state are unchanged. This avoids rereading engine side effects, keeps rejected plans away from AppKit, and prevents the applied scene from advancing beyond the actual panel state.
+Native-fullscreen placeholders have a split projection. `WorldView` derives stable lifecycle/content descriptors from every fullscreen record, including hidden descriptors retained through workspace switches and temporary entry loss. Dwindle attaches exact rendered slot frames and layout visibility to each accepted `WorkspaceLayoutDiff`, using its interpolated frame map and active group member. `SurfaceReconciler` joins the projections by `record.originalToken`, validates the current token, and uses the geometry-only move path only when token, workspace, selection, and visibility state are unchanged. This avoids rereading engine side effects, keeps rejected plans away from AppKit, and prevents the applied scene from advancing beyond the actual panel state.
 
 The reconciler is *not* called from inside `WorldStore.commit`; it reads current state at drain time through a freshly constructed `WorldView`, not a captured commit snapshot.
 
@@ -472,20 +469,19 @@ When OmniWM activates an app or focuses a window, macOS emits an AX focus-change
 
 Both engines follow the same contract:
 
-1. They own their own **tree state** — per-workspace `NiriRoot` trees for Niri, per-workspace `DwindleNode` trees for Dwindle.
+1. Dwindle owns its **tree state** — per-workspace `DwindleNode` trees.
 2. They are **owned privately by `WorldStore`** and may only be mutated under commit/build-scope sanction.
-3. Given a workspace's snapshot, monitor geometry, gaps, and (for Niri) a `ViewportState`, they compute a `[WindowToken: CGRect]` frame map.
 4. They **never touch windows** — no AX calls, no frame writes, no `@Observable`, no actor isolation. They are plain `final class` types that run on the main actor only because their owner does.
 
-The Controller-layer handlers (`NiriLayoutHandler`/`DwindleLayoutHandler`) translate the engines' frame maps into `EffectPlan`s; the engines themselves never build an `EffectPlan`. Note that `ViewportState` is stored in `WorldStore.viewports`, not inside the Niri engine — the engine receives it as a call parameter.
+The Controller-layer `DwindleLayoutHandler` translates the engine's frame maps into `EffectPlan`s; the engine itself never builds an `EffectPlan`.
 
 ### 3.9 The Ungated Animation Tier
 
 There is one deliberate exception to "all mutation goes through commit": **per-frame animation**.
 
-`LayoutRefreshController` owns a `CADisplayLink` per display (via `NSScreen.displayLink(target:selector:)`). On each tick (`displayLinkFired`, at `displayLink.targetTimestamp`) it fans out to `NiriLayoutHandler.tickScrollAnimation`, the Dwindle tick, closing animations, and `surfaceReconciler.reconcileAnimationTick`. These ticks advance spring/gesture math and push interpolated frames to AX **outside `WorldStore.commit`** — committing 60–120 times per second would be both wasteful and impossible (commit is synchronous and seq-bumping). The committed `ViewportState` offset is the *anchor*; the animation adds a transient delta on top. When motion settles, the handler finalizes and stops the display link.
+`LayoutRefreshController` owns a `CADisplayLink` per display (via `NSScreen.displayLink(target:selector:)`). On each tick (`displayLinkFired`, at `displayLink.targetTimestamp`) it advances Dwindle animations, workspace slides, closing animations, and `surfaceReconciler.reconcileAnimationTick`. These ticks push interpolated frames to AX **outside `WorldStore.commit`** — committing 60–120 times per second would be both wasteful and impossible (commit is synchronous and seq-bumping). When motion settles, the handler finalizes and stops the display link.
 
-`AnimationDriver` (`Core/Animation/`) owns only the per-workspace viewport scroll motion — its `ViewportMotion` is `gesture`, `spring`, or `deceleration`. Per-window and per-column animations live inside `NiriLayoutEngine` (`tickAllWindowAnimations`/`tickAllColumnAnimations`); Dwindle node animations use `CubicAnimation`.
+Dwindle node animations use `CubicAnimation`.
 
 ### 3.10 Thread Safety Model
 
@@ -493,7 +489,6 @@ There is one deliberate exception to "all mutation goes through commit": **per-f
 
 **Exceptions, all explicitly bounded:**
 
-- **Per-app AX threads.** `AppAXContext` runs a dedicated `NSThread` + `CFRunLoop` per application for enumeration, frame batches, observer state, and queued retry raises. State pinned to the thread is wrapped in `ThreadGuardedValue` and checked against a `@TaskLocal appThreadToken`. `Thread.runInLoop` dispatches work to that thread and returns its result asynchronously, with a default 2-second deadline. This does not cover every AX operation: synchronous focus/control paths, including raises outside primary Niri navigation, still run on the main actor.
 - **The intake buffer.** `EventIntake` holds its buffer in a `nonisolated OSAllocatedUnfairLock`, so `EventIntake.post(...)` is callable from any transport thread; the drain re-enters the main actor via `CFRunLoopPerformBlock` + `MainActor.assumeIsolated`.
 - **IPC actors.** `IPCApplicationBridge`, `IPCConnection`, `IPCEventBroker`, and `IPCConnectionRegistry` are Swift actors; they hop to `@MainActor` for any window-management work.
 - **Clipboard store.** `ClipboardHistoryStore` is a Swift actor; pasteboard reads happen on a utility `DispatchQueue`.
@@ -517,16 +512,15 @@ There is one deliberate exception to "all mutation goes through commit": **per-f
 | `axEventHandler` | CGS/AX events → admissions, focus confirm/retry, native-fullscreen detection |
 | `commandHandler` | Routes physical `HotkeyInvocation`s through Overview first, then routes inactive-Overview commands with layout-compatibility guards |
 | `mouseEventHandler` / `mouseWarpHandler` | CGEvent tap, focus-follows-mouse, gestures; cursor warp |
-| `workspaceNavigationHandler` | Workspace switching, directional whole-workspace monitor moves, explicit-handle window workspace/monitor transfers, and Niri whole-column workspace transfers |
 | `windowActionHandler` | Close, fullscreen, float toggle |
 | `serviceLifecycleManager` | Observer setup, permission polling, service start/stop |
-| `layoutRefreshController` | Refresh scheduling, the display-link loop, frame application (owns `niriLayoutHandler`/`dwindleLayoutHandler`) |
+| `layoutRefreshController` | Refresh scheduling, the display-link loop, frame application (owns `dwindleHandler`) |
 | `focusNotificationDispatcher` | Publishes focus-change events to IPC subscribers |
 
 **Core managers it owns directly:** `settings: SettingsStore`, `workspaceManager: WorkspaceManager`, `axManager: AXManager`, `windowRuleEngine: WindowRuleEngine`, `hotkeys: HotkeyCenter`, `motionPolicy: MotionPolicy`, `animationClock: AnimationClock`, plus surface managers (`workspaceBarManager`, `nativeFullscreenPlaceholderManager`) and the quake, clipboard, command-palette, and system-stats controllers. `OverviewController` is **not** one of them: `windowActionHandler` lazily constructs and owns it, and `WMController` reaches Overview through that handler.
 
 :::note
-The layout engines are **not** owned by `WMController`. `WMController.niriEngine`/`dwindleEngine` are pass-through accessors that ultimately reach `WorldStore`'s private engines.
+The layout engines are **not** owned by `WMController`. `WMController.dwindleEngine` are pass-through accessors that ultimately reach `WorldStore`'s private engines.
 :::
 
 ### 4.2 World State: WorldStore, WorkspaceManager, WindowState
@@ -544,12 +538,11 @@ WorkspaceManager
     ├── model: WindowModel  (private)           [WindowToken: WindowState]
     ├── windows: WindowModel.ReadView          Read-only registry access
     ├── focus: FocusSessionSnapshot             focused token, pending managed focus, …
-    ├── viewports: [WorkspaceID: ViewportState] Niri scroll/selection per workspace
     ├── monitorSessions: [MonitorID: MonitorSession]   visible workspace per monitor
     ├── scratchpads: ScratchpadState           membersBySlot + revealedIndex
     ├── hiddenAppPIDs + visibility generations    PID-scoped macOS app visibility
     ├── spaceTopology: SpaceTopology
-    └── niriEngine / dwindleEngine             layout trees, mutation-gated
+    └── dwindleEngine             layout trees, mutation-gated
 ```
 
 **`WorldStore.commit` is the semantic world-state and layout-engine mutation path**, entered through `WorkspaceManager.recordReconcileEvent(_ event: WMEvent)` (which supplies the snapshot/resolve closures and writes the resolved `ActionPlan` back through the in-commit mutators). Invalidation bookkeeping and the animation tier remain the explicit exceptions described above.
@@ -579,40 +572,6 @@ struct WindowState: Equatable {
 ```
 
 The focus session (`FocusSessionSnapshot`) and per-monitor visible-workspace state (`MonitorSession`) are value types defined in `Core/Reconcile/ReconcileSnapshot.swift` and held on `WorldStore`. There is no single `SessionState` type.
-
-### 4.3 Niri Layout Engine (Orientation-Aware Scrolling Containers)
-
-**Directory:** `Sources/OmniWM/Core/Layout/Niri/`
-
-Niri arranges containers along the monitor's primary axis, inspired by the [Niri](https://github.com/niri-wm/niri) Wayland compositor. In horizontal orientation, vertical columns scroll left and right and their windows stack vertically. In vertical orientation, horizontal rows scroll up and down and their windows span left to right.
-
-```
-NiriRoot (per workspace)
-├── NiriContainer (column 1)
-│   ├── NiriWindow (window A)
-│   └── NiriWindow (window B)    ← stacked vertically
-├── NiriContainer (column 2)
-│   └── NiriWindow (window C)
-└── NiriContainer (column 3)     ← can be tabbed
-    ├── NiriWindow (window D)    ← active tab
-    └── NiriWindow (window E)    ← hidden tab
-```
-
-| Type | Purpose |
-|------|---------|
-| `NiriLayoutEngine` | Owns per-workspace `NiriWorkspaceState` values with local roots and `nodesByToken` indexes, per-monitor `NiriMonitor` state, axis-solve cache, config. |
-| `NiriRoot` | Per-workspace container; cached columns / all-windows / id set. |
-| `NiriContainer` | A primary-axis container: `displayMode` (`.normal`/`.tabbed`), horizontal `width` state, vertical `height` state, `activeTileIdx`, and move/width springs. |
-| `NiriWindow` | Leaf: `token`, `SizingMode` (`.normal`/`.maximized`/`.fullscreen`), horizontal-orientation `height`, vertical-orientation `windowWidth`, constraints, and move animations. |
-| `ProportionalSize` | `.proportion(CGFloat)` or `.fixed(CGFloat)` — a container's primary span. |
-| `WeightedSize` | `.auto(weight:)`, `.fixed(CGFloat)`, or `.preset(Int)` — a window's secondary span within its container. |
-| `ViewportState` | Per-workspace scroll/selection snapshot. **Stored in `WorldStore.viewports`**, passed into `calculateLayout`. |
-
-**Layout computation** lives in `NiriLayout.swift` (`calculateLayout(...) -> [WindowToken: CGRect]`). Monitor orientation selects the primary scroll axis and secondary window-distribution axis before frame calculation. **Constraint solving** is `NiriAxisSolver` in `NiriConstraintSolver.swift` — a pure 1-D solver distributing span across weighted windows while honoring min/max/fixed constraints, memoized in the engine's axis-solve cache.
-
-**File organization.** The core engine is split across `NiriLayoutEngine.swift` and focused `NiriLayoutEngine+*.swift` extensions, with navigation in `NiriNavigation.swift`, the node tree in `NiriNode.swift`, viewport math in `ViewportState.swift` and its extensions, and overlays for interactive move/resize, drag ghost, and swap targets. Tabbed Niri columns and grouped Dwindle tiles share the surface-layer `TabRailManager`.
-
-**Interactive move/resize.** Desktop Niri moves resolve one configured non-Shift modifier chord at mouse-down. The chord defaults to Option: the base chord swaps windows, adding Shift selects insertion, and Off leaves modified drags entirely to applications. `DragGhostController` captures a ScreenCaptureKit thumbnail shown as a translucent ghost and `SwapTargetOverlay` highlights the drop target. Edge-dragging resizes the container on the primary axis and the selected window on the secondary axis. Each interaction captures its orientation at begin and keeps that axis ownership through update and completion.
 
 ### 4.4 Dwindle Layout Engine (BSP)
 
@@ -649,7 +608,7 @@ enum DwindleNodeKind {
 
 Each leaf owns one stable tile containing an ordered member list and one active member. Singleton-to-neighbor joins preserve the destination tile identity; extraction removes only the active member while preserving the remaining group identity and per-member fullscreen state. `DwindleLayoutEngine` owns these tree/tile mutations, while `DwindleLayoutHandler` owns hidden-member reveal, rollback, and verified focus completion. Group rails are derived through `WorldView` and applied by the shared `TabRailManager`. Overview caches every eligible group member for search and projects one preview into the canonical group content frame; tab controls change only the preview until dismissal activates the selected member through the existing Dwindle handler.
 
-`DwindleLayoutEngine.calculateLayout(for:screen:) -> [WindowToken: CGRect]`. **Smart split** (`planSplit`) chooses orientation from the available rectangle's slope vs. aspect; **preselection** lets the user direct where the next window inserts. The engine also supports resize/balance/whole-tile swap/toggle-orientation/toggle-fullscreen, grouped-member reorder, and geometric-neighbor navigation. Like Niri it is a plain `final class`, AX-free, mutation-gated by `WorldStore`.
+`DwindleLayoutEngine.calculateLayout(for:screen:) -> [WindowToken: CGRect]`. **Smart split** (`planSplit`) chooses orientation from the available rectangle's slope vs. aspect; **preselection** lets the user direct where the next window inserts. The engine also supports resize/balance/whole-tile swap/toggle-orientation/toggle-fullscreen, grouped-member reorder, and geometric-neighbor navigation. It is a plain `final class`, AX-free, mutation-gated by `WorldStore`.
 
 ### 4.5 Focus Lifecycle
 
@@ -667,13 +626,11 @@ Focus management is split across several objects (there is no single coordinator
      b. workspaceManager.beginManagedFocusRequest
         → commits WMEvent.managedFocusRequested (records the request in the world).
 4. WMController applies the effect selected from the merged request origin and live settings:
-     - primary-axis Niri keyboard navigation immediately activates the app and
        focuses the exact window, omitting the initial AXRaise;
      - other keyboard/programmatic and pointer-hover requests normally use the
        activateApp + focusSpecificWindow + raiseWindow sequence;
      - focus-follows-mouse uses the focus-only applicator without an explicit
        public app activation or AX raise unless focus.raiseOnMouseFocus is enabled.
-   Primary-axis Niri retry raises run on the app AX worker, then re-enter focus
    verification only while the exact request and window identity remain current.
 5. macOS emits an AX focused-window-changed echo → posted into EventIntake.
 6. FactResolver gathers the focused-window fact off-main, re-enters the intake.
@@ -690,7 +647,7 @@ Focus management is split across several objects (there is no single coordinator
 | `ManagedFocusRequest` | In-flight request: `requestId`, `token`, `workspaceId`, `origin`, `phase` (`.awaitingSameAppActivation(sourceToken:isRetry:)`/`.awaitingConfirmation`), `retryCount`, `status` (`.pending`/`.confirmed`). |
 | `EchoClassification` | `.echoOf` / `.lateEcho` / `.external` — see [3.7](#37-echo-classification--intents). |
 
-Managed origins merge with `keyboardOrProgrammatic > pointerHover > focusFollowsMouse`; the request returned by `IntentLedger.beginManagedRequest` is authoritative, so a weaker hover cannot downgrade an existing request for the same target. Only `keyboardOrProgrammatic` confirmation may move the cursor into the focused window. Real Niri, Dwindle, deferred-Dwindle, and floating-window pointer focus use `focusFollowsMouse`; tab clicks and completed gestures retain `pointerHover` and therefore full fronting.
+Managed origins merge with `keyboardOrProgrammatic > pointerHover > focusFollowsMouse`; the request returned by `IntentLedger.beginManagedRequest` is authoritative, so a weaker hover cannot downgrade an existing request for the same target. Only `keyboardOrProgrammatic` confirmation may move the cursor into the focused window. Real Dwindle, deferred-Dwindle, and floating-window pointer focus use `focusFollowsMouse`; tab clicks and completed gestures retain `pointerHover` and therefore full fronting.
 
 Focus-follows-mouse has two effects. The generated default is `focus.raiseOnMouseFocus = false`; in that mode OmniWM omits `NSRunningApplication.activate`, `kAXRaiseAction`, and explicit SkyLight ordering. The private specific-window primitive still establishes keyboard routing through `_SLPSSetFrontProcessWithOptions`, so focus without raise is a best-effort ordering contract: macOS or the client may activate or reorder itself. With `raiseOnMouseFocus = true`, OmniWM uses the existing full-fronting sequence. Both effects pass through the same hidden-app, lock-screen, and focus-policy gates.
 
@@ -704,20 +661,19 @@ Native focus ownership and border projection are intentionally separate. `render
 
 **Hotkeys** (`Sources/OmniWM/Core/Input/`)
 
-`ActionCatalog` is the source of truth for action metadata and shortcut assignability. `buildSpecs()` assembles `ActionSpec`s from focused extensions, including repeated workspace, column, window, and scratchpad bindings. Each spec has a title, search keywords, category, layout compatibility, default binding, and visibility. `HotkeyBinding`/`HotkeyBindingRegistry` persist exactly one binding per spec that is not `.unassignable`. `HotkeyBindingRegistry.resolve` matches the persisted list against the current defaults and rejects unknown, missing, or duplicate action IDs rather than repairing the file; each accepted trigger is still normalized through `canonicalizeTrigger`. Unassignable specs are never persisted but remain available to non-hotkey command surfaces such as IPC.
+`ActionCatalog` is the source of truth for action metadata and shortcut assignability. `buildSpecs()` assembles `ActionSpec`s from focused extensions, including repeated workspace, group, window, and scratchpad bindings. Each spec has a title, search keywords, category, layout compatibility, default binding, and visibility. `HotkeyBinding`/`HotkeyBindingRegistry` persist exactly one binding per spec that is not `.unassignable`. `HotkeyBindingRegistry.resolve` matches the persisted list against the current defaults and rejects unknown, missing, or duplicate action IDs rather than repairing the file; each accepted trigger is still normalized through `canonicalizeTrigger`. Unassignable specs are never persisted but remain available to non-hotkey command surfaces such as IPC.
 
 `HotkeyCenter` (`Hotkeys.swift`) installs one Carbon `InstallEventHandler` and registers each binding via `RegisterEventHotKey`, plus a virtual-hyper synthesis path. On a press it emits a `HotkeyInvocation` through `onCommand`; the invocation carries the semantic `HotkeyCommand` and optional `PhysicalHotkeyTrigger` metadata (`keyCode`, modifiers, and repeat state). `WMController` wires it to `eventIntake.enqueue(.hotkeyInvocation(invocation))`, so physical commands enter the same ordered intake pipeline as other world-mutating events and commands (falling back to `CommandHandler.handleHotkeyInvocation` only if intake is closed).
 
-**Command routing** (`Core/Controller/CommandHandler.swift`). `handleHotkeyInvocation` gives `OverviewController` first refusal while Overview is open. The modal router uses physical keys for Escape, Enter, and non-repeating Command-W, recognizes the configured physical Overview toggle, and routes assigned structural commands against the selected Overview `WindowHandle`; recognized no-ops are consumed. Unsupported commands and triggerless external/IPC commands remain blocked. When Overview is inactive, `performCommand` enforces `isEnabled` and the **layout-compatibility guard**: a `.niri`-only command is ignored under Dwindle and vice versa (`.shared` commands work everywhere).
+**Command routing** (`Core/Controller/CommandHandler.swift`). `handleHotkeyInvocation` gives `OverviewController` first refusal while Overview is open. The modal router uses physical keys for Escape, Enter, and non-repeating Command-W, recognizes the configured physical Overview toggle, and routes assigned workspace transfers against the selected Overview `WindowHandle`; recognized no-ops are consumed. Unsupported commands and triggerless external/IPC commands remain blocked. When Overview is inactive, `performCommand` enforces `isEnabled`; retained commands support Dwindle.
 
 **Mouse events** (`Core/Controller/MouseEventHandler.swift`). A `CGEventTap` drives focus-follows-mouse through the existing 100 ms action-rate throttle and interactive move/resize. The throttle is not a configurable hover delay and has no new trailing-edge scheduler. Transient mouse events are coalesced *in the intake* before draining.
 
 Raw multitouch frames from `MultitouchGestureSource` drive one idle→armed→committed state machine in `MouseEventHandler` and its `+TrackpadRecognition`, `+TrackpadLifecycle`, and `+WindowGestures` extensions. `TrackpadGestureIntent` resolves five modes from the configured finger counts, gesture context, and axis:
 
-- **Container scrolling** updates the Niri viewport on the resolved monitor orientation axis, retained for the rest of the gesture.
 - **Workspace switching** invokes `WorkspaceNavigationHandler.switchWorkspaceRelative`, targeting the monitor under the cursor. When it shares a finger count with container scrolling, it uses the perpendicular axis.
 - **Overview** routes through `WindowActionHandler` to `OverviewController`'s interactive transition lifecycle. With motion disabled, a recognized swipe opens or closes Overview without an interactive transition.
-- **Window move** and **window resize** reuse `MouseEventHandler`'s existing Niri/Dwindle interaction entry points, update paths, and completion/cancellation ownership.
+- **Window move** and **window resize** reuse `MouseEventHandler`'s existing Dwindle interaction entry points, update paths, and completion/cancellation ownership.
 
 **SkyLight events** (`Core/SkyLight/CGSEventObserver.swift`). Registers for window-server notifications and posts them into the intake:
 
@@ -777,7 +733,6 @@ struct WindowDecision: Equatable, Sendable {
     let layoutDecisionKind: WindowDecisionLayoutKind   // .explicitLayout / .fallbackLayout
     let workspaceName: String?
     let ruleEffects: ManagedWindowRuleEffects   // minWidth/minHeight + matchedRuleId
-    let admissionHints: ManagedWindowAdmissionHints    // initialNiriContainerPrimarySpan
     let heuristicReasons: [AXWindowHeuristicReason]
     let deferredReason: WindowDecisionDeferredReason?
 }
@@ -791,9 +746,6 @@ is inferred or changed. The high-level user escape hatch bypasses only the level
 and the parent, help-tag, and input-method exclusions still apply. Broad app/title rules and Automatic layout
 cannot cross any precise-inclusion gate.
 
-Per-app `initialContainerPrimarySpan` is an admission hint, not an ongoing `ManagedWindowRuleEffects` constraint.
-`WindowRuleEngine` takes it only from the single winning rule, and Niri consumes it once when a resizable
-window creates or claims a new container. Niri owns that initial primary-span seed before its normal fallback;
 Dwindle ignores it, restored placement takes precedence, and later resize or relayout operations do not
 reassert the rule value. Single Window Fit retains visual precedence for a lone window, while physical
 minimum-size constraints can clamp the resolved span without mutating the stored initial proportion.
@@ -876,7 +828,7 @@ When management is suspended, `NativeFullscreenPlaceholderManager` retains one n
 
 **The focus border** is a derived surface applied by `BorderSurfaceApplier`. `BorderWindow` drives one persistent `BorderLayerPanel`: a transparent, nonactivating `NSPanel` with disabled implicit animations. Solid borders use a native Core Animation rim with independent corner radii. The panel orders below the exact target through SkyLight. Target-level metadata is queried asynchronously and accepted only when both PID and WID match; until then, the border uses that same target's cached level or level 0. A failed lookup permits one later border-only retry.
 
-The target frame is rounded once to physical pixels. Border width expands the exterior ring and sets minimum layout clearance. Corner sampling is deferred until the workspace has no viewport motion and the target has no pending AX frame write; animation ticks reuse cached or default radii. `targetFrameOnScreen` records the rounded target while `frameOnScreen` reports the expanded overlay surface. The surface is registered with `SurfaceCoordinator` and excluded from the screenshot window picker through `IgnoreForScreencaptureWindowSelection`; full-screen captures and screen recording still include it.
+The target frame is rounded once to physical pixels. Border width expands the exterior ring and sets minimum layout clearance. Corner sampling is deferred until the target has no pending AX frame write; animation ticks reuse cached or default radii. `targetFrameOnScreen` records the rounded target while `frameOnScreen` reports the expanded overlay surface. The surface is registered with `SurfaceCoordinator` and excluded from the screenshot window picker through `IgnoreForScreencaptureWindowSelection`; full-screen captures and screen recording still include it.
 
 Optional gradients replace the visible solid rim with an even-odd ring mask. An all-square target retains square outer corners; other targets expand each sampled radius by the border width. Optional glow uses retained, rounded stroked bands beneath the border and inherits its solid color or gradient endpoints unless an explicit glow color is set. Glow padding expands only the overlay surface. `MouseEventHandler` tests the target frame expanded by border width, excluding the target interior, so glow does not enlarge the resize hit zone. A shared effect container carries the fractional offset inside the integral panel; translation repositions it without rebuilding paths.
 
@@ -888,15 +840,11 @@ Optional gradients replace the visible solid rim with an even-odd ring mask. An 
 
 **Directory:** `Sources/OmniWM/Core/Animation/`
 
-- **`SpringAnimation` / `SpringConfig`** — a closed-form damped-spring solver sampled by absolute `CACurrentMediaTime`. `offsetBy(_:)` rebases both endpoints so the world can re-anchor a viewport mid-flight. The named presets (`niriHorizontalViewMovement`, `niriWindowMovement`, `niriWindowResize`, and the `snappy`/`balanced`/`default` aliases) all use the same critically-damped curve (`dampingRatio 1.0`, `stiffness 800`).
 - **`CubicAnimation`** — cubic-bezier easing used by the Dwindle path.
-- **`MoveAnimation`** — a spring plus a starting offset, used by the Niri engine for per-window/column motion.
-- **`DecelerationAnimation`** — exponential-decay inertia (`decelerationRate 0.997`) for thrown viewport gestures.
-- **`AnimationDriver`** — owns the per-workspace **viewport scroll motion only**. Its `ViewportMotion` enum covers `gesture` (live `SwipeTracker`), `spring`, and `deceleration` (inertial throw), and it can seed or rebase either animation type. It is seeded from inside the commit path (`reconcileViewportCommit` re-seeds the spring from a committed `ViewportState` transition) and sampled per frame by `NiriLayoutHandler`. Per-window/column animations live in the Niri engine, not here.
 - **`SwipeTracker`** — accumulates trackpad deltas over an 80 ms history window and reports the release velocity that seeds the throw animation.
 - **`AnimationClock`** — a monotonic accumulating clock over `CACurrentMediaTime`, held by the engines and `WMController`.
 - **`MotionPolicy`** — a `@MainActor @Observable` gate for OmniWM-authored animations. Its effective `animationsEnabled` is `userAnimationsEnabled && !systemReducesMotion`. `AppDelegate` seeds the system preference from `NSWorkspace` and observes accessibility display-option changes, so macOS **Reduce Motion** takes effect while OmniWM is running.
-- **Native-fullscreen placeholder panels** — consume the same accepted Niri rendered frames or Dwindle interpolated frames as managed windows. Translation-only animation performs an origin move; actual tile-size animation resizes the full-tile panel while reusing cached app identity and Core Text lines.
+- **Native-fullscreen placeholder panels** — consume the same accepted Dwindle interpolated frames as managed windows. Translation-only animation performs an origin move; actual tile-size animation resizes the full-tile panel while reusing cached app identity and Core Text lines.
 
 The per-frame **display link** is owned by `LayoutRefreshController` (not by `Animation/`); see [3.9](#39-the-ungated-animation-tier).
 
@@ -929,9 +877,7 @@ The per-frame **display link** is owned by `LayoutRefreshController` (not by `An
 
 Overview ribbons and workspace-swipe backdrops each own an `OverviewWallpaperCache`. It first captures the rendered wallpaper window through SkyLight, so native solid colours match the desktop even when `NSWorkspace.desktopImageURL` returns the system's default image. Capture requires Screen Recording permission: Overview's cache checks it before each capture, and the swipe preview checks it before requesting its backdrop. If capture is unavailable, the cache falls back to the image URL. It retains size-bucketed thumbnails per display and frame, not additional full-size captures. Closing Overview or stopping a visible swipe preview clears the snapshots; display-frame changes also invalidate them. A swipe that cannot start because both capture and file fallback are unavailable clears the failed backdrop state, allowing the next warmup or swipe attempt to retry. Idle gesture cleanup preserves the swipe cache to avoid recapturing after ordinary trackpad touches.
 
-**Overview mutation ownership.** `NiriLayoutHandler` owns explicit-`WindowHandle` Niri reorder, consume/expel, column, and insertion mutations; `WorkspaceNavigationHandler` owns explicit-handle window workspace/monitor transfers and Niri whole-column workspace transfers. Their internal `StructuralMutationOutcome` reports the selected handle, moved tokens, destination, and affected workspaces. `OverviewController` uses that result to make `WorkspaceManager` activate the destination workspace and interaction monitor, commit remembered layout focus, request relayout only for affected workspaces, and keep the moved window selected. Overview mutations suppress client-window activation, so no AX focus is issued until an intentional dismissal focuses the current selection.
 
-Dragging a card continues to resolve an `OverviewDragTarget` for workspace-only, exact-card, or between-column placement. A cross-layout move into Niri first commits destination admission, then applies the exact target in a version-gated post-layout continuation; if the continuation is invalidated, the workspace transfer remains authoritative and the stale insertion is discarded. Projection refreshes reuse cached titles, frames, icons, and thumbnails while updating affected engine snapshots and active-workspace flags. Close completion is driven by `WorkspaceManager.onWindowRemoved`, not a speculative timer, so selection advances only after authoritative removal.
 
 ---
 
@@ -961,7 +907,6 @@ EventInterpreter.handleIntakeEvent → CommandHandler.handleHotkeyInvocation
            │
            v
         executeCombinedNavigation → WMController.focusWindow
-           │  resolves the target NiriNode
            ├──> IntentLedger.beginManagedRequest(token)   records .focusWindow Intent
            │       + DeadlineWheel 100ms settle deadline   (so the echo = echoOf)
            └──> WorkspaceManager.beginManagedFocusRequest
@@ -970,7 +915,6 @@ EventInterpreter.handleIntakeEvent → CommandHandler.handleHotkeyInvocation
     │
     v
 WMController.performWindowFronting                        [STAGE 3 — effector]
-    │  activateApp + focusSpecificWindow; primary Niri navigation omits initial AXRaise
     │  retry raises run on the app AX worker before exact-request verification
     v
 macOS emits AX focused-window-changed echo
@@ -1058,7 +1002,6 @@ CLIRenderer displays the result
 1. **Add the enum case** in `Core/Input/HotkeyCommand.swift`.
 2. **Add the action spec** in the relevant `Core/Input/ActionCatalog+*.swift` extension (title, keywords, category, layout compatibility, default binding, and visibility). `ActionCatalog.swift` assembles these specs and is the source of truth for command metadata and shortcut assignability; `.unassignable` specs are omitted from default bindings while retaining metadata for non-hotkey command surfaces.
 3. **Handle it** in `Core/Controller/CommandHandler.swift` or `CommandHandler+Actions.swift` — set the right `LayoutCompatibility` so the guard accepts it under the active layout. Mutations must reach the world through `WorkspaceManager.recordReconcileEvent`, never by touching `WindowModel`/engines directly.
-4. **Route structural Overview behavior** when applicable in `OverviewController`, using an explicit-`WindowHandle` entry point owned by `NiriLayoutHandler` or `WorkspaceNavigationHandler`; do not fall back to the desktop-focused window.
 5. **Expose via IPC** (optional): add the public command/request definitions and construction under `OmniWMIPC/`, route through `IPC/IPCCommandRouter.swift`, and register the descriptor in `OmniWMIPC/IPCAutomationManifest+Commands.swift`. `omniwmctl` reads command names and argument descriptors from the manifest, so commands using existing argument kinds need no per-command entry in `OmniWMCtl/CLIParser.swift`. New argument kinds also require typed parsing support in `OmniWMCtl/CLIArgumentParser.swift`.
 
 ### 6.2 Adding a New IPC Query
@@ -1069,16 +1012,14 @@ CLIRenderer displays the result
 
 ### 6.3 Adding a New Setting
 
-1. Add the property to its `Core/Config/` domain owner, such as `FocusSettings` or `NiriSettings`, with defaults, `onChange`, and export/apply mapping. `SettingsStore` owns these domains and connects their changes to `scheduleSave()`; add a direct store property only for settings owned there.
 2. Wire runtime behavior in `WMController.applyPersistedSettings()` or the consuming handler.
 3. Add UI under `Sources/OmniWM/UI/`.
 4. Thread it through the relevant `SettingsExport.swift` / `SettingsExport+*.swift` model and `CanonicalTOMLConfig.swift` mapping. `SettingsTOMLCodec` handles encoding/decoding, while `SettingsFilePersistence` owns file access, observation, save scheduling, and configuration notices. Verify that the setting survives a TOML round trip. Operational/runtime state (updater status, restore catalog, palette mode, Quake custom frame, issue draft/walkthrough, and monitor-setup status) belongs in `RuntimeStateStore` (`runtime-state.json`), not the TOML.
 
 ### 6.4 Modifying Layout Behavior
 
-1. Pick the engine: `Core/Layout/Niri/` or `Core/Layout/Dwindle/`.
-2. For Niri, find the right `NiriLayoutEngine+*.swift` extension (`+ColumnOps`, `+Sizing`, `+TabbedMode`, `+WindowOps`, `+WorkspaceOps`, `+Animation`, …); navigation is in `NiriNavigation.swift`, constraint solving in `NiriConstraintSolver.swift`.
-3. Keep engines pure: no AX calls, no frame writes. Any engine mutation must run inside a commit — enter one via `withEngineMutationScope` (or `withBatchedLayoutBuild` for plan-building); the engines assert otherwise. Emit a frame map; let `NiriLayoutHandler`/`DwindleLayoutHandler` build the `EffectPlan`.
+1. Pick the engine: `Core/Layout/Dwindle/`.
+3. Keep engines pure: no AX calls, no frame writes. Any engine mutation must run inside a commit — enter one via `withEngineMutationScope` (or `withBatchedLayoutBuild` for plan-building); the engines assert otherwise. Emit a frame map; let `DwindleLayoutHandler` build the `EffectPlan`.
 
 ### 6.5 Working with Private APIs
 
@@ -1097,10 +1038,10 @@ CLIRenderer displays the result
 | `IntentLedger` | Ring buffer of focus/activation `Intent`s; `classifyFocusObservation` returns `echoOf`/`lateEcho`/`external`. |
 | `DeadlineWheel` | Main-actor timing wheel; posts `.intentExpired` back into the intake. Drives intent settle/expiry, not frame retries. |
 | `WMEvent` | The typed, exhaustive event consumed by `WorldStore.commit`. |
-| `WorldStore` | The single synchronous semantic writer. Owns the private `WindowModel`, read facade, focus, viewports, scratchpads, monitor sessions, PID-scoped app visibility and generations, space topology, and both engines. |
+| `WorldStore` | The single synchronous semantic writer. Owns the private `WindowModel`, read facade, focus, scratchpads, monitor sessions, PID-scoped app visibility and generations, space topology, and both engines. |
 | `commit` | `WorldStore.commit(_:…)` — normalize → reduce → resolve → invariants; bumps `seq`. The semantic model/focus/workspace/engine mutation path; invalidation bookkeeping and the animation tier are explicit exceptions. |
 | `withEngineMutationScope` | `WorkspaceManager` wrapper that runs an engine mutation inside its own `commit`; `withBatchedLayoutBuild` is the plan-building variant. |
-| `ActionPlan` | Pure output of `StateReducer.reduce` — per-domain state deltas + a `ViewportPlan` + notes. |
+| `ActionPlan` | Pure output of `StateReducer.reduce` — per-domain state deltas + notes. |
 | `EffectPlan` | Effector-side plan (`Core/Layout/LayoutBoundary.swift`): per-workspace layout diffs + seq-gated post-layout actions. Built by the layout handlers. |
 | `InvalidationMarks` | Per-domain `seq` watermarks used to drop layout plans that were built against a now-stale world. |
 | `InvariantChecks` | Post-commit consistency checks. Every returned violation is traced and triggers `assertionFailure` in Debug builds; there is no severity split. |
@@ -1114,7 +1055,6 @@ CLIRenderer displays the result
 | `ScratchpadState` | World-owned slot membership and the single revealed slot. |
 | `FocusSessionSnapshot` | Value type holding focused token, pending managed focus, per-workspace last-focused, lease, etc. (on `WorldStore.focus`). |
 | `MonitorSession` | Per-monitor visible/previous workspace (on `WorldStore.monitorSessions`). |
-| `ViewportState` | Niri per-workspace scroll/selection state, stored in `WorldStore.viewports`. |
 | `LayoutRefreshController` | The effector: schedules refreshes, runs the display-link loop, executes `EffectPlan`s. |
 | `RefreshReason` / `RefreshRequestRoute` | Why a refresh was requested, and which route it maps to (`fullRescan`/`relayout`/`immediateRelayout`/`visibilityRefresh`/`windowRemoval`). |
 | `AXManager` | Per-app AX frame writer; owns `AXFrameApplicationLedger`. `applyFramesParallel` = per-app thread fan-out. |
@@ -1125,7 +1065,6 @@ CLIRenderer displays the result
 | `SpaceTopology` | Pure value model of the macOS Spaces layout (per-display spaces, current/fullscreen spaces, window→space map). |
 | `SpaceTracker` | Stateless transform that rebuilds `SpaceTopology` from read-only SkyLight queries and commits it. |
 | `NativeFullscreenRecord` | Per-window record (`originalToken`, `currentToken`, `workspaceId`, `transition`, `transitionGeneration`) from which lifecycle, exact focus ownership, and deadlines are derived. |
-| `AnimationDriver` | Owns per-workspace viewport scroll motion (gesture, spring, or deceleration). |
 | `SpringConfig` | Spring parameters; presets are all the same critically-damped curve. |
 | `MotionPolicy` | Gates OmniWM-authored animations on the app setting and macOS Reduce Motion preference. |
 | `HotkeyCommand` | Semantic command enum shared by hotkey invocations and selected IPC routes. Catalogued cases receive binding, visibility, title, and compatibility metadata from `ActionCatalog`; IPC-only cases can be uncatalogued (such as `swapWorkspaceWithMonitor`) or use other request types. |
@@ -1150,7 +1089,7 @@ Long-standing names that a returning contributor may search for, and what replac
 | Removed / renamed | Now |
 |-------------------|-----|
 | `RuntimeStore` / `RuntimeStore.transact` | `WorldStore.commit` (`Core/World/`), entered via `WorkspaceManager.recordReconcileEvent` |
-| `SessionState` (single type) | Split into `FocusSessionSnapshot`, `MonitorSession`, `viewports`, and `ScratchpadState` on `WorldStore` |
+| `SessionState` (single type) | Split into `FocusSessionSnapshot`, `MonitorSession` and `ScratchpadState` on `WorldStore` |
 | `WindowModel.Entry` (nested struct) | `WindowState` (top-level value type) |
 | `BorderManager` / `FocusBorderController` / `BorderCoordinator` | Derived surface: `SurfaceReconciler` → `BorderSurfaceApplier` → `BorderWindow` |
 | `FocusBridgeCoordinator` | Managed focus split across `WMController`, `AXEventHandler`, `WorkspaceManager`, `IntentLedger` |

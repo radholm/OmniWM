@@ -5,7 +5,6 @@ import Foundation
 
 public enum IPCAutomationLayoutCompatibility: String, Codable, CaseIterable, Equatable, Sendable {
     case shared
-    case niri
     case dwindle
 }
 
@@ -48,31 +47,24 @@ public enum IPCQuerySelectorName: String, Codable, CaseIterable, Equatable, Hash
 public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Sendable {
     case direction
     case workspaceNumber = "workspace-number"
-    case columnIndex = "column-index"
-    case windowIndex = "window-index"
     case scratchpadIndex = "scratchpad-index"
     case layout
     case resizeAxis = "resize-axis"
     case resizeOperation = "resize-operation"
-    case sizeChange = "size-change"
 
     public var usagePlaceholder: String {
         switch self {
         case .direction:
             "<left|right|up|down>"
         case .workspaceNumber,
-             .columnIndex,
-             .windowIndex,
              .scratchpadIndex:
             "<number>"
         case .layout:
-            "<default|niri|dwindle>"
+            "<default|dwindle>"
         case .resizeAxis:
             "<horizontal|vertical>"
         case .resizeOperation:
             "<grow|shrink>"
-        case .sizeChange:
-            "<size-change>"
         }
     }
 }
@@ -122,14 +114,6 @@ public struct IPCCommandArgumentDescriptor: Codable, Equatable, Sendable {
         kind: .workspaceNumber,
         summary: "One-based position in the interaction monitor's ordered workspace list."
     )
-    static let columnIndex = Self(
-        kind: .columnIndex,
-        summary: "One-based column index."
-    )
-    static let windowIndex = Self(
-        kind: .windowIndex,
-        summary: "One-based window index within the focused column."
-    )
     static let scratchpadIndex = Self(
         kind: .scratchpadIndex,
         summary: "Scratchpad slot from 1 to 10."
@@ -145,10 +129,6 @@ public struct IPCCommandArgumentDescriptor: Codable, Equatable, Sendable {
     static let resizeOperation = Self(
         kind: .resizeOperation,
         summary: "Whether to grow or shrink."
-    )
-    static let sizeChange = Self(
-        kind: .sizeChange,
-        summary: "Size change such as 100, 50%, +10, or -10%."
     )
 
     public init(kind: IPCCommandArgumentKind, summary: String) {

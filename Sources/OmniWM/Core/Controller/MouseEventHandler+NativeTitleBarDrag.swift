@@ -20,21 +20,11 @@ extension MouseEventHandler {
         workspaceId: WorkspaceDescriptor.ID
     ) -> WindowToken? {
         guard let controller else { return nil }
-        let layoutType = controller.workspaceManager.descriptor(for: workspaceId)
-            .map { controller.settings.workspaces.layoutType(for: $0.name) }
-        let token: WindowToken?
-        if layoutType == .dwindle {
-            token = controller.dwindleEngine?.hitTestFocusableWindow(
-                point: location,
-                in: workspaceId,
-                at: controller.animationClock.now()
-            )
-        } else {
-            token = controller.niriEngine?.hitTestFocusableWindow(
-                point: location,
-                in: workspaceId
-            )?.token
-        }
+        let token = controller.dwindleEngine?.hitTestFocusableWindow(
+            point: location,
+            in: workspaceId,
+            at: controller.animationClock.now()
+        )
         guard let token,
               controller.workspaceManager.entry(for: token)?.mode == .tiling
         else { return nil }

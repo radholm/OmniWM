@@ -91,7 +91,6 @@ import QuartzCore
             ?? fastFrameProvider(token, axRef)
     }
 
-    private(set) lazy var niriHandler = NiriLayoutHandler(controller: controller)
     lazy var workspaceSwipe = WorkspaceSwipePresentation(refreshController: self)
     private(set) lazy var dwindleHandler = DwindleLayoutHandler(controller: controller)
     private lazy var diffExecutor = LayoutDiffExecutor(refreshController: self)
@@ -491,7 +490,6 @@ extension LayoutRefreshController {
         controller.withRuntimeFrameJobCancellationSuppressed {
             applySessionPatch(plan.sessionPatch)
             diffExecutor.execute(plan)
-            controller.workspaceManager.setNiriRestorePlacements(plan.niriRestorePlacements)
             controller.workspaceManager.setDwindleRestorePlacements(plan.dwindleRestorePlacements)
         }
     }

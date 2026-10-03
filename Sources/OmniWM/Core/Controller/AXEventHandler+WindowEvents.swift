@@ -83,7 +83,6 @@ extension AXEventHandler {
 
     private func handleCGSWindowCreated(windowId: UInt32, spaceId: UInt64) {
         captureCreatePlacementContext(windowId: windowId, spaceId: spaceId)
-        recordNiriCreateFocusTrace(.init(kind: .createSeen(windowId: windowId)))
         if shouldDeferCreateForInactiveNativeSpace(spaceId) {
             WindowAdmissionTrace.record(
                 .init(

@@ -6,22 +6,6 @@ import Foundation
 import QuartzCore
 
 extension WorkspaceManager {
-    func setNiriRestorePlacements(_ placements: [WindowToken: PersistedNiriPlacement]) {
-        let changedPlacements = placements.filter { token, placement in
-            guard let entry = windowQueries.entry(for: token), entry.mode == .tiling else { return false }
-            let restoreIntent = StateReducer.restoreIntent(for: entry, monitors: monitors)
-            return restoreIntent.niriPlacement != placement
-                || restoreIntent.detachedNiriContainerSizingState != nil
-        }
-        guard !changedPlacements.isEmpty else { return }
-        recordReconcileEvent(
-            .niriPlacementsResolved(
-                placements: changedPlacements,
-                source: .workspaceManager
-            )
-        )
-    }
-
     func setDwindleRestorePlacements(_ placements: [WindowToken: PersistedDwindlePlacement]) {
         var changedPlacements: [WindowToken: PersistedDwindlePlacement] = [:]
         for (token, captured) in placements {
@@ -138,23 +122,6 @@ extension WorkspaceManager {
                 source: .workspaceManager
             )
         )
-    }
-
-    @discardableResult
-    func updateAdmissionHints(
-        _ admissionHints: ManagedWindowAdmissionHints,
-        for token: WindowToken
-    ) -> Bool {
-        guard let entry = windowQueries.entry(for: token), entry.admissionHints != admissionHints else { return false }
-        recordReconcileEvent(
-            .windowAdmissionHintsChanged(
-                token: token,
-                workspaceId: entry.workspaceId,
-                admissionHints: admissionHints,
-                source: .workspaceManager
-            )
-        )
-        return windowQueries.admissionHints(for: token) == admissionHints
     }
 
     func updateFloatingGeometry(

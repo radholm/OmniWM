@@ -808,7 +808,6 @@ final class WindowAdmissionTraceTests: XCTestCase {
                     layoutDecisionKind: .fallbackLayout,
                     workspaceName: nil,
                     ruleEffects: .none,
-                    admissionHints: .none,
                     heuristicReasons: [],
                     deferredReason: nil
                 )

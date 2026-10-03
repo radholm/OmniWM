@@ -32,8 +32,6 @@ enum StateReducer {
             _ = reduceFocusEvent(event, context: context, plan: &plan)
         case .session:
             _ = reduceSessionEvent(event, context: context, plan: &plan)
-        case .viewport:
-            _ = reduceViewportEvent(event, context: context, plan: &plan)
         }
 
         if plan.restoreIntent == nil, plan.mutatesRuntimeState, let existingEntry {
@@ -57,10 +55,7 @@ enum StateReducer {
             monitors.first { $0.id == id }
         }
         let floatingState = entry.floatingState
-        let hasDetachedNiriPlacement = entry.restoreIntent?.detachedNiriContainerSizingState != nil
         let keepsTilingPlacement = entry.mode == .tiling && entry.restoreIntent?.workspaceId == entry.workspaceId
-        let preservesNiriPlacement = hasDetachedNiriPlacement || keepsTilingPlacement
-        let niriPlacement = preservesNiriPlacement ? entry.restoreIntent?.niriPlacement : nil
         return RestoreIntent(
             topologyProfile: TopologyProfile(monitors: monitors),
             workspaceId: entry.workspaceId,
@@ -69,8 +64,6 @@ enum StateReducer {
             normalizedFloatingOrigin: floatingState?.normalizedOrigin,
             restoreToFloating: entry.mode == .floating,
             rescueEligible: entry.desiredState.rescueEligible || floatingState?.restoreToFloating == true,
-            niriPlacement: niriPlacement,
-            detachedNiriContainerSizingState: entry.restoreIntent?.detachedNiriContainerSizingState,
             dwindlePlacement: keepsTilingPlacement ? entry.restoreIntent?.dwindlePlacement : nil
         )
     }
@@ -136,14 +129,13 @@ enum StateReducer {
         case .floatingGeometryUpdated,
              .floatingStateChanged,
              .manualLayoutOverrideChanged,
-             .windowAdmissionHintsChanged,
              .topLevelInventoryObserved:
             reduceFloatingState(event, context: context, plan: &plan)
             return true
-        case .niriPlacementsResolved,
-             .dwindlePlacementsResolved,
-             .layoutOperationPerformed,
-             .managedReplacementMetadataChanged:
+        case
+            .dwindlePlacementsResolved,
+            .layoutOperationPerformed,
+            .managedReplacementMetadataChanged:
             reducePlacementNotes(event, context: context, plan: &plan)
             return true
         case .windowMinimizedChanged:
@@ -188,23 +180,6 @@ enum StateReducer {
             return true
         case .workspaceFocusCleared:
             reduceWorkspaceFocus(event, context: context, plan: &plan)
-            return true
-        default:
-            return false
-        }
-    }
-
-    private static func reduceViewportEvent(
-        _ event: WMEvent,
-        context: ReductionContext,
-        plan: inout ActionPlan
-    ) -> Bool {
-        switch event {
-        case .viewportChanged,
-             .viewportCommitted,
-             .viewportForgotten,
-             .selectionChanged:
-            reduceViewport(event, context: context, plan: &plan)
             return true
         default:
             return false

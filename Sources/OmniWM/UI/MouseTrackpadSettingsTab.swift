@@ -65,10 +65,6 @@ struct MouseTrackpadSettingsTab: View {
                 }
             }
 
-            SettingsCaption(
-                localized: "Hold this modifier and left-drag to swap Niri tiled windows. Add Shift to insert instead; choose Off to leave modified drags to apps."
-            )
-
             Picker("Right Mouse Resize Modifier", selection: Bindable(settings.gestures).mouseResizeModifierKey) {
                 ForEach(MouseResizeModifierKey.allCases, id: \.self) { key in
                     Text(key.localizedDisplayName).tag(key)

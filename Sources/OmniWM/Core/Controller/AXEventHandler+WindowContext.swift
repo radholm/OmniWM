@@ -210,24 +210,6 @@ extension AXEventHandler {
         windowFrame: CGRect?,
         controller: WMController
     ) {
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .createPlacementResolved(
-                    token: token,
-                    workspaceId: placement.workspaceId,
-                    rung: placement.rung,
-                    pendingWorkspaceId: createPlacementContext?.pendingFocusedWorkspaceId,
-                    pendingMonitorId: createPlacementContext?.pendingFocusedMonitorId,
-                    focusedWorkspaceId: createPlacementContext?.focusedWorkspaceId,
-                    focusedMonitorId: createPlacementContext?.focusedMonitorId,
-                    nativeSpaceMonitorId: createPlacementContext?.nativeSpaceMonitorId,
-                    frameMonitorId: placementTraceMonitorId(for: windowFrame, controller: controller),
-                    interactionWorkspaceId: createPlacementContext?.interactionWorkspaceId,
-                    interactionMonitorId: createPlacementContext?.interactionMonitorId,
-                    ruleSkipReason: placement.ruleSkipReason
-                )
-            )
-        )
     }
 
     private func placementTraceMonitorId(

@@ -6,32 +6,6 @@ import Carbon
 import XCTest
 
 final class HotkeySettingsDisplayModelTests: XCTestCase {
-    func testSearchFindsAdvancedSizingCommands() {
-        let ids = [
-            "setContainerPrimarySpan.decrease10Percent",
-            "setContainerPrimarySpan.increase10Percent",
-            "setWindowSecondarySpan.decrease10Percent",
-            "setWindowSecondarySpan.increase10Percent"
-        ]
-        let bindings = HotkeyBindingRegistry.defaults().filter { ids.contains($0.id) }
-
-        XCTAssertEqual(
-            Set(searchIDs("increase", bindings: bindings)),
-            Set(["setContainerPrimarySpan.increase10Percent", "setWindowSecondarySpan.increase10Percent"])
-        )
-        XCTAssertEqual(
-            Set(searchIDs("decrease", bindings: bindings)),
-            Set(["setContainerPrimarySpan.decrease10Percent", "setWindowSecondarySpan.decrease10Percent"])
-        )
-    }
-
-    func testSearchFindsAdvancedColumnCommands() {
-        let ids = ["moveColumn.left", "moveColumn.right"]
-        let bindings = HotkeyBindingRegistry.defaults().filter { ids.contains($0.id) }
-
-        XCTAssertEqual(Set(searchIDs("column", bindings: bindings)), Set(ids))
-    }
-
     func testSearchFindsWindowMarkActionsAndTheyDefaultUnassigned() throws {
         let ids = ["setWindowMark", "removeWindowMark"]
         let bindings = HotkeyBindingRegistry.defaults().filter { ids.contains($0.id) }
@@ -48,7 +22,7 @@ final class HotkeySettingsDisplayModelTests: XCTestCase {
     func testSearchFindsAdvancedCommandByConfiguredShortcut() throws {
         let shortcut = try XCTUnwrap(KeySymbolMapper.fromHumanReadable("Hyper+Minus"))
         let binding = try XCTUnwrap(HotkeyBindingRegistry.makeBinding(
-            id: "setContainerPrimarySpan.decrease10Percent",
+            id: "balanceSizes",
             binding: shortcut
         ))
 
@@ -56,21 +30,16 @@ final class HotkeySettingsDisplayModelTests: XCTestCase {
     }
 
     func testSearchIncludesNormalAndAdvancedCommands() {
-        let ids = ["move.left", "moveColumn.left"]
+        let ids = ["move.left"]
         let bindings = HotkeyBindingRegistry.defaults().filter { ids.contains($0.id) }
 
         XCTAssertEqual(bindings.count, ids.count)
         XCTAssertEqual(Set(searchIDs("left", bindings: bindings)), Set(ids))
     }
 
-    func testListShowsAdvancedCommandsAndExcludesUnassignableCommands() throws {
-        let advanced = try XCTUnwrap(HotkeyBindingRegistry.makeBinding(id: "moveColumn.left", binding: .unassigned))
-        let unavailable = HotkeyBinding(
-            id: "consumeOrExpelWindowLeft",
-            command: .focusNavigation(.previous),
-            trigger: .unassigned
-        )
-        let bindings = [advanced, unavailable]
+    func testListShowsAdvancedCommands() throws {
+        let advanced = try XCTUnwrap(HotkeyBindingRegistry.makeBinding(id: "moveGroup.left", binding: .unassigned))
+        let bindings = [advanced]
 
         XCTAssertEqual(searchIDs("", bindings: bindings), [advanced.id])
         XCTAssertEqual(searchIDs("   ", bindings: bindings), [advanced.id])

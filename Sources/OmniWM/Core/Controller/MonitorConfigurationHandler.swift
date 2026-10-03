@@ -43,10 +43,6 @@ struct MonitorConfigurationHandler {
             displayId: monitorId.displayId,
             migrateAnimations: false
         )
-
-        controller.workspaceManager.withEngineMutationScope {
-            controller.niriEngine?.cleanupRemovedMonitor(monitorId)
-        }
     }
 
     @discardableResult
@@ -78,8 +74,6 @@ struct MonitorConfigurationHandler {
             controller.publishDisplayChanged()
         }
         guard performPostUpdateActions else { return }
-
-        controller.syncMonitorsToNiriEngine()
         controller.surfaceReconciler.noteWorldChanged()
 
         let focusedWsId = controller.workspaceManager.selectedManagedToken

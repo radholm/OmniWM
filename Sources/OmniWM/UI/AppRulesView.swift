@@ -268,20 +268,6 @@ struct AppRuleSidebarRow: View {
                 accessibilityLabel: String(localized: "Assigned to workspace \(workspace)")
             )
         }
-        if let width = rule.validInitialContainerPrimarySpan {
-            let percent = AppRulePrimarySpanPercent.displayText(for: width)
-            RuleBadge(
-                text: String(localized: "Primary \(percent)%"),
-                color: .indigo,
-                accessibilityLabel: String(localized: "Initial Niri container primary span \(percent) percent")
-            )
-        } else if rule.initialContainerPrimarySpan != nil {
-            RuleBadge(
-                text: String(localized: "Primary invalid"),
-                color: .red,
-                accessibilityLabel: String(localized: "Invalid initial Niri container primary span")
-            )
-        }
         if rule.minWidth != nil || rule.minHeight != nil {
             RuleBadge(
                 text: String(localized: "Size"),

@@ -33,7 +33,6 @@ enum IPCRuleProjection {
             invalidRegexMessage,
             validation.identifierError,
             validation.titleMatcherError,
-            validation.initialContainerPrimarySpanError,
             validation.effectError,
             validation.minSizeError
         ].compactMap { $0 }
@@ -50,7 +49,6 @@ enum IPCRuleProjection {
             axSubrole: definition.axSubrole,
             layout: definition.layout,
             assignToWorkspace: definition.assignToWorkspace,
-            initialContainerPrimarySpan: definition.initialContainerPrimarySpan,
             minWidth: definition.minWidth,
             minHeight: definition.minHeight,
             specificity: rule.specificity,
@@ -71,7 +69,6 @@ enum IPCRuleProjection {
                 axSubrole: rule.axSubrole,
                 layout: ipcRuleLayout(from: rule.effectiveLayoutAction),
                 assignToWorkspace: rule.assignToWorkspace,
-                initialContainerPrimarySpan: rule.initialContainerPrimarySpan,
                 minWidth: rule.minWidth,
                 minHeight: rule.minHeight
             )
@@ -90,7 +87,6 @@ enum IPCRuleProjection {
             axSubrole: normalized.axSubrole,
             layout: windowRuleLayout(from: normalized.layout),
             assignToWorkspace: normalized.assignToWorkspace,
-            initialContainerPrimarySpan: normalized.initialContainerPrimarySpan,
             minWidth: normalized.minWidth,
             minHeight: normalized.minHeight
         )
@@ -106,7 +102,6 @@ enum IPCRuleProjection {
             axSubrole: trimmedNonEmpty(definition.axSubrole),
             layout: definition.layout,
             assignToWorkspace: trimmedNonEmpty(definition.assignToWorkspace),
-            initialContainerPrimarySpan: definition.initialContainerPrimarySpan,
             minWidth: definition.minWidth,
             minHeight: definition.minHeight
         )

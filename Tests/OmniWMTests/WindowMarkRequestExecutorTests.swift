@@ -26,7 +26,7 @@ final class WindowMarkRequestExecutorTests: XCTestCase {
     func testDuplicateRefusalAndFocusControllerStateGates() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMWindowMarkGates")
         let workspaceId = try XCTUnwrap(
-            WindowAdmissionTestSupport.workspace(named: "78", layoutType: .niri, controller: controller)
+            WindowAdmissionTestSupport.workspace(named: "78", layoutType: .dwindle, controller: controller)
         )
         _ = controller.workspaceManager.focusWorkspace(named: "78")
         let focusedToken = WindowToken(pid: 78_011, windowId: 78_111)
@@ -55,7 +55,7 @@ final class WindowMarkRequestExecutorTests: XCTestCase {
     func testListPrunesStaleMarkWithoutDiscardingLiveMarks() throws {
         let controller = WindowAdmissionTestSupport.controller(prefix: "OmniWMWindowMarkList")
         let workspaceId = try XCTUnwrap(
-            WindowAdmissionTestSupport.workspace(named: "79", layoutType: .niri, controller: controller)
+            WindowAdmissionTestSupport.workspace(named: "79", layoutType: .dwindle, controller: controller)
         )
         let liveToken = WindowToken(pid: 79_001, windowId: 79_101)
         _ = WindowAdmissionTestSupport.track(liveToken, in: workspaceId, controller: controller)

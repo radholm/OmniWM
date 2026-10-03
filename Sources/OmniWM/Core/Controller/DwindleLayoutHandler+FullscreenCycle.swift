@@ -69,7 +69,6 @@ extension DwindleLayoutHandler {
             _ = controller.workspaceManager.applySessionPatch(
                 .init(
                     workspaceId: wsId,
-                    viewportState: nil,
                     rememberedFocusToken: cycle.next,
                     plannedSeq: controller.workspaceManager.worldSeq
                 )

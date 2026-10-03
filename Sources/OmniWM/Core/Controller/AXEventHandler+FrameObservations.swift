@@ -162,10 +162,6 @@ extension AXEventHandler {
             return
         }
 
-        if controller.niriLayoutHandler.hasScrollAnimation(for: entry.workspaceId) {
-            return
-        }
-
         if shouldSuppressFrameChangedRelayout(
             for: entry,
             observedFrame: focusedObservedFrame
@@ -245,13 +241,6 @@ extension AXEventHandler {
     }
 
     private func shouldIgnoreScrollingFrameChange(_ trackedEntry: WindowState?, controller: WMController) -> Bool {
-        if let trackedEntry,
-           trackedEntry.mode == .tiling,
-           trackedEntry.hiddenState == nil,
-           controller.niriLayoutHandler.hasScrollAnimation(for: trackedEntry.workspaceId)
-        {
-            return true
-        }
         return false
     }
 }

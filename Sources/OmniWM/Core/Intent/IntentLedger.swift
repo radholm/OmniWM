@@ -147,21 +147,6 @@ final class IntentLedger {
     }
 
     @discardableResult
-    func registerReplacementFocus(_ payload: ReplacementFocusPayload) -> Intent {
-        append(kind: .replacementFocus(payload), origin: .keyboardOrProgrammatic)
-    }
-
-    func updateReplacementFocus(id: IntentID, _ mutate: (inout ReplacementFocusPayload) -> Void) {
-        guard let index = entries.firstIndex(where: { $0.id == id && $0.phase == .pending }),
-              case var .replacementFocus(payload) = entries[index].kind
-        else {
-            return
-        }
-        mutate(&payload)
-        entries[index].kind = .replacementFocus(payload)
-    }
-
-    @discardableResult
     func registerSameAppCloseProbe(_ payload: SameAppCloseProbePayload) -> Intent {
         append(kind: .sameAppCloseProbe(payload), origin: .keyboardOrProgrammatic)
     }

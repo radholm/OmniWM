@@ -4,94 +4,6 @@
 import CoreGraphics
 import Foundation
 
-struct NiriContainerSizingState: Codable, Equatable, Sendable {
-    let width: ProportionalSize
-    let presetWidthIndex: Int?
-    let isFullWidth: Bool
-    let savedWidth: ProportionalSize?
-    let hasManualSingleWindowWidthOverride: Bool
-    let height: ProportionalSize
-    let isFullHeight: Bool
-    let savedHeight: ProportionalSize?
-    let hasManualSingleWindowHeightOverride: Bool
-
-    init(
-        width: ProportionalSize,
-        presetWidthIndex: Int?,
-        isFullWidth: Bool,
-        savedWidth: ProportionalSize?,
-        hasManualSingleWindowWidthOverride: Bool,
-        height: ProportionalSize = .default,
-        isFullHeight: Bool = false,
-        savedHeight: ProportionalSize? = nil,
-        hasManualSingleWindowHeightOverride: Bool = false
-    ) {
-        self.width = width
-        self.presetWidthIndex = presetWidthIndex
-        self.isFullWidth = isFullWidth
-        self.savedWidth = savedWidth
-        self.hasManualSingleWindowWidthOverride = hasManualSingleWindowWidthOverride
-        self.height = height
-        self.isFullHeight = isFullHeight
-        self.savedHeight = savedHeight
-        self.hasManualSingleWindowHeightOverride = hasManualSingleWindowHeightOverride
-    }
-}
-
-struct PersistedNiriColumnState: Codable, Equatable, Sendable {
-    let displayMode: ColumnDisplay
-    let activeTileIndex: Int
-    let width: ProportionalSize
-    let presetWidthIndex: Int?
-    let isFullWidth: Bool
-    let savedWidth: ProportionalSize?
-    let hasManualSingleWindowWidthOverride: Bool
-    let height: ProportionalSize
-    let isFullHeight: Bool
-    let savedHeight: ProportionalSize?
-    let hasManualSingleWindowHeightOverride: Bool
-
-    init(
-        displayMode: ColumnDisplay,
-        activeTileIndex: Int,
-        width: ProportionalSize,
-        presetWidthIndex: Int?,
-        isFullWidth: Bool,
-        savedWidth: ProportionalSize?,
-        hasManualSingleWindowWidthOverride: Bool,
-        height: ProportionalSize = .default,
-        isFullHeight: Bool = false,
-        savedHeight: ProportionalSize? = nil,
-        hasManualSingleWindowHeightOverride: Bool = false
-    ) {
-        self.displayMode = displayMode
-        self.activeTileIndex = activeTileIndex
-        self.width = width
-        self.presetWidthIndex = presetWidthIndex
-        self.isFullWidth = isFullWidth
-        self.savedWidth = savedWidth
-        self.hasManualSingleWindowWidthOverride = hasManualSingleWindowWidthOverride
-        self.height = height
-        self.isFullHeight = isFullHeight
-        self.savedHeight = savedHeight
-        self.hasManualSingleWindowHeightOverride = hasManualSingleWindowHeightOverride
-    }
-}
-
-struct PersistedNiriWindowState: Codable, Equatable, Sendable {
-    let sizingMode: SizingMode
-    let height: WeightedSize
-    let savedHeight: WeightedSize?
-    let windowWidth: WeightedSize
-}
-
-struct PersistedNiriPlacement: Codable, Equatable, Sendable {
-    let columnIndex: Int
-    let tileIndex: Int
-    let column: PersistedNiriColumnState
-    let window: PersistedNiriWindowState
-}
-
 struct PersistedDwindleSplitStep: Codable, Equatable, Sendable {
     let orientation: DwindleOrientation
     let ratio: CGFloat
@@ -122,33 +34,7 @@ struct PersistedRestoreIntent: Codable, Equatable, Sendable {
     let normalizedFloatingOrigin: CGPoint?
     let restoreToFloating: Bool
     let rescueEligible: Bool
-    let niriPlacement: PersistedNiriPlacement?
-    let detachedNiriContainerSizingState: NiriContainerSizingState?
     let dwindlePlacement: PersistedDwindlePlacement?
-
-    init(
-        workspaceName: String,
-        topologyProfile: TopologyProfile,
-        preferredMonitor: DisplayFingerprint?,
-        floatingFrame: CGRect?,
-        normalizedFloatingOrigin: CGPoint?,
-        restoreToFloating: Bool,
-        rescueEligible: Bool,
-        niriPlacement: PersistedNiriPlacement? = nil,
-        detachedNiriContainerSizingState: NiriContainerSizingState? = nil,
-        dwindlePlacement: PersistedDwindlePlacement? = nil
-    ) {
-        self.workspaceName = workspaceName
-        self.topologyProfile = topologyProfile
-        self.preferredMonitor = preferredMonitor
-        self.floatingFrame = floatingFrame
-        self.normalizedFloatingOrigin = normalizedFloatingOrigin
-        self.restoreToFloating = restoreToFloating
-        self.rescueEligible = rescueEligible
-        self.niriPlacement = niriPlacement
-        self.detachedNiriContainerSizingState = detachedNiriContainerSizingState
-        self.dwindlePlacement = dwindlePlacement
-    }
 }
 
 struct PersistedWindowRestoreIdentity: Codable, Equatable, Hashable, Sendable {

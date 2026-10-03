@@ -95,7 +95,7 @@ final class NuCompletionTests: XCTestCase {
         })
         try assertCompletions(
             "omniwmctl command \(layout.commandWords.joined(separator: " ")) ",
-            ["default", "niri", "dwindle"]
+            ["default", "dwindle"]
         )
     }
 
@@ -152,7 +152,7 @@ final class NuCompletionTests: XCTestCase {
         for input in [
             "omniwmctl window focus ",
             "omniwmctl workspace focus-name ",
-            "omniwmctl command focus-column 3 ",
+            "omniwmctl command switch-workspace 3 ",
             "omniwmctl watch focus --exec ",
             "omniwmctl watch focus --exec nu --format ",
             "omniwmctl watch focus --exec nu --json "
@@ -172,8 +172,8 @@ final class NuCompletionTests: XCTestCase {
                 ["watch", "focus", "--exec", "nu", "-c", "print \"a b\"", "--format", "json"]
             ),
             (
-                "omniwmctl command set-window-primary-span '-10%' --json",
-                ["command", "set-window-primary-span", "-10%", "--json"]
+                "omniwmctl command move-window-to-workspace '-10%' --json",
+                ["command", "move-window-to-workspace", "-10%", "--json"]
             )
         ]
         for (body, expected) in cases {

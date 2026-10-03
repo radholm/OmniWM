@@ -1016,30 +1016,6 @@ final class FloatingCreatePlacementTests: XCTestCase {
         XCTAssertEqual(explicit.rung, .workspaceRule)
     }
 
-    func testCreatePlacementTraceIncludesInteractionWorkspace() {
-        let workspaceId = WorkspaceDescriptor.ID()
-        let event = NiriCreateFocusTraceEvent(
-            kind: .createPlacementResolved(
-                token: WindowToken(pid: 6_116, windowId: 600),
-                workspaceId: workspaceId,
-                rung: .interactionWorkspace,
-                pendingWorkspaceId: nil,
-                pendingMonitorId: nil,
-                focusedWorkspaceId: nil,
-                focusedMonitorId: nil,
-                nativeSpaceMonitorId: nil,
-                frameMonitorId: nil,
-                interactionWorkspaceId: workspaceId,
-                interactionMonitorId: nil,
-                ruleSkipReason: .appAlreadyHasEntries
-            )
-        )
-
-        XCTAssertTrue(event.description.contains("rung=interaction_workspace"))
-        XCTAssertTrue(event.description.contains("interaction_workspace=\(workspaceId.uuidString)"))
-        XCTAssertTrue(event.description.contains("rule_skip=app_already_has_entries"))
-    }
-
     func testSynthesizedContextOnAXFirstAdmissionResolvesFocusedWorkspace() throws {
         let fixture = try makeTwoMonitorFixture()
         let manager = fixture.controller.workspaceManager
@@ -1450,7 +1426,6 @@ final class FloatingCreatePlacementTests: XCTestCase {
                 layoutDecisionKind: .fallbackLayout,
                 workspaceName: nil,
                 ruleEffects: .none,
-                admissionHints: .none,
                 heuristicReasons: [],
                 deferredReason: nil
             ),
@@ -1602,7 +1577,6 @@ final class FloatingCreatePlacementTests: XCTestCase {
             topologyProfile: TopologyProfile(sortedMonitors: []),
             focusSession: focusSession,
             windows: windows,
-            viewports: [:],
             layouts: [:]
         )
     }

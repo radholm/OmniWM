@@ -127,15 +127,15 @@ final class DwindleGroupCommandContractTests: XCTestCase {
             XCTAssertEqual(spec.ipcCommandName, ipcName)
             XCTAssertEqual(descriptor.layoutCompatibility, .shared)
             XCTAssertTrue(descriptor.summary.localizedCaseInsensitiveContains("reorder"))
-            assertSearchTerms(["reorder", "group", "tab", "column"], in: spec)
+            assertSearchTerms(["reorder", "group", "tab"], in: spec)
         }
     }
 
-    func testMoveContainerActionsHaveDirectionSpecificCompatibility() throws {
+    func testMoveGroupActionsPreserveDirectionalBindings() throws {
         let cases: [(Direction, LayoutCompatibility, KeyBinding)] = [
             (
                 .left,
-                .shared,
+                .dwindle,
                 KeyBinding(
                     keyCode: UInt32(kVK_LeftArrow),
                     modifiers: UInt32(optionKey | controlKey | shiftKey)
@@ -143,7 +143,7 @@ final class DwindleGroupCommandContractTests: XCTestCase {
             ),
             (
                 .right,
-                .shared,
+                .dwindle,
                 KeyBinding(
                     keyCode: UInt32(kVK_RightArrow),
                     modifiers: UInt32(optionKey | controlKey | shiftKey)
@@ -154,34 +154,24 @@ final class DwindleGroupCommandContractTests: XCTestCase {
         ]
 
         for (direction, compatibility, binding) in cases {
-            let spec = try XCTUnwrap(ActionCatalog.spec(for: .moveColumn(direction)))
+            let spec = try XCTUnwrap(ActionCatalog.spec(for: .dwindle(.moveGroup(direction))))
 
-            XCTAssertEqual(spec.id, "moveColumn.\(direction.rawValue)")
-            XCTAssertEqual(spec.title, "Move Container \(direction.displayName)")
+            XCTAssertEqual(spec.id, "moveGroup.\(direction.rawValue)")
+            XCTAssertEqual(spec.title, "Move Group \(direction.displayName)")
             XCTAssertEqual(spec.layoutCompatibility, compatibility)
             XCTAssertEqual(spec.visibility, .advanced)
             XCTAssertEqual(spec.defaultBinding, binding)
-            XCTAssertEqual(spec.ipcCommandName, .column(.move))
-            assertSearchTerms(["container", "tile", "group"], in: spec)
+            XCTAssertEqual(spec.ipcCommandName, .dwindle(.moveGroup))
+            assertSearchTerms(["tile", "group"], in: spec)
         }
 
-        let descriptor = try XCTUnwrap(IPCAutomationManifest.commandDescriptor(for: .column(.move)))
+        let descriptor = try XCTUnwrap(IPCAutomationManifest.commandDescriptor(for: .dwindle(.moveGroup)))
 
-        XCTAssertEqual(descriptor.commandWords, ["move-column"])
-        XCTAssertEqual(descriptor.path, "command move-column <left|right|up|down>")
+        XCTAssertEqual(descriptor.commandWords, ["move-group"])
+        XCTAssertEqual(descriptor.path, "command move-group <left|right|up|down>")
         XCTAssertEqual(descriptor.arguments.map(\.kind), [.direction])
-        XCTAssertEqual(descriptor.layoutCompatibility, .shared)
-        XCTAssertTrue(descriptor.summary.contains("Niri"))
+        XCTAssertEqual(descriptor.layoutCompatibility, .dwindle)
         XCTAssertTrue(descriptor.summary.contains("Dwindle"))
-
-        for id in ["moveColumn.left", "moveColumn.right"] {
-            let spec = try XCTUnwrap(ActionCatalog.spec(for: id))
-            let matchingIDs = ActionCatalog.allSpecs()
-                .filter { $0.defaultBinding == spec.defaultBinding }
-                .map(\.id)
-
-            XCTAssertEqual(matchingIDs, [id])
-        }
     }
 
     func testReusedIPCRequestsRetainCanonicalWireShapes() throws {
@@ -189,8 +179,7 @@ final class DwindleGroupCommandContractTests: XCTestCase {
             .focus(.spatial(direction: .down)),
             .focus(.windowDownOrTop),
             .windowMovement(.spatial(direction: .left)),
-            .windowMovement(.up),
-            .column(.move(direction: .down))
+            .windowMovement(.up)
         ]
 
         for request in requests {
@@ -200,15 +189,15 @@ final class DwindleGroupCommandContractTests: XCTestCase {
         }
 
         XCTAssertEqual(
-            try IPCCommandRequest(name: .column(.move), argumentValues: [.direction(.up)]),
-            .column(.move(direction: .up))
+            try IPCCommandRequest(name: .dwindle(.moveGroup), argumentValues: [.direction(.up)]),
+            .dwindle(.moveGroup(direction: .up))
         )
 
-        let data = try JSONEncoder().encode(IPCCommandRequest.column(.move(direction: .down)))
+        let data = try JSONEncoder().encode(IPCCommandRequest.dwindle(.moveGroup(direction: .down)))
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let arguments = try XCTUnwrap(object["arguments"] as? [String: Any])
 
-        XCTAssertEqual(object["name"] as? String, "move-column")
+        XCTAssertEqual(object["name"] as? String, "move-group")
         XCTAssertEqual(arguments["direction"] as? String, "down")
     }
 

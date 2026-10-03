@@ -17,10 +17,6 @@ extension IPCCommandRequest: Codable {
             try command.encodeArguments(to: &writer)
         case let .workspace(command):
             try command.encodeArguments(to: &writer)
-        case let .column(command):
-            try command.encodeArguments(to: &writer)
-        case let .sizing(command):
-            try command.encodeArguments(to: &writer)
         case let .swapWorkspaceWithMonitor(direction):
             try writer.encode(direction: direction)
         case let .dwindle(command):

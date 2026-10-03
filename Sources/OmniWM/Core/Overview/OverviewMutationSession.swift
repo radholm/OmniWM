@@ -78,9 +78,6 @@ final class OverviewMutationSession {
                 )
             }
         )
-        if let scrollWorkspaceId = mutation.scrollWorkspaceId {
-            wmController.layoutRefreshController.startScrollAnimation(for: scrollWorkspaceId)
-        }
     }
 
     private func beginProjectionMutation(
@@ -143,18 +140,13 @@ final class OverviewMutationSession {
         guard let wmController,
               wmController.workspaceManager.workspace(for: mutation.selectedHandle.id)
               == mutation.destinationWorkspaceId,
-              let monitor = wmController.workspaceManager.monitorForWorkspace(mutation.destinationWorkspaceId)
+              wmController.workspaceManager.monitorForWorkspace(mutation.destinationWorkspaceId) != nil
         else {
             return
         }
 
-        let nodeId = wmController.niriEngine?
-            .findNode(for: mutation.selectedHandle, in: mutation.destinationWorkspaceId)?.id
-        _ = wmController.workspaceManager.commitWorkspaceSelection(
-            nodeId: nodeId,
-            focusedToken: mutation.selectedHandle.id,
-            in: mutation.destinationWorkspaceId,
-            onMonitor: monitor.id
+        _ = wmController.workspaceManager.rememberFocus(
+            mutation.selectedHandle.id, in: mutation.destinationWorkspaceId
         )
         if wmController.workspaceManager.activeLayoutKind(for: mutation.destinationWorkspaceId) == .dwindle,
            let engine = wmController.dwindleEngine,
@@ -190,108 +182,4 @@ final class OverviewMutationSession {
 }
 
 extension OverviewMutationSession {
-    func completeDeferredDragMutation(
-        _ mutation: StructuralMutation,
-        target: OverviewDragTarget
-    ) {
-        guard let wmController, activateStructuralDestination(mutation) else { return }
-        guard let transferGeneration = beginStructuralTransfer() else { return }
-        let projectionGeneration = beginProjectionMutation(
-            affectedWorkspaceIds: projectionWorkspaceIds(for: mutation)
-        )
-        wmController.layoutRefreshController.requestImmediateRelayout(
-            reason: .overviewMutation,
-            affectedWorkspaceIds: mutation.affectedWorkspaceIds,
-            postLayout: { [weak self] in
-                self?.applyDeferredDragPlacement(
-                    mutation,
-                    target: target,
-                    transferGeneration: transferGeneration,
-                    projectionGeneration: projectionGeneration
-                )
-            },
-            postLayoutInvalidated: { [weak self] in
-                self?.finishDeferredDragMutation(
-                    mutation,
-                    transferGeneration: transferGeneration,
-                    projectionGeneration: projectionGeneration,
-                    update: .immediate
-                )
-            }
-        )
-    }
-
-    private func applyDeferredDragPlacement(
-        _ mutation: StructuralMutation,
-        target: OverviewDragTarget,
-        transferGeneration: UInt64,
-        projectionGeneration: UInt64
-    ) {
-        guard let wmController,
-              case .open = state,
-              projectionMutationGeneration == projectionGeneration,
-              activeStructuralTransferGeneration == transferGeneration,
-              let selectedEntry = windowFacts.visibleManagedEntry(for: mutation.selectedHandle),
-              selectedEntry.workspaceId == mutation.destinationWorkspaceId
-        else {
-            finishDeferredDragMutation(
-                mutation,
-                transferGeneration: transferGeneration,
-                projectionGeneration: projectionGeneration,
-                update: .immediate
-            )
-            return
-        }
-
-        let inserted = structuralActions.placeAdmittedWindow(mutation.selectedHandle, target: target)
-
-        guard inserted else {
-            finishDeferredDragMutation(
-                mutation,
-                transferGeneration: transferGeneration,
-                projectionGeneration: projectionGeneration,
-                update: .immediate
-            )
-            return
-        }
-        wmController.layoutRefreshController.requestImmediateRelayout(
-            reason: .overviewMutation,
-            affectedWorkspaceIds: mutation.affectedWorkspaceIds,
-            postLayout: { [weak self] in
-                self?.finishDeferredDragMutation(
-                    mutation,
-                    transferGeneration: transferGeneration,
-                    projectionGeneration: projectionGeneration
-                )
-            },
-            postLayoutInvalidated: { [weak self] in
-                self?.finishDeferredDragMutation(
-                    mutation,
-                    transferGeneration: transferGeneration,
-                    projectionGeneration: projectionGeneration,
-                    update: .immediate
-                )
-            }
-        )
-        wmController.layoutRefreshController.startScrollAnimation(for: mutation.destinationWorkspaceId)
-    }
-
-    private func finishDeferredDragMutation(
-        _ mutation: StructuralMutation,
-        transferGeneration: UInt64,
-        projectionGeneration: UInt64,
-        update: OverviewLayoutUpdate = .structural
-    ) {
-        defer { finishStructuralTransfer(transferGeneration) }
-        guard self.projectionMutationGeneration == projectionGeneration else { return }
-        synchronizeStructuralSelection(mutation)
-        pendingProjectionWorkspaceIds.formUnion(projectionWorkspaceIds(for: mutation))
-        let affectedWorkspaceIds = pendingProjectionWorkspaceIds
-        pendingProjectionWorkspaceIds.removeAll(keepingCapacity: true)
-        overview?.refreshCachedOverviewProjection(
-            affectedWorkspaceIds: affectedWorkspaceIds,
-            preservingViewport: mutation.sourceWorkspaceId == mutation.destinationWorkspaceId,
-            update: update
-        )
-    }
 }

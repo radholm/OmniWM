@@ -13,7 +13,6 @@ final class SettingsStore {
     let pointer = PointerSettings()
     let monitors = MonitorConfigurationSettings()
     let gaps = GapSettings()
-    let niri = NiriSettings()
     let dwindle: DwindlePreferences
     let gestures = GestureSettings()
     let workspaceBar = WorkspaceBarSettings()
@@ -27,7 +26,7 @@ final class SettingsStore {
     @ObservationIgnored private var lastEffectiveTrackpadAvailability: Bool?
 
     var effectiveTrackpadGesturesEnabled: Bool {
-        gestures.scrollEnabled || gestures.workspaceSwipeEnabled ||
+        gestures.workspaceSwipeEnabled ||
             (gestures.overviewGestureEnabled && overview.enabled) ||
             gestures.windowMoveEnabled || gestures.windowResizeEnabled
     }
@@ -275,7 +274,6 @@ final class SettingsStore {
         pointer.onChange = { [weak self] in self?.scheduleSave() }
         monitors.onChange = { [weak self] in self?.scheduleSave() }
         gaps.onChange = { [weak self] in self?.scheduleSave() }
-        niri.onChange = { [weak self] in self?.scheduleSave() }
         dwindle.onChange = { [weak self] in self?.scheduleSave() }
         gestures.onChange = { [weak self] in
             self?.notifyTrackpadAvailabilityIfChanged()
@@ -385,7 +383,6 @@ extension SettingsStore {
             routing: monitors.export(),
             monitorRanking: monitors.ranking,
             gaps: gaps.export(),
-            niri: niri.export(),
             workspaceConfigurations: workspaces.configurations,
             defaultLayoutType: workspaces.defaultLayoutType,
             borders: borders.export(),
@@ -398,7 +395,6 @@ extension SettingsStore {
             monitorBarSettings: workspaceBar.monitorOverrides,
             appRules: appRules,
             monitorOrientationSettings: monitors.orientationOverrides,
-            monitorNiriSettings: niri.monitorOverrides,
             dwindle: dwindle.export(),
             monitorDwindleSettings: dwindle.monitorOverrides,
             monitorGapSettings: gaps.monitorOverrides.filter(\.hasOverrides),
@@ -440,8 +436,6 @@ extension SettingsStore {
         monitors.ranking = MonitorRanking.normalized(export.monitorRanking)
         gaps.apply(export.gaps)
 
-        niri.apply(export.niri, baseline: SettingsStore.defaultExport.niri)
-
         workspaces.configurations = WorkspaceSettings.normalizedConfigurations(export.workspaceConfigurations)
         workspaces.defaultLayoutType = export.defaultLayoutType
 
@@ -460,7 +454,6 @@ extension SettingsStore {
 
         appRules = export.appRules
         monitors.orientationOverrides = export.monitorOrientationSettings
-        niri.monitorOverrides = export.monitorNiriSettings
 
         dwindle.apply(export.dwindle)
         dwindle.monitorOverrides = export.monitorDwindleSettings

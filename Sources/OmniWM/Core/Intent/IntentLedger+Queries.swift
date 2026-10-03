@@ -56,35 +56,6 @@ extension IntentLedger {
         return (intent, payload)
     }
 
-    func openReplacementFocusIntent(pid: pid_t, workspaceId: WorkspaceDescriptor.ID) -> Intent? {
-        entries.last { entry in
-            guard entry.phase == .pending,
-                  case let .replacementFocus(payload) = entry.kind
-            else {
-                return false
-            }
-            return payload.pid == pid && payload.workspaceId == workspaceId
-        }
-    }
-
-    func openReplacementFocusIntents(pid: pid_t) -> [Intent] {
-        entries.filter { entry in
-            guard entry.phase == .pending,
-                  case let .replacementFocus(payload) = entry.kind
-            else {
-                return false
-            }
-            return payload.pid == pid
-        }
-    }
-
-    func openReplacementFocusIntents() -> [Intent] {
-        entries.filter { entry in
-            guard entry.phase == .pending, case .replacementFocus = entry.kind else { return false }
-            return true
-        }
-    }
-
     func openSameAppCloseProbe() -> (intent: Intent, payload: SameAppCloseProbePayload)? {
         let open = entries.last { entry in
             guard entry.phase == .pending, case .sameAppCloseProbe = entry.kind else { return false }

@@ -111,9 +111,6 @@ extension AXEventHandler {
             }
             _ = controller.workspaceManager.recordExternalFocus(pid: pid, windowId: nil)
             controller.surfaceReconciler.noteRestackOccurred()
-            recordNiriCreateFocusTrace(
-                .init(kind: .provisionalExternalFocusEntered(pid: pid, source: source))
-            )
         }
 
         return focusedToken
@@ -152,14 +149,6 @@ extension AXEventHandler {
         guard shouldEnterMissingWindowFallback(requestDisposition, source: source, origin: origin) else { return }
 
         _ = controller.workspaceManager.recordExternalFocus(pid: pid, windowId: nil)
-        recordNiriCreateFocusTrace(
-            .init(
-                kind: .externalFocusFallbackEntered(
-                    pid: pid,
-                    source: source
-                )
-            )
-        )
     }
 
     private func shouldEnterMissingWindowFallback(
@@ -253,22 +242,11 @@ extension AXEventHandler {
         )?.phase == .awaitingConfirmation else {
             return
         }
-        if let updatedRequest = controller.intentLedger.recordRetry(
+        if controller.intentLedger.recordRetry(
             requestId: request.requestId,
             source: source,
             retryLimit: Self.activationRetryLimit
-        ) {
-            recordNiriCreateFocusTrace(
-                .init(
-                    kind: .activationDeferred(
-                        requestId: updatedRequest.requestId,
-                        token: updatedRequest.token,
-                        source: source,
-                        reason: reason,
-                        attempt: updatedRequest.retryCount
-                    )
-                )
-            )
+        ) != nil {
             return
         }
         guard origin != .probe else {
@@ -298,25 +276,8 @@ extension AXEventHandler {
         )
         controller.scratchpadStacking.advanceScratchpadStackingAfterFocusRetryExhaustion(request)
 
-        if let token = controller.workspaceManager.renderableFocusToken {
+        if controller.workspaceManager.renderableFocusToken != nil {
             controller.surfaceReconciler.noteRestackOccurred()
-            recordNiriCreateFocusTrace(
-                .init(
-                    kind: .borderReapplied(
-                        token: token,
-                        phase: .retryExhaustedFallback
-                    )
-                )
-            )
-        } else {
-            recordNiriCreateFocusTrace(
-                .init(
-                    kind: .externalFocusFallbackEntered(
-                        pid: request.token.pid,
-                        source: source
-                    )
-                )
-            )
         }
     }
 

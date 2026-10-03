@@ -87,33 +87,23 @@ struct WorkspaceBarDataSource {
         focusedToken: WindowToken?,
         hiddenAppPIDs: Set<pid_t>
     ) -> WorkspaceBarItem {
-        let topology = workspaceManager.layoutTopology(for: snapshot.workspace.id)
         let orderedTiledEntries = visibilityOrderedEntries(
-            WorkspaceEntryOrdering.orderedEntries(
-                snapshot.tiledEntries,
-                topology: topology
-            ),
+            snapshot.tiledEntries,
             hiddenAppPIDs: hiddenAppPIDs
         )
         let orderedFloatingEntries = visibilityOrderedEntries(
-            WorkspaceEntryOrdering.orderedEntries(
-                snapshot.floatingEntries,
-                topology: topology
-            ),
+            snapshot.floatingEntries,
             hiddenAppPIDs: hiddenAppPIDs
         )
-        let useLayoutOrder = topology.hasColumns
         let tiledWindows = windowProjector.items(
             entries: orderedTiledEntries,
             deduplicate: options.deduplicateAppIcons,
-            useLayoutOrder: useLayoutOrder,
             focusedToken: focusedToken,
             hiddenAppPIDs: hiddenAppPIDs
         )
         let floatingWindows = windowProjector.items(
             entries: orderedFloatingEntries,
             deduplicate: options.deduplicateAppIcons,
-            useLayoutOrder: useLayoutOrder,
             focusedToken: focusedToken,
             hiddenAppPIDs: hiddenAppPIDs
         )
@@ -172,7 +162,6 @@ struct WorkspaceBarDataSource {
             let windows = windowProjector.items(
                 entries: entries,
                 deduplicate: true,
-                useLayoutOrder: false,
                 focusedToken: focusedToken,
                 hiddenAppPIDs: workspaceManager.hiddenAppPIDs
             )

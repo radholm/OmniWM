@@ -128,7 +128,7 @@ enum StatusMenuControl: String, CaseIterable, Identifiable {
         case .moveMouseToFocusedWindow:
             "Moves the pointer into a window after OmniWM navigation changes focus. It stays put if already inside or the pointer caused the focus."
         case .focusFollowsWindowToMonitor:
-            "After moving a window or column to another workspace, switches there and keeps it focused. When off, you stay in the source workspace."
+            "After moving a window to another workspace, switches there and keeps it focused. When off, you stay in the source workspace."
         case .moveCrossesMonitorAtEdge:
             "At a workspace edge, Move Window sends the focused window left, right, up, or down to the adjacent routed display and follows it."
         case .mouseWarpEnabled:

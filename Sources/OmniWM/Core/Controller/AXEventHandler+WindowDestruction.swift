@@ -222,11 +222,6 @@ extension AXEventHandler {
 
     func processPreparedDestroy(_ candidate: PreparedDestroy) {
         handleRemoved(token: candidate.token, evidence: candidate.evidence)
-        clearManagedReplacementFocusTransaction(
-            containing: candidate.token,
-            workspaceId: candidate.workspaceId,
-            reason: "destroy_processed"
-        )
     }
 
     func shouldDelayManagedReplacementDestroy(_ candidate: PreparedDestroy) -> Bool {

@@ -80,7 +80,6 @@ final class WindowRuleEngine {
             layoutDecisionKind: .explicitLayout,
             workspaceName: decision.workspaceName,
             ruleEffects: decision.ruleEffects,
-            admissionHints: decision.admissionHints,
             heuristicReasons: [],
             deferredReason: nil
         )
@@ -162,7 +161,6 @@ final class WindowRuleEngine {
             layoutDecisionKind: .explicitLayout,
             workspaceName: nil,
             ruleEffects: .none,
-            admissionHints: .none,
             heuristicReasons: [],
             deferredReason: nil
         )
@@ -175,7 +173,6 @@ final class WindowRuleEngine {
             layoutDecisionKind: .explicitLayout,
             workspaceName: nil,
             ruleEffects: .none,
-            admissionHints: .none,
             heuristicReasons: [],
             deferredReason: nil
         )
@@ -190,7 +187,6 @@ final class WindowRuleEngine {
             layoutDecisionKind: .fallbackLayout,
             workspaceName: nil,
             ruleEffects: .none,
-            admissionHints: .none,
             heuristicReasons: reason == .attributeFetchFailed ? [.attributeFetchFailed] : [],
             deferredReason: reason
         )

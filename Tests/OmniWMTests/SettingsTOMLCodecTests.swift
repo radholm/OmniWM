@@ -69,41 +69,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
         XCTAssertNil(result.migratedData)
     }
 
-    func testDefaultTOMLOmitsUnassignableHotkeyActions() throws {
-        let toml = String(
-            decoding: try SettingsTOMLCodec.encode(.defaults()),
-            as: UTF8.self
-        )
-
-        for id in ["consumeOrExpelWindowLeft", "consumeOrExpelWindowRight"] {
-            XCTAssertFalse(toml.contains(#"id = "\#(id)""#))
-        }
-    }
-
-    func testTOMLRejectsUnassignableHotkeyActions() throws {
-        for id in ["consumeOrExpelWindowLeft", "consumeOrExpelWindowRight"] {
-            let source = Data(
-                (String(decoding: try SettingsTOMLCodec.encode(.defaults()), as: UTF8.self) + """
-
-                [[hotkeys]]
-                binding = "Option+H"
-                id = "\(id)"
-                """).utf8
-            )
-
-            XCTAssertThrowsError(try SettingsTOMLCodec.decode(source)) { error in
-                XCTAssertEqual(
-                    error as? HotkeyBindingResolutionError,
-                    .unassignableActionID(id)
-                )
-                XCTAssertEqual(
-                    error.localizedDescription,
-                    "hotkeys: \(id) cannot be assigned as a hotkey."
-                )
-            }
-        }
-    }
-
     func testTOMLRejectsFileMissingAKnownHotkeyAction() throws {
         let firstID = try XCTUnwrap(HotkeyBindingRegistry.defaults().first?.id)
         let withoutEntry = try canonicalDefaultLines { lines in
@@ -233,17 +198,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
             )
         }
 
-        for id in ["consumeOrExpelWindowLeft", "consumeOrExpelWindowRight"] {
-            let withUnassignable = complete + [PersistedHotkeyBinding(id: id, trigger: .unassigned)]
-            XCTAssertThrowsError(try HotkeyBindingRegistry.resolve(withUnassignable)) { error in
-                XCTAssertEqual(error as? HotkeyBindingResolutionError, .unassignableActionID(id))
-                XCTAssertEqual(
-                    error.localizedDescription,
-                    "hotkeys: \(id) cannot be assigned as a hotkey."
-                )
-            }
-        }
-
         let firstID = try XCTUnwrap(defaults.first?.id)
         XCTAssertThrowsError(try HotkeyBindingRegistry.resolve(Array(complete.dropFirst()))) { error in
             XCTAssertEqual(error as? HotkeyBindingResolutionError, .missingActionID(firstID))
@@ -258,11 +212,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
     @MainActor
     func testLoadFailureReportsRejectedHotkeyActionsPrecisely() throws {
         let cases = [
-            ("retired.action", "hotkeys: retired.action is not an action in this build."),
-            (
-                "consumeOrExpelWindowLeft",
-                "hotkeys: consumeOrExpelWindowLeft cannot be assigned as a hotkey."
-            )
+            ("retired.action", "hotkeys: retired.action is not an action in this build.")
         ]
 
         for (id, expectedMessage) in cases {
@@ -323,25 +273,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
         XCTAssertTrue(toml.contains("innerGap = 6.0"))
         XCTAssertTrue(toml.contains("fullscreenUsesOuterGaps = true"))
         XCTAssertTrue(toml.contains("fullscreenUsesOuterGaps = false"))
-    }
-
-    func testPreservingEncodeKeepsUnknownKeysInsideKnownTables() throws {
-        let previous = try defaultsWithReplacements(
-            ("[general]\n", "[general]\nfutureSetting = \"keep-me\"\n"),
-            ("[niri]\n", "[niri]\nfutureNiriSetting = true\n")
-        )
-
-        var export = try SettingsTOMLCodec.decode(previous)
-        export.gaps.size = 24
-
-        let rewritten = String(
-            decoding: try SettingsTOMLCodec.encode(export, preservingUnknownKeysFrom: previous),
-            as: UTF8.self
-        )
-
-        XCTAssertTrue(rewritten.contains("futureSetting = \"keep-me\""))
-        XCTAssertTrue(rewritten.contains("futureNiriSetting = true"))
-        XCTAssertTrue(rewritten.contains("size = 24.0"))
     }
 
     func testPreservingEncodeUsesCanonicalDataOnlyWhenPreviousDataIsAbsent() throws {
@@ -503,17 +434,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
         XCTAssertEqual(rewritten, canonicalData)
     }
 
-    func testTrackpadScrollStyleRoundTrips() throws {
-        XCTAssertEqual(SettingsExport.defaults().gestures.trackpadScrollStyle, .snap)
-
-        var export = SettingsExport.defaults()
-        export.gestures.trackpadScrollStyle = .momentum
-        let data = try SettingsTOMLCodec.encode(export)
-
-        XCTAssertTrue(String(decoding: data, as: UTF8.self).contains("trackpadScrollStyle = \"momentum\""))
-        XCTAssertEqual(try SettingsTOMLCodec.decode(data).gestures.trackpadScrollStyle, .momentum)
-    }
-
     func testMouseMoveModifierRoundTrips() throws {
         XCTAssertEqual(SettingsExport.defaults().gestures.mouseMoveModifierKey, .option)
         XCTAssertTrue(
@@ -595,7 +515,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
     @MainActor
     func testOverviewOnlyGestureAvailabilityFollowsEnablement() {
         let settings = makeSettingsStore()
-        settings.gestures.scrollEnabled = false
         settings.gestures.workspaceSwipeEnabled = false
         var changes: [Bool] = []
         settings.onTrackpadGestureAvailabilityChanged = { changes.append($0) }
@@ -635,41 +554,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
     }
 
     @MainActor
-    func testNonfiniteTOMLScrollSensitivityNormalizesWhenApplied() throws {
-        for literal in ["nan", "inf", "-inf"] {
-            let data = try defaultsWithReplacements(
-                ("scrollSensitivity = 5.0\n", "scrollSensitivity = \(literal)\n")
-            )
-            let export = try SettingsTOMLCodec.decode(data)
-            let settings = makeSettingsStore()
-
-            XCTAssertFalse(export.gestures.scrollSensitivity.isFinite)
-            settings.applyExport(export)
-
-            XCTAssertEqual(settings.gestures.scrollSensitivity, SettingsExport.defaults().gestures.scrollSensitivity)
-            XCTAssertEqual(
-                settings.toExport().gestures.scrollSensitivity,
-                SettingsExport.defaults().gestures.scrollSensitivity
-            )
-        }
-    }
-
-    @MainActor
-    func testProgrammaticScrollSensitivityNormalizesBeforeExport() {
-        let settings = makeSettingsStore()
-
-        settings.gestures.scrollSensitivity = .nan
-        XCTAssertEqual(settings.gestures.scrollSensitivity, SettingsExport.defaults().gestures.scrollSensitivity)
-        settings.gestures.scrollSensitivity = .infinity
-        XCTAssertEqual(settings.gestures.scrollSensitivity, SettingsExport.defaults().gestures.scrollSensitivity)
-        settings.gestures.scrollSensitivity = 0
-        XCTAssertEqual(settings.gestures.scrollSensitivity, 0.1)
-        settings.gestures.scrollSensitivity = 101
-        XCTAssertEqual(settings.gestures.scrollSensitivity, 100)
-        XCTAssertEqual(settings.toExport().gestures.scrollSensitivity, 100)
-    }
-
-    @MainActor
     func testUnsupportedWorkspaceSwipeValuesRejectDecode() throws {
         let cases: [(replacement: (String, String), keyPath: String)] = [
             (
@@ -694,10 +578,8 @@ final class SettingsTOMLCodecTests: XCTestCase {
     }
 
     @MainActor
-    func testHorizontalWorkspaceSwipeSelectionSurvivesFingerCountCollision() {
+    func testHorizontalWorkspaceSwipeAxisSurvivesFingerCountChanges() {
         var export = SettingsExport.defaults()
-        export.gestures.scrollEnabled = true
-        export.gestures.fingerCount = .three
         export.gestures.workspaceSwipeEnabled = true
         export.gestures.workspaceSwipeFingerCount = .three
         export.gestures.workspaceSwipeAxis = .horizontal
@@ -706,14 +588,10 @@ final class SettingsTOMLCodecTests: XCTestCase {
         settings.applyExport(export)
 
         XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
-        XCTAssertTrue(settings.gestures.workspaceSwipeAxisLockedToVertical)
-        XCTAssertEqual(settings.gestures.effectiveWorkspaceSwipeAxis, .vertical)
 
         settings.gestures.workspaceSwipeFingerCount = .four
 
         XCTAssertEqual(settings.gestures.workspaceSwipeAxis, .horizontal)
-        XCTAssertFalse(settings.gestures.workspaceSwipeAxisLockedToVertical)
-        XCTAssertEqual(settings.gestures.effectiveWorkspaceSwipeAxis, .horizontal)
     }
 
     func testMalformedWorkspaceSwipeTypesRejectDecode() throws {
@@ -832,14 +710,8 @@ final class SettingsTOMLCodecTests: XCTestCase {
 
     func testUnknownEnumValueRejectsWholeFile() throws {
         let cases: [(line: String, invalid: String, key: String)] = [
-            ("defaultLayoutType = \"\(LayoutType.niri.rawValue)\"", "defaultLayoutType = \"bsp\"", "defaultLayoutType"),
             ("lockModifier = \"\(FocusLockModifier.off.rawValue)\"", "lockModifier = \"hyper\"", "lockModifier"),
             ("mode = \"\(MonitorRoutingMode.macOS.rawValue)\"", "mode = \"sideways\"", "routing.mode"),
-            (
-                "centerFocusedColumn = \"\(CenterFocusedColumn.never.rawValue)\"",
-                "centerFocusedColumn = \"sometimes\"",
-                "centerFocusedColumn"
-            ),
             ("singleWindowFit = \"fill\"", "singleWindowFit = \"stretch\"", "singleWindowFit"),
             (
                 "windowLevel = \"\(WorkspaceBarWindowLevel.popup.rawValue)\"",
@@ -862,11 +734,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
                 "revealModifier"
             ),
             (
-                "scrollModifierKey = \"\(ScrollModifierKey.optionShift.rawValue)\"",
-                "scrollModifierKey = \"fn\"",
-                "scrollModifierKey"
-            ),
-            (
                 "mouseMoveModifierKey = \"\(MouseMoveModifierKey.option.rawValue)\"",
                 "mouseMoveModifierKey = \"shift\"",
                 "mouseMoveModifierKey"
@@ -875,12 +742,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
                 "mouseResizeModifierKey = \"\(MouseResizeModifierKey.option.rawValue)\"",
                 "mouseResizeModifierKey = \"hyperspace\"",
                 "mouseResizeModifierKey"
-            ),
-            ("fingerCount = \(GestureFingerCount.three.rawValue)\n", "fingerCount = 7\n", "fingerCount"),
-            (
-                "trackpadScrollStyle = \"\(TrackpadScrollStyle.snap.rawValue)\"",
-                "trackpadScrollStyle = \"drift\"",
-                "trackpadScrollStyle"
             ),
             (
                 "workspaceSwipeFingerCount = \(GestureFingerCount.three.rawValue)\n",
@@ -921,30 +782,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
                     "\(testCase.key): \(SettingsTOMLCodec.diagnosticDescription(for: error))"
                 )
             }
-        }
-    }
-
-    func testMonitorOverrideUnknownEnumValuesRejectDecode() throws {
-        var export = SettingsExport.defaults()
-        export.monitorNiriSettings = [
-            MonitorNiriSettings(monitorName: "Override", singleWindowFit: SingleWindowFit(mode: .containerPrimarySpan))
-        ]
-        export.monitorDwindleSettings = [
-            MonitorDwindleSettings(
-                monitorName: "Override",
-                singleWindowFit: SingleWindowFit(mode: .containerPrimarySpan)
-            )
-        ]
-        let toml = String(decoding: try SettingsTOMLCodec.encode(export), as: UTF8.self)
-        XCTAssertEqual(toml.components(separatedBy: "singleWindowFit = \"container_primary_span\"").count, 3)
-
-        let invalid = toml.replacingOccurrences(
-            of: "singleWindowFit = \"container_primary_span\"",
-            with: "singleWindowFit = \"stretch\""
-        )
-
-        XCTAssertThrowsError(try SettingsTOMLCodec.decode(Data(invalid.utf8))) { error in
-            XCTAssertTrue(SettingsTOMLCodec.diagnosticDescription(for: error).contains("singleWindowFit"))
         }
     }
 

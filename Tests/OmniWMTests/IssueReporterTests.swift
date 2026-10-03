@@ -425,7 +425,7 @@ final class IssueReporterTests: XCTestCase {
             repro: "",
             affectedApps: "",
             category: IssueCategory.unspecified.rawValue,
-            layout: LayoutType.niri.rawValue,
+            layout: LayoutType.dwindle.rawValue,
             regression: IssueRegression.unknown.rawValue,
             regressionVersion: "",
             polishedBody: ""
@@ -464,7 +464,7 @@ final class IssueReporterTests: XCTestCase {
             repro: "",
             affectedApps: "",
             category: IssueCategory.placement.rawValue,
-            layout: LayoutType.niri.rawValue,
+            layout: LayoutType.dwindle.rawValue,
             regression: IssueRegression.unknown.rawValue,
             regressionVersion: "",
             polishedBody: ""

@@ -2,8 +2,11 @@
 // Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
 
 public enum IPCDwindleCommandName: String, CaseIterable, Hashable, Sendable {
+    case cycleSizeForward = "cycle-size-forward"
+    case cycleSizeBackward = "cycle-size-backward"
     case balanceSizes = "balance-sizes"
     case moveToRoot = "move-to-root"
+    case moveGroup = "move-group"
     case toggleSplit = "toggle-split"
     case swapSplit = "swap-split"
     case resize = "resize"
@@ -13,8 +16,11 @@ public enum IPCDwindleCommandName: String, CaseIterable, Hashable, Sendable {
 }
 
 public enum IPCDwindleCommand: Equatable, Sendable {
+    case cycleSizeForward
+    case cycleSizeBackward
     case balanceSizes
     case moveToRoot
+    case moveGroup(direction: IPCDirection)
     case toggleSplit
     case swapSplit
     case resize(axis: IPCResizeAxis, operation: IPCResizeOperation)
@@ -24,10 +30,16 @@ public enum IPCDwindleCommand: Equatable, Sendable {
 
     public var name: IPCDwindleCommandName {
         switch self {
+        case .cycleSizeForward:
+            .cycleSizeForward
+        case .cycleSizeBackward:
+            .cycleSizeBackward
         case .balanceSizes:
             .balanceSizes
         case .moveToRoot:
             .moveToRoot
+        case .moveGroup:
+            .moveGroup
         case .toggleSplit:
             .toggleSplit
         case .swapSplit:
@@ -45,10 +57,16 @@ public enum IPCDwindleCommand: Equatable, Sendable {
 
     init(name: IPCDwindleCommandName, arguments: IPCCommandArgumentSource) throws {
         switch name {
+        case .cycleSizeForward:
+            self = try arguments.requireNoArguments(.cycleSizeForward)
+        case .cycleSizeBackward:
+            self = try arguments.requireNoArguments(.cycleSizeBackward)
         case .balanceSizes:
             self = try arguments.requireNoArguments(.balanceSizes)
         case .moveToRoot:
             self = try arguments.requireNoArguments(.moveToRoot)
+        case .moveGroup:
+            self = try .moveGroup(direction: arguments.direction())
         case .toggleSplit:
             self = try arguments.requireNoArguments(.toggleSplit)
         case .swapSplit:
@@ -67,13 +85,17 @@ public enum IPCDwindleCommand: Equatable, Sendable {
 
     func encodeArguments(to writer: inout IPCCommandArgumentWriter) throws {
         switch self {
+        case let .moveGroup(direction):
+            try writer.encode(direction: direction)
         case let .resize(axis, operation):
             try writer.encode(axis: axis, operation: operation)
         case let .resizeFocused(operation):
             try writer.encode(resizeOperation: operation)
         case let .preselect(direction):
             try writer.encode(direction: direction)
-        case .balanceSizes,
+        case .cycleSizeForward,
+             .cycleSizeBackward,
+             .balanceSizes,
              .moveToRoot,
              .toggleSplit,
              .swapSplit,

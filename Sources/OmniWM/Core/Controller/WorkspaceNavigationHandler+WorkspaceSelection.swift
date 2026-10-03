@@ -60,10 +60,6 @@ extension WorkspaceNavigationHandler {
             return false
         }
 
-        if let currentWorkspace {
-            saveNiriViewportState(for: currentWorkspace.id)
-        }
-
         guard let targetWorkspaceId = controller.workspaceManager.workspaceId(
             for: rawWorkspaceID,
             createIfMissing: false
@@ -78,7 +74,6 @@ extension WorkspaceNavigationHandler {
         commitWorkspaceTransitionFocusHandoff(
             targetWorkspaceId: result.workspace.id,
             monitor: result.monitor,
-            startScrollAnimation: false,
             affectedWorkspaces: affectedWorkspaces
         )
         return true
@@ -151,7 +146,6 @@ extension WorkspaceNavigationHandler {
         on monitorId: Monitor.ID
     ) -> Bool {
         guard let controller else { return false }
-        saveNiriViewportState(for: currentWorkspaceId)
         guard controller.workspaceManager.setActiveWorkspace(targetWorkspace.id, on: monitorId) else {
             return false
         }
@@ -160,57 +154,22 @@ extension WorkspaceNavigationHandler {
             ?? controller.workspaceManager.monitor(byId: monitorId)
         commitWorkspaceTransitionFocusHandoff(
             targetWorkspaceId: targetWorkspace.id,
-            monitor: monitor,
-            startScrollAnimation: false
+            monitor: monitor
         )
         return true
-    }
-
-    func saveNiriViewportState(for workspaceId: WorkspaceDescriptor.ID) {
-        guard let controller else { return }
-        guard controller.workspaceManager.activeLayoutKind(for: workspaceId) == .niri else { return }
-        guard let engine = controller.niriEngine else { return }
-
-        if let focusedToken = controller.workspaceManager.selectedManagedToken,
-           controller.workspaceManager.workspace(for: focusedToken) == workspaceId,
-           let focusedNode = engine.findNode(for: focusedToken, in: workspaceId)
-        {
-            commitWorkspaceSelection(
-                nodeId: focusedNode.id,
-                focusedToken: focusedToken,
-                in: workspaceId
-            )
-        }
     }
 
     @discardableResult
     func focusWorkspaceAnywhere(rawWorkspaceID: String) -> Bool {
         guard let controller else { return false }
-        let currentWorkspace = controller.activeWorkspace()
-
         guard let targetWsId = controller.workspaceManager.workspaceId(named: rawWorkspaceID) else { return false }
         guard let targetMonitor = controller.workspaceManager.monitorForWorkspace(targetWsId) else { return false }
 
-        if let currentWorkspace {
-            saveNiriViewportState(for: currentWorkspace.id)
-        }
-
-        let currentMonitorId = interactionMonitorId(for: controller)
-
-        if let currentMonitorId, currentMonitorId != targetMonitor.id {
-            if let currentTargetWs = controller.workspaceManager.activeWorkspace(on: targetMonitor.id) {
-                saveNiriViewportState(for: currentTargetWs.id)
-            }
-        }
-
         guard controller.workspaceManager.setActiveWorkspace(targetWsId, on: targetMonitor.id) else { return false }
-
-        controller.syncMonitorsToNiriEngine()
 
         commitWorkspaceTransitionFocusHandoff(
             targetWorkspaceId: targetWsId,
-            monitor: targetMonitor,
-            startScrollAnimation: false
+            monitor: targetMonitor
         )
         return true
     }
@@ -224,11 +183,6 @@ extension WorkspaceNavigationHandler {
             return
         }
 
-        let currentWorkspace = controller.activeWorkspace()
-        if let currentWorkspace {
-            saveNiriViewportState(for: currentWorkspace.id)
-        }
-
         guard controller.workspaceManager.setActiveWorkspace(prevWorkspace.id, on: currentMonitorId) else {
             return
         }
@@ -237,8 +191,7 @@ extension WorkspaceNavigationHandler {
             ?? controller.workspaceManager.monitor(byId: currentMonitorId)
         commitWorkspaceTransitionFocusHandoff(
             targetWorkspaceId: prevWorkspace.id,
-            monitor: monitor,
-            startScrollAnimation: false
+            monitor: monitor
         )
     }
 
@@ -266,14 +219,11 @@ extension WorkspaceNavigationHandler {
         while candidateNumber > 0 {
             let candidateName = String(candidateNumber)
             if wm.workspaceId(named: candidateName) == nil {
-                let candidateLayoutKind: ActiveLayoutKind = controller.settings.workspaces
-                    .layoutType(for: candidateName)
-                    == .dwindle ? .dwindle : .niri
+                let candidateLayoutKind: ActiveLayoutKind = .dwindle
                 guard requiredLayoutKind == nil || candidateLayoutKind == requiredLayoutKind else { return nil }
                 guard let workspace = wm.createDynamicWorkspace(named: candidateName, on: monitorId) else {
                     return nil
                 }
-                controller.syncMonitorsToNiriEngine()
                 return workspace
             }
             let delta = direction == .down ? 1 : -1
