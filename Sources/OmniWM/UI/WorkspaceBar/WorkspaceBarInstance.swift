@@ -13,7 +13,10 @@ final class WorkspaceBarInstance {
     var primary: WorkspaceBarIslandPanel
     var secondary: WorkspaceBarIslandPanel?
     var monitor: Monitor
-    private var measuredLengths: [WorkspaceBarMeasurementKey: CGFloat] = [:]
+    private var measuredLengths: [WorkspaceBarMeasurementKey: (
+        geometry: WorkspaceBarMeasurementGeometry,
+        length: CGFloat
+    )] = [:]
     weak var statsAnchorView: NSView?
     var screenDisplayId: CGDirectDisplayID?
     private var uncompactedSnapshot: WorkspaceBarSnapshot?
@@ -100,15 +103,16 @@ final class WorkspaceBarInstance {
             slice: slice,
             showsSystemStatsButton: showsSystemStatsButton
         )
-        if let cached = measuredLengths[key] {
-            return cached
+        let geometry = WorkspaceBarMeasurementGeometry(snapshot: snapshot, slice: slice)
+        if let cached = measuredLengths[key], cached.geometry == geometry {
+            return cached.length
         }
         let length = uncachedMeasuredLength(
             for: snapshot,
             slice: slice,
             showsSystemStatsButton: showsSystemStatsButton
         )
-        measuredLengths[key] = length
+        measuredLengths[key] = (geometry, length)
         return length
     }
 
@@ -183,6 +187,7 @@ final class WorkspaceBarInstance {
     }
 
     func applyCurrentAppearance() {
+        measuredLengths.removeAll(keepingCapacity: true)
         let appearance = NSApplication.shared.appearance
         primary.panel.appearance = appearance
         primary.hostingView.appearance = appearance
@@ -194,7 +199,6 @@ final class WorkspaceBarInstance {
     func updateSnapshot(_ snapshot: WorkspaceBarSnapshot) {
         if model.snapshot != snapshot {
             model.snapshot = snapshot
-            measuredLengths = [:]
         }
         if let presented = model.presentedWindowList,
            !snapshot.items.contains(where: { item in

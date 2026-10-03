@@ -62,7 +62,7 @@ final class OverviewThumbnailCapture {
         }
     }
 
-    private struct CachedPreview {
+    struct CachedPreview {
         let frame: OverviewPreviewFrame
         let token: WindowToken
         var lastRequestedUse: UInt64
@@ -83,8 +83,9 @@ final class OverviewThumbnailCapture {
     private var starts: [UInt64: Task<Void, Never>] = [:]
     private var discoveryTask: Task<Void, Never>?
     private var windowsByToken: [WindowToken: SCWindow] = [:]
-    private var previewCache: [WindowHandle: CachedPreview] = [:]
-    private let maximumRetainedBytes: Int
+    var previewCache: [WindowHandle: CachedPreview] = [:]
+    var residentHandles: Set<WindowHandle> = []
+    let maximumRetainedBytes: Int
     private let memoryPressure: any DispatchSourceMemoryPressure
     private var stopsAfterFirstFrame = false
     var onPreview: @MainActor (WindowHandle, OverviewPreviewFrame?) -> Void = { _, _ in }
@@ -123,10 +124,6 @@ final class OverviewThumbnailCapture {
         sources.values.contains { !$0.published && $0.status != .failed && $0.status != .completed }
     }
 
-    var cachedByteCount: Int {
-        previewCache.values.reduce(0) { $0 + $1.frame.surface.allocationSize }
-    }
-
     func reconcile(
         represented: Set<WindowHandle>,
         visible: [OverviewPreviewRequest],
@@ -134,6 +131,7 @@ final class OverviewThumbnailCapture {
         retainingUnrepresentedPreviews: Bool = false,
         firstFrameOnly: Bool = false
     ) {
+        residentHandles = represented
         stopsAfterFirstFrame = firstFrameOnly
         for handle in Array(previewCache.keys)
             where (!retainingUnrepresentedPreviews && !represented.contains(handle))
@@ -144,6 +142,7 @@ final class OverviewThumbnailCapture {
             removeCachedPreview(for: handle, reason: reason)
             onPreview(handle, nil)
         }
+        trimRetainedPreviews()
         let requests = collectRequests(represented: represented, visible: visible, selectedHandle: selectedHandle)
         for (key, source) in sources where requests[key]?.token != source.request.token
             || (!firstFrameOnly && source.status == .completed)
@@ -179,6 +178,7 @@ final class OverviewThumbnailCapture {
     }
 
     func remove(handle: WindowHandle) {
+        residentHandles.remove(handle)
         let key = ObjectIdentifier(handle)
         if let source = sources.removeValue(forKey: key) { retire(source) }
         sourceOrder.removeAll { $0 == key }
@@ -194,6 +194,7 @@ final class OverviewThumbnailCapture {
         for source in sources.values { retire(source) }
         sources.removeAll()
         sourceOrder.removeAll()
+        residentHandles.removeAll()
         trimRetainedPreviews()
         if traceRecorder.isActive {
             traceRecorder.record(record(.previewCacheCleared, reason: .retained, bytes: cachedByteCount))
@@ -229,8 +230,9 @@ final class OverviewThumbnailCapture {
                 guard let self else { return }
                 do {
                     let control = try await makeControl(request: source.request, output: output)
-                    try Task.checkCancellation()
                     source.control = control
+                    try Task.checkCancellation()
+                    guard isCurrent(source) else { throw CancellationError() }
                     try await control.start()
                     finishStarting(source, failed: false)
                 } catch {
@@ -271,6 +273,7 @@ final class OverviewThumbnailCapture {
         previewCache[source.request.handle] = CachedPreview(
             frame: frame, token: source.request.token, lastRequestedUse: source.lastRequestedUse
         )
+        trimRetainedPreviews()
         if !source.published {
             source.published = true
             trace(.previewArrived, source: source)
@@ -300,6 +303,7 @@ final class OverviewThumbnailCapture {
         request: OverviewPreviewRequest,
         output: OverviewPreviewStream
     ) async throws -> any OverviewPreviewStreamControl {
+        try Task.checkCancellation()
         if let streamFactory { return try await streamFactory(request, output) }
         if windowsByToken[request.token] == nil { await discoverWindows() }
         try Task.checkCancellation()
@@ -345,7 +349,9 @@ final class OverviewThumbnailCapture {
 
 extension OverviewThumbnailCapture {
     func inject(_ frame: OverviewPreviewFrame, for handle: WindowHandle) {
+        nextRequestedUse &+= 1
         previewCache[handle] = CachedPreview(frame: frame, token: handle.token, lastRequestedUse: nextRequestedUse)
+        trimRetainedPreviews()
     }
 
     func preview(for handle: WindowHandle) -> OverviewPreviewFrame? {
@@ -361,26 +367,12 @@ extension OverviewThumbnailCapture {
             cached.token == token || handle.token == token ? handle : nil
         }).union(sources.values.compactMap { source in
             source.request.token == token || source.request.handle.token == token ? source.request.handle : nil
-        })
+        }).union(residentHandles.filter { $0.token == token })
         for handle in handles { remove(handle: handle) }
     }
 
-    private func trimRetainedPreviews() {
-        guard cachedByteCount > maximumRetainedBytes else { return }
-        var remaining = maximumRetainedBytes
-        for (handle, preview) in previewCache.sorted(by: { $0.value.lastRequestedUse > $1.value.lastRequestedUse }) {
-            let bytes = preview.frame.surface.allocationSize
-            if bytes <= remaining {
-                remaining -= bytes
-            } else {
-                removeCachedPreview(for: handle, reason: .budget)
-                onPreview(handle, nil)
-            }
-        }
-    }
-
     func releaseCache(reason: CacheReleaseReason = .explicitRelease) {
-        guard sources.isEmpty else { return }
+        guard sources.isEmpty, residentHandles.isEmpty else { return }
         let handles = Array(previewCache.keys)
         if traceRecorder.isActive {
             for cached in previewCache.values {
@@ -391,7 +383,7 @@ extension OverviewThumbnailCapture {
         for handle in handles { onPreview(handle, nil) }
     }
 
-    private func removeCachedPreview(for handle: WindowHandle, reason: OverviewFrameTrace.PreviewReason) {
+    func removeCachedPreview(for handle: WindowHandle, reason: OverviewFrameTrace.PreviewReason) {
         guard let cached = previewCache.removeValue(forKey: handle) else { return }
         traceEviction(cached, reason: reason)
     }

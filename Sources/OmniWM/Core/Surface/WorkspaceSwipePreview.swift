@@ -80,6 +80,8 @@ final class WorkspaceSwipePreview {
     /// Windows that delivered a frame since the last `prepare`; cached previews of other windows may be
     /// minutes old (captured when their workspace was last shown).
     private var freshHandles: Set<WindowHandle> = []
+    private var snapshotGeneration: UInt64 = 0
+    private var snapshotBatch: WorkspaceSwipeSnapshot?
     private(set) var isWarming = false
 
     var isVisible: Bool {
@@ -120,11 +122,6 @@ final class WorkspaceSwipePreview {
         stop()
     }
 
-    func remove(token: WindowToken) {
-        tokens = tokens.filter { $0.value != token && $0.key.token != token }
-        capture.remove(token: token)
-    }
-
     /// Starts capturing fresh previews for a slide. With `snapshotsSource`, the source windows (on screen) are
     /// snapshotted by the window server (~15 ms each) instead of starting a capture stream each (~45 ms each,
     /// started one after another), so only the destination's windows need streams.
@@ -158,6 +155,7 @@ final class WorkspaceSwipePreview {
         warming: Bool,
         snapshotsSource: Bool = false
     ) {
+        cancelSnapshots()
         isWarming = false
         let frame = workingFrame ?? monitor.visibleFrame
         let items = (source + destination).filter { $0.frame.intersects(frame) }
@@ -184,12 +182,13 @@ final class WorkspaceSwipePreview {
         )
         guard !snapshotted.isEmpty else { return }
         let snapshotItems = items.filter { snapshotted.contains($0.handle) }
-        snapshot(snapshotItems) { [weak self] failed in
+        snapshot(snapshotItems, backingScale: scale) { [weak self] failed in
             // Windows the window server could not capture fall back to capture streams.
             guard let self, !failed.isEmpty else { return }
             capture.reconcile(
-                represented: represented,
-                visible: requests + failed.map { $0.captureRequest(backingScale: scale) },
+                represented: Set(tokens.keys),
+                visible: (requests + failed.map { $0.captureRequest(backingScale: scale) })
+                    .filter { tokens[$0.handle] == $0.token },
                 retainingUnrepresentedPreviews: true
             )
         }
@@ -282,6 +281,7 @@ final class WorkspaceSwipePreview {
     /// Stops the preview. With `revealingWindows`, the panel stays on screen briefly and fades out, hiding the
     /// first frames of windows that were just moved on screen (stale content, activation redraws).
     func stop(revealingWindows: Bool = false) {
+        cancelSnapshots()
         isWarming = false
         let previous = contents.values.flatMap { $0.map(\.preview) }
         CATransaction.begin()
@@ -349,6 +349,16 @@ final class WorkspaceSwipePreview {
 
 @MainActor
 extension WorkspaceSwipePreview {
+    func remove(token: WindowToken) {
+        snapshotBatch?.cancel(token: token)
+        freshHandles = freshHandles.filter { tokens[$0] != token && $0.token != token }
+        for (handle, representedToken) in tokens where representedToken == token || handle.token == token {
+            capture.remove(handle: handle)
+        }
+        tokens = tokens.filter { $0.value != token && $0.key.token != token }
+        capture.remove(token: token)
+    }
+
     fileprivate static let policy = SurfacePolicy(
         kind: .workspaceSwipe,
         hitTestPolicy: .passthrough,
@@ -441,20 +451,35 @@ private final class WorkspaceSwipePreviewPanel: NSPanel {
 }
 
 extension WorkspaceSwipePreview {
+    private func cancelSnapshots() {
+        snapshotGeneration &+= 1
+        snapshotBatch?.cancel()
+        snapshotBatch = nil
+    }
+
     /// Snapshots `items` with the window server off the main thread and stores them as fresh previews.
-    fileprivate func snapshot(_ items: [Item], failed: @escaping @MainActor ([Item]) -> Void) {
+    fileprivate func snapshot(
+        _ items: [Item], backingScale: CGFloat, failed: @escaping @MainActor ([Item]) -> Void
+    ) {
         guard hasCaptureAccess(), let capture = snapshotCapture() else {
             failed(items)
             return
         }
-        let windowIds = items.map { UInt32($0.handle.token.windowId) }
+        let generation = snapshotGeneration
+        let requests: [WorkspaceSwipeSnapshot.Request] = items.map {
+            let request = $0.captureRequest(backingScale: backingScale)
+            return .init(token: request.token, pixelWidth: request.pixelWidth, pixelHeight: request.pixelHeight)
+        }
+        let batch = WorkspaceSwipeSnapshot(requests: requests, capture: capture)
+        snapshotBatch = batch
         Task { @MainActor [weak self] in
-            let frames = await Task.detached(priority: .userInitiated) {
-                windowIds.map { capture($0).flatMap { OverviewPreviewFrame(image: $0) } }
-            }.value
-            guard let self else { return }
+            let frames = await batch.task.value
+            guard let self, snapshotGeneration == generation, !batch.task.isCancelled else { return }
+            snapshotBatch = nil
             var missing: [Item] = []
-            for (item, frame) in zip(items, frames) where tokens[item.handle] == item.handle.token {
+            for (item, (request, frame)) in zip(items, zip(requests, frames))
+                where tokens[item.handle] == request.token && item.handle.token == request.token
+            {
                 if let frame {
                     if !freshHandles.contains(item.handle) {
                         self.capture.inject(frame, for: item.handle)

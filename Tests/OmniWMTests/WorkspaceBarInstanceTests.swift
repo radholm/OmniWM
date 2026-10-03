@@ -56,6 +56,64 @@ final class WorkspaceBarInstanceTests: XCTestCase {
         XCTAssertTrue(instance.primary.panel === panel)
     }
 
+    func testFocusOnlyUpdatesPreserveMeasurementButUpdatePresentation() {
+        let fixture = makeFixture()
+        let instance = fixture.instance
+        defer { instance.primary.panel.close() }
+        let id = WorkspaceDescriptor.ID()
+        func snapshot(focused: Bool, name: String = "1") -> WorkspaceBarSnapshot {
+            WorkspaceBarSnapshot(
+                projection: WorkspaceBarProjection(
+                    items: [.init(
+                        id: id, name: name, rawName: "1", isFocused: focused,
+                        tiledWindows: [], floatingWindows: []
+                    )],
+                    scratchpads: []
+                ),
+                showLabels: true, showSystemStatsButton: false, backgroundOpacity: 0.1,
+                barHeight: 24, accentColor: nil, textColor: nil
+            )
+        }
+        let initial = snapshot(focused: false)
+        instance.updateSnapshot(initial)
+        _ = instance.measuredLength(for: initial, slice: .all, showsSystemStatsButton: false)
+        let focused = snapshot(focused: true)
+        instance.updateSnapshot(focused)
+        _ = instance.measuredLength(for: focused, slice: .all, showsSystemStatsButton: false)
+        XCTAssertEqual(fixture.measurementView.measurementCount, 1)
+        XCTAssertEqual(instance.model.snapshot, focused)
+
+        let renamed = snapshot(focused: true, name: "Development")
+        instance.updateSnapshot(renamed)
+        _ = instance.measuredLength(for: renamed, slice: .all, showsSystemStatsButton: false)
+        XCTAssertEqual(fixture.measurementView.measurementCount, 2)
+    }
+
+    func testMeasurementUsesRequestedGeometryEvenWithoutUpdatingModel() {
+        let fixture = makeFixture()
+        let instance = fixture.instance
+        defer { instance.primary.panel.close() }
+        let initial = instance.model.snapshot
+        _ = instance.measuredLength(for: initial, slice: .all, showsSystemStatsButton: false)
+        let changed = initial.replacingScratchpads([
+            .init(index: 1, label: "Terminal", windows: [], isVisible: false)
+        ])
+        _ = instance.measuredLength(for: changed, slice: .all, showsSystemStatsButton: false)
+        XCTAssertEqual(fixture.measurementView.measurementCount, 2)
+        XCTAssertEqual(instance.model.snapshot, initial)
+    }
+
+    func testAppearanceChangesInvalidateCachedMeasurement() {
+        let fixture = makeFixture()
+        let instance = fixture.instance
+        defer { instance.primary.panel.close() }
+        let snapshot = instance.model.snapshot
+        _ = instance.measuredLength(for: snapshot, slice: .all, showsSystemStatsButton: false)
+        instance.applyCurrentAppearance()
+        _ = instance.measuredLength(for: snapshot, slice: .all, showsSystemStatsButton: false)
+        XCTAssertEqual(fixture.measurementView.measurementCount, 2)
+    }
+
     func testHeadlessMonitorUpdateRetainsPanelAndModelIdentity() {
         let fixture = makeFixture()
         let instance = fixture.instance
