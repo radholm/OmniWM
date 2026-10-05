@@ -22,6 +22,33 @@ extension DwindleLayoutEngine {
         canFocus: (WindowToken) -> Bool = { _ in true }
     ) -> FullscreenCycle? {
         assertSanctionedMutation()
+        guard let plan = fullscreenCyclePlan(in: workspaceId, forward: forward, canFocus: canFocus) else { return nil }
+        plan.currentLeaf.tile?.setFullscreen(false, for: plan.cycle.previous)
+        plan.nextLeaf.tile?.setFullscreen(true, for: plan.cycle.next)
+        setSelectedNode(plan.nextLeaf, in: workspaceId)
+        return plan.cycle
+    }
+
+    private struct FullscreenCyclePlan {
+        let cycle: FullscreenCycle
+        let currentLeaf: DwindleNode
+        let nextLeaf: DwindleNode
+    }
+
+    /// The cycle `cycleFullscreen` would perform, without performing it (e.g. to preview it during a swipe).
+    func peekFullscreenCycle(
+        in workspaceId: WorkspaceDescriptor.ID,
+        forward: Bool = true,
+        canFocus: (WindowToken) -> Bool = { _ in true }
+    ) -> FullscreenCycle? {
+        fullscreenCyclePlan(in: workspaceId, forward: forward, canFocus: canFocus)?.cycle
+    }
+
+    private func fullscreenCyclePlan(
+        in workspaceId: WorkspaceDescriptor.ID,
+        forward: Bool,
+        canFocus: (WindowToken) -> Bool
+    ) -> FullscreenCyclePlan? {
         guard let state = existingState(for: workspaceId) else { return nil }
         let leaves = state.root.collectAllLeaves().compactMap { leaf -> (DwindleNode, DwindleTileMember)? in
             guard let tile = leaf.tile,
@@ -39,14 +66,9 @@ extension DwindleLayoutEngine {
             index = (index + step) % leaves.count
         }
         guard index != currentIndex else { return nil }
-
-        let (currentLeaf, currentMember) = leaves[currentIndex]
-        let (nextLeaf, nextMember) = leaves[index]
-        currentLeaf.tile?.setFullscreen(false, for: currentMember.token)
-        nextLeaf.tile?.setFullscreen(true, for: nextMember.token)
-        setSelectedNode(nextLeaf, in: workspaceId)
         let deck = (1 ... leaves.count).map { leaves[(currentIndex + step * $0) % leaves.count].1.token }
-        return FullscreenCycle(previous: currentMember.token, next: nextMember.token, deck: deck)
+        let cycle = FullscreenCycle(previous: leaves[currentIndex].1.token, next: leaves[index].1.token, deck: deck)
+        return FullscreenCyclePlan(cycle: cycle, currentLeaf: leaves[currentIndex].0, nextLeaf: leaves[index].0)
     }
 
     /// Moves fullscreen to `token` when another window of its workspace is fullscreen, e.g. when the user

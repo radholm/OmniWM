@@ -204,6 +204,8 @@ extension MouseEventHandler {
             state.gesturePhase = .committed
             state.activeGestureMode = .workspaceSwitch(axis: axis)
             state.workspaceSwipeFired = true
+        } else if context.fullscreenStackAvailable {
+            controller?.dwindleLayoutHandler.fullscreenStackGesture.prepare(workspaceId: context.workspaceId)
         }
     }
 
@@ -229,7 +231,7 @@ extension MouseEventHandler {
         } else {
             nil
         }
-        return .init(
+        var context = MouseInputState.LockedGestureContext(
             workspaceId: workspace.id,
             monitorId: monitor.id,
             fingerCount: fingerCount,
@@ -238,6 +240,9 @@ extension MouseEventHandler {
             windowGestureTarget: target,
             startLocation: location
         )
+        context.fullscreenStackAvailable = isWorkspaceCandidate && layoutType == .dwindle
+            && controller.dwindleLayoutHandler.fullscreenStackGesture.canPage(workspaceId: workspace.id)
+        return context
     }
 
     private func processActiveGestureFrame(average: CGPoint, timestamp: TimeInterval) {

@@ -25,6 +25,8 @@ enum OverviewGestureAction: Equatable {
 enum TrackpadGestureMode: Equatable {
     case overview(OverviewGestureAction)
     case workspaceSwitch(axis: WorkspaceSwipeAxis)
+    /// Pages the fullscreen stack, swiping across the workspace swipe's axis.
+    case fullscreenStack(axis: WorkspaceSwipeAxis)
     case windowMove
     case windowResize
 
@@ -33,7 +35,8 @@ enum TrackpadGestureMode: Equatable {
         case .windowMove,
              .windowResize: true
         case .overview,
-             .workspaceSwitch: false
+             .workspaceSwitch,
+             .fullscreenStack: false
         }
     }
 
@@ -65,6 +68,8 @@ enum TrackpadGestureIntent {
         var windowMoveFingerCount = 4
         var windowResizeEnabled = false
         var windowResizeFingerCount = 3
+        /// The workspace under the fingers shows a fullscreen stack that a swipe across the workspace axis pages.
+        var fullscreenStackAvailable = false
     }
 
     static let workspaceSwipeTriggerUnits: CGFloat = 140.0
@@ -93,7 +98,8 @@ enum TrackpadGestureIntent {
             fingerCount = config.windowResizeFingerCount
             if config.windowMoveEnabled, config.windowMoveFingerCount == fingerCount { return .windowMove }
         case .overview,
-             .workspaceSwitch:
+             .workspaceSwitch,
+             .fullscreenStack:
             return nil
         }
         if config.workspaceSwipeEnabled, config.workspaceSwipeFingerCount == fingerCount {
@@ -155,8 +161,9 @@ enum TrackpadGestureIntent {
             guard overviewConflict(config) == nil else { return nil }
             return .overview(action)
         }
-        guard workspaceCandidate, workspaceAxis == dominantAxis else { return nil }
-        return .workspaceSwitch(axis: workspaceAxis)
+        guard workspaceCandidate else { return nil }
+        if workspaceAxis == dominantAxis { return .workspaceSwitch(axis: workspaceAxis) }
+        return config.fullscreenStackAvailable ? .fullscreenStack(axis: dominantAxis) : nil
     }
 
     static func windowGestureLocation(

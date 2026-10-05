@@ -35,6 +35,8 @@ import QuartzCore
         return transition
     }()
 
+    private(set) lazy var fullscreenStackGesture = FullscreenStackGesturePresentation(handler: self)
+
     var snapshotTransitionArm: (workspaceId: WorkspaceDescriptor.ID, time: TimeInterval)?
     /// The next snapshot transition of the workspace slides `previous` out and `next` in (fullscreen paging).
     var fullscreenSlideArm: FullscreenSlide?

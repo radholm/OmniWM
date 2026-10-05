@@ -79,10 +79,12 @@ extension WorkspaceNavigationHandler {
         return true
     }
 
+    /// With `animated`, slides to the workspace like Command+N does.
     func switchWorkspaceRelative(
         isNext: Bool,
         wrapAround: Bool = true,
-        monitorId explicitMonitorId: Monitor.ID? = nil
+        monitorId explicitMonitorId: Monitor.ID? = nil,
+        animated: Bool = false
     ) {
         guard let controller else { return }
         guard let currentMonitorId = explicitMonitorId ?? interactionMonitorId(for: controller)
@@ -110,6 +112,13 @@ extension WorkspaceNavigationHandler {
         }
 
         guard let targetWorkspace else { return }
+        if animated, controller.layoutRefreshController.workspaceSwipe.animateSwitch(to: targetWorkspace.id, fallback: {
+            [weak self] in
+            guard let self, let controller = self.controller,
+                  controller.workspaceManager.activeWorkspaceOrFirst(on: currentMonitorId)?.id == currentWorkspace.id
+            else { return }
+            activateWorkspaceInOrder(targetWorkspace, from: currentWorkspace.id, on: currentMonitorId)
+        }) { return }
         activateWorkspaceInOrder(targetWorkspace, from: currentWorkspace.id, on: currentMonitorId)
     }
 

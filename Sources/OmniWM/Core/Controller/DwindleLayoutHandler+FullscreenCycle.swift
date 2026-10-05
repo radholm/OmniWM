@@ -45,8 +45,9 @@ extension DwindleLayoutHandler {
 
     /// Makes the next window of the active workspace fullscreen instead of the current fullscreen window.
     /// Returns `false` when no window is fullscreen, so the caller can fall back to its regular action.
+    /// Without `animated`, the page turn is not played (e.g. a swipe already showed it).
     @discardableResult
-    func cycleFullscreen(forward: Bool = true) -> Bool {
+    func cycleFullscreen(forward: Bool = true, animated: Bool = true) -> Bool {
         guard let controller else { return false }
         var cycled = false
         withDwindleContext { engine, wsId in
@@ -58,14 +59,14 @@ extension DwindleLayoutHandler {
             cycled = true
             recordLayoutOperation(.fullscreenToggled(token: cycle.previous), in: wsId)
             recordLayoutOperation(.fullscreenToggled(token: cycle.next), in: wsId)
-            fullscreenSlideArm = FullscreenSlide(
+            fullscreenSlideArm = animated ? FullscreenSlide(
                 workspaceId: wsId,
                 previousWindowId: cycle.previous.windowId,
                 nextWindowId: cycle.next.windowId,
                 deckWindowIds: cycle.deck.map(\.windowId),
                 forward: forward,
                 time: CACurrentMediaTime()
-            )
+            ) : nil
             _ = controller.workspaceManager.applySessionPatch(
                 .init(
                     workspaceId: wsId,
@@ -81,6 +82,29 @@ extension DwindleLayoutHandler {
             )
         }
         return cycled
+    }
+
+    /// The page turn `cycleFullscreen` would play on `workspaceId`, without paging, or `nil` when it can't page.
+    func peekFullscreenSlide(in workspaceId: WorkspaceDescriptor.ID, forward: Bool) -> FullscreenSlide? {
+        guard let controller, let engine = controller.dwindleEngine,
+              controller.activeWorkspace()?.id == workspaceId,
+              controller.settings.workspaces.layoutType(
+                  for: controller.workspaceManager.descriptor(for: workspaceId)?.name ?? ""
+              ) == .dwindle,
+              let cycle = engine.peekFullscreenCycle(
+                  in: workspaceId,
+                  forward: forward,
+                  canFocus: { !controller.isManagedWindowSuppressedByMacOS($0) }
+              )
+        else { return nil }
+        return FullscreenSlide(
+            workspaceId: workspaceId,
+            previousWindowId: cycle.previous.windowId,
+            nextWindowId: cycle.next.windowId,
+            deckWindowIds: cycle.deck.map(\.windowId),
+            forward: forward,
+            time: CACurrentMediaTime()
+        )
     }
 
     /// A window activated from the fullscreen stack (Command+Tab, Dock) becomes the fullscreen one.

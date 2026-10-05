@@ -88,7 +88,10 @@ final class WorkspaceSwipePresentation {
     private let mediaTimeProvider: () -> TimeInterval
     var keyboardSwitchTask: Task<Void, Never>?
     var keyboardSwitchFallback: (() -> Void)?
-    static let keyboardPreviewWait: Duration = .milliseconds(120)
+    static let keyboardPreviewWaitSeconds: TimeInterval = 0.12
+    static let keyboardPreviewWait: Duration = .seconds(keyboardPreviewWaitSeconds)
+    /// When the current swipe started capturing previews; a swipe waits for fresh ones as long as a keyboard switch.
+    private var preparedAt: TimeInterval?
 
     init(
         refreshController: LayoutRefreshController,
@@ -135,10 +138,12 @@ final class WorkspaceSwipePresentation {
             return false
         }
         self.preparation = preparation
+        preparedAt = mediaTime
         previewSurface(controller).prepare(
             source: preparation.source.items,
             destination: (preparation.previous?.items ?? []) + (preparation.next?.items ?? []),
-            monitor: preparation.monitor, workingFrame: preparation.frame
+            monitor: preparation.monitor, workingFrame: preparation.frame,
+            snapshotsSource: true
         )
         return false
     }
@@ -166,6 +171,17 @@ final class WorkspaceSwipePresentation {
         )
         guard participantsAreCurrent(flight) else {
             trace("fallback-participants")
+            return
+        }
+        if let preparedAt, mediaTimeProvider() - preparedAt < Self.keyboardPreviewWaitSeconds,
+           preview?.hasFreshPreviews(
+               source: preparation.source.items,
+               destination: destination.items,
+               monitor: preparation.monitor,
+               workingFrame: preparation.frame
+           ) != true
+        {
+            trace("waiting-fresh-previews")
             return
         }
         flight.wallpaper = wallpaperMotion(for: flight)
@@ -201,6 +217,8 @@ final class WorkspaceSwipePresentation {
     @discardableResult
     func release(timestamp: TimeInterval, allowFlick: Bool) -> Bool {
         guard let flight, !flight.committing else { return false }
+        // Already settling, e.g. a slide started by the swipe's fallback like a keyboard switch.
+        if flight.motion.target != nil { return true }
         guard flight.motion.release(
             timestamp: timestamp, allowFlick: allowFlick, animationTime: mediaTimeProvider(),
             motion: controller?.motionPolicy.snapshot() ?? .enabled
@@ -226,8 +244,9 @@ final class WorkspaceSwipePresentation {
     }
 
     func stopPreparing(warm: Bool = false) {
-        guard flight == nil else { return }
+        guard flight == nil, keyboardSwitchFallback == nil else { return }
         preparation = nil
+        preparedAt = nil
         preview?.stop()
         if warm {
             refreshController?.collectUnusedWorkspacesIfIdle()

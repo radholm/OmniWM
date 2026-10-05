@@ -48,7 +48,8 @@ extension MouseEventHandler {
                 source: .trackpadGesture
             )
         case .overview,
-             .workspaceSwitch:
+             .workspaceSwitch,
+             .fullscreenStack:
             return false
         }
         guard began else {

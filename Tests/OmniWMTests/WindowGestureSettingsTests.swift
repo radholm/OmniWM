@@ -204,7 +204,8 @@ final class WindowGestureSettingsTests: XCTestCase {
         case .windowResize:
             gestures.windowResizeEnabled = true
             gestures.windowResizeFingerCount = .four
-        case let .workspaceSwitch(axis):
+        case let .workspaceSwitch(axis),
+             let .fullscreenStack(axis):
             gestures.workspaceSwipeEnabled = true
             gestures.workspaceSwipeFingerCount = .four
             gestures.workspaceSwipeAxis = axis

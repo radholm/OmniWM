@@ -352,31 +352,6 @@ final class WindowSnapshotTransition {
     }
 }
 
-@MainActor
-private final class SnapshotTransitionPanel: NSPanel {
-    init(frame: CGRect) {
-        super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        isFloatingPanel = true
-        isOpaque = false
-        backgroundColor = .clear
-        level = .screenSaver
-        ignoresMouseEvents = true
-        hasShadow = false
-        hidesOnDeactivate = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-        isReleasedWhenClosed = false
-        animationBehavior = .none
-    }
-
-    override var canBecomeKey: Bool {
-        false
-    }
-
-    override var canBecomeMain: Bool {
-        false
-    }
-}
-
 extension WindowSnapshotTransition {
     /// A new window that macOS already shows on this display (e.g. a Finder window opened at its remembered
     /// frame) has already appeared once; it stays put or glides from there instead of appearing a second time.
@@ -451,6 +426,19 @@ extension WindowSnapshotTransition {
 }
 
 extension WindowSnapshotTransition {
+    /// Poses the stacked snapshots of `items` at `time` (0...1) of their page turn, e.g. while a swipe scrubs it.
+    func scrubStack(_ items: [Item], at time: CGFloat) {
+        guard let panel, finishTask == nil else { return }
+        let origin = CGPoint(x: -panel.frame.minX, y: -panel.frame.minY)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for item in items {
+            guard let effect = item.stackEffect, let layer = layers[item.windowId] else { continue }
+            effect.apply(to: layer, frame: item.to.offsetBy(dx: origin.x, dy: origin.y), at: time)
+        }
+        CATransaction.commit()
+    }
+
     fileprivate func captureMissingImages(_ items: [Item], prefetched: [Int: CGImage]) -> [Int: CGImage]? {
         var images: [Int: CGImage] = [:]
         for item in items where layers[item.windowId] == nil {

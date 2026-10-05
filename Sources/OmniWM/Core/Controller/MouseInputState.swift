@@ -23,6 +23,8 @@ struct MouseInputState {
         let windowGestureTarget: WindowToken?
         let startLocation: CGPoint
         var contactSession: MultitouchContactSession?
+        /// A swipe across the workspace axis pages the workspace's fullscreen stack.
+        var fullscreenStackAvailable = false
     }
 
     enum GesturePhase {

@@ -495,6 +495,11 @@ final class TrackpadGestureIntentTests: XCTestCase {
             config.workspaceSwipeEnabled = true
             config.workspaceSwipeFingerCount = fingers
             config.workspaceSwipeAxis = axis
+        case let .fullscreenStack(axis):
+            config.workspaceSwipeEnabled = true
+            config.workspaceSwipeFingerCount = fingers
+            config.workspaceSwipeAxis = axis == .horizontal ? .vertical : .horizontal
+            config.fullscreenStackAvailable = true
         case let .overview(action):
             config.overviewAction = action
             config.overviewFingerCount = fingers

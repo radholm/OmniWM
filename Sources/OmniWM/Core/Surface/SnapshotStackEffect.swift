@@ -59,18 +59,59 @@ struct SnapshotStackEffect: Equatable {
 
     /// Pose of a card at a (fractional) deck `slot` of a deck with `count` cards; `dip` (0...1) lowers it below
     /// the deck. The card pivots on its bottom centre, which sits at the bottom centre of its full-size frame.
-    static func deckPose(slot: CGFloat, count: Int, dip: CGFloat = 0, size: CGSize) -> CATransform3D {
+    /// `zoom` (0...1) blends from the card's full-size frame (0) to its place in the deck (1).
+    static func deckPose(slot: CGFloat, count: Int, dip: CGFloat = 0, zoom: CGFloat = 1, size: CGSize)
+        -> CATransform3D
+    {
         let count = CGFloat(min(max(count, 1), maximumDeckSize))
         let centred = slot - (count - 1) / 2
-        let offsetX = size.width * deckStepX * centred
-        let offsetY = -size.height * deckStepY * centred - size.height * tuckDrop * dip
+        let offsetX = size.width * deckStepX * centred * zoom
+        let offsetY = (-size.height * deckStepY * centred - size.height * tuckDrop * dip) * zoom
+        let scale = 1 - (1 - deckScale) * zoom
         var transform = CATransform3DIdentity
         transform.m34 = -1 / perspective
         transform = CATransform3DTranslate(
-            transform, offsetX, size.height * (1 - deckScale) / 2 + offsetY, 0
+            transform, offsetX, size.height * (1 - scale) / 2 + offsetY, 0
         )
-        transform = CATransform3DRotate(transform, deckYaw, 0, 1, 0)
-        return CATransform3DScale(transform, deckScale, deckScale, 1)
+        transform = CATransform3DRotate(transform, deckYaw * zoom, 0, 1, 0)
+        return CATransform3DScale(transform, scale, scale, 1)
+    }
+
+    /// Pose of the card at `time` (0...1) of the page turn, for scrubbing it interactively (e.g. by a swipe).
+    func pose(at time: CGFloat, size: CGSize) -> (transform: CATransform3D, zPosition: CGFloat) {
+        let time = min(max(time, 0), 1)
+        let zoom: CGFloat
+        var progress: CGFloat = 0
+        if time < Self.deckShownTime {
+            zoom = Self.easedProgress(time / Self.deckShownTime)
+        } else if time <= Self.tuckedTime {
+            zoom = 1
+            progress = Self.easedProgress((time - Self.deckShownTime) / (Self.tuckedTime - Self.deckShownTime))
+        } else {
+            zoom = 1 - Self.easedProgress((time - Self.tuckedTime) / (1 - Self.tuckedTime))
+            progress = 1
+        }
+        let slot = CGFloat(fromDepth) + (CGFloat(toDepth) - CGFloat(fromDepth)) * progress
+        let dip = tucksUnder ? sin(.pi * progress) : 0
+        let transform = zoom <= 0 ? CATransform3DIdentity
+            : Self.deckPose(slot: slot, count: deckSize, dip: dip, zoom: zoom, size: size)
+        let swapped = time >= Self.orderSwapTime
+        let zPosition = swapped ? Self.zPosition(depth: toDepth)
+            : tucksUnder ? Self.tuckZPosition : Self.zPosition(depth: fromDepth)
+        return (transform, zPosition)
+    }
+
+    /// Places `layer`, whose full-size frame is `frame`, at `time` of the page turn without animating.
+    func apply(to layer: CALayer, frame: CGRect, at time: CGFloat) {
+        layer.removeAnimation(forKey: "stack")
+        layer.transform = CATransform3DIdentity
+        layer.bounds = CGRect(origin: .zero, size: frame.size)
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0)
+        layer.position = CGPoint(x: frame.midX, y: frame.minY)
+        let pose = pose(at: time, size: frame.size)
+        layer.transform = pose.transform
+        layer.zPosition = pose.zPosition
+        layer.opacity = opacity(depth: toDepth)
     }
 
     /// Ease-in-out progress for `time` (0...1).

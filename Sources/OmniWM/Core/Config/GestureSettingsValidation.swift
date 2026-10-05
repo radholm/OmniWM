@@ -25,7 +25,8 @@ struct TrackpadGestureConflict: Error, Equatable, LocalizedError {
 
     private static func name(for gesture: TrackpadGestureMode) -> String {
         switch gesture {
-        case .workspaceSwitch: String(localized: "workspace switching", comment: "Trackpad gesture name")
+        case .workspaceSwitch,
+             .fullscreenStack: String(localized: "workspace switching", comment: "Trackpad gesture name")
         case .overview: String(localized: "Overview", comment: "Trackpad gesture name")
         case .windowMove: String(localized: "window moving", comment: "Trackpad gesture name")
         case .windowResize: String(localized: "window resizing", comment: "Trackpad gesture name")

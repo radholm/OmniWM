@@ -33,6 +33,20 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[0]])
     }
 
+    func testPeekPreviewsTheCycleWithoutPaging() throws {
+        let (engine, workspace) = makeEngine()
+        _ = sync(engine, [first, second, third], in: workspace)
+        let order = try layoutOrder(engine, in: workspace)
+        XCTAssertNil(engine.peekFullscreenCycle(in: workspace))
+        XCTAssertEqual(engine.toggleFullscreen(in: workspace), order[0])
+
+        let forward = try XCTUnwrap(engine.peekFullscreenCycle(in: workspace))
+        let backward = try XCTUnwrap(engine.peekFullscreenCycle(in: workspace, forward: false))
+        XCTAssertEqual(engine.fullscreenTokens(in: workspace), [order[0]], "peeking doesn't page")
+        XCTAssertEqual(backward.next, order[2])
+        XCTAssertEqual(try XCTUnwrap(engine.cycleFullscreen(in: workspace)), forward)
+    }
+
     func testCycleBackwardWraps() throws {
         let (engine, workspace) = makeEngine()
         _ = sync(engine, [first, second, third], in: workspace)

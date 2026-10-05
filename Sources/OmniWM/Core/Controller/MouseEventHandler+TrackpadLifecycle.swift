@@ -18,6 +18,7 @@ extension MouseEventHandler {
             config.workspaceSwipeAxis = axis
         }
         config.overviewAction = controller.settings.overview.enabled ? lockedContext.overviewAction : nil
+        config.fullscreenStackAvailable = lockedContext.fullscreenStackAvailable
         guard let mode = TrackpadGestureIntent.resolveMode(
             config,
             fingerCount: lockedContext.fingerCount,
@@ -49,6 +50,11 @@ extension MouseEventHandler {
         } else {
             controller.layoutRefreshController.workspaceSwipe.cancel(reason: "other-gesture")
         }
+        if case let .fullscreenStack(axis) = mode {
+            beginFullscreenStackSwipe(
+                axis: axis, workspaceId: lockedContext.workspaceId, metrics: metrics, timestamp: timestamp
+            )
+        }
         return true
     }
 
@@ -67,6 +73,11 @@ extension MouseEventHandler {
                 axis: axis,
                 metrics: metrics,
                 monitorId: lockedContext.monitorId,
+                timestamp: timestamp
+            )
+        case let .fullscreenStack(axis):
+            controller?.dwindleLayoutHandler.fullscreenStackGesture.update(
+                cumulative: Double(axisUnits(axis, metrics) * workspaceSwipeSensitivity),
                 timestamp: timestamp
             )
         case .windowMove:
@@ -98,6 +109,11 @@ extension MouseEventHandler {
             cumulative: cumulative,
             timestamp: timestamp
         ) { return }
+        // The slide waits briefly for fresh previews (like Command+N), so it may begin on a later frame.
+        if !state.workspaceSwipeFired {
+            beginWorkspaceSwipePresentation(axis: axis, metrics: metrics, timestamp: timestamp)
+            if state.workspaceSwipeFired { return }
+        }
         handleWorkspaceSwipeFrame(
             axis: axis,
             cumulative: cumulative,
@@ -157,7 +173,9 @@ extension MouseEventHandler {
               )
         else { return }
         state.workspaceSwipeFired = true
-        controller?.workspaceNavigationHandler.switchWorkspaceRelative(isNext: isNext, monitorId: monitorId)
+        controller?.workspaceNavigationHandler.switchWorkspaceRelative(
+            isNext: isNext, monitorId: monitorId, animated: true
+        )
     }
 
     private func beginWorkspaceSwipePresentation(
@@ -169,14 +187,46 @@ extension MouseEventHandler {
         let sensitivity = workspaceSwipeSensitivity
         controller.layoutRefreshController.workspaceSwipe.begin(
             axis: axis,
-            cumulative: (axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY) * sensitivity,
+            cumulative: axisUnits(axis, metrics) * sensitivity,
             timestamp: timestamp,
             recognitionMovement: SwipeEvent(
-                delta: Double((axis == .horizontal ? metrics.rawDeltaX : metrics.rawDeltaY) * sensitivity),
+                delta: Double(axisDelta(axis, metrics) * sensitivity),
                 timestamp: metrics.previousTimestamp
             )
         )
         if controller.layoutRefreshController.workspaceSwipe.hasPresentation { state.workspaceSwipeFired = true }
+    }
+
+    private func beginFullscreenStackSwipe(
+        axis: WorkspaceSwipeAxis,
+        workspaceId: WorkspaceDescriptor.ID,
+        metrics: GestureFrameMetrics,
+        timestamp: TimeInterval
+    ) {
+        guard let controller else { return }
+        let sensitivity = workspaceSwipeSensitivity
+        let cumulative = axisUnits(axis, metrics) * sensitivity
+        guard let forward = TrackpadGestureIntent.isNextWorkspace(
+            axis: axis, displacement: cumulative, naturalDirection: controller.settings.gestures.invertDirection
+        ) else { return }
+        controller.dwindleLayoutHandler.fullscreenStackGesture.begin(
+            workspaceId: workspaceId,
+            forward: forward,
+            cumulative: Double(cumulative),
+            timestamp: timestamp,
+            recognitionMovement: SwipeEvent(
+                delta: Double(axisDelta(axis, metrics) * sensitivity),
+                timestamp: metrics.previousTimestamp
+            )
+        )
+    }
+
+    private func axisUnits(_ axis: WorkspaceSwipeAxis, _ metrics: GestureFrameMetrics) -> CGFloat {
+        axis == .horizontal ? metrics.cumulativeX : metrics.cumulativeY
+    }
+
+    private func axisDelta(_ axis: WorkspaceSwipeAxis, _ metrics: GestureFrameMetrics) -> CGFloat {
+        axis == .horizontal ? metrics.rawDeltaX : metrics.rawDeltaY
     }
 
     private var workspaceSwipeSensitivity: CGFloat {
@@ -199,6 +249,12 @@ extension MouseEventHandler {
                 allowFlick: allowFlick,
                 timestamp: timestamp
             )
+        case .fullscreenStack:
+            controller?.dwindleLayoutHandler.fullscreenStackGesture.release(
+                timestamp: timestamp,
+                allowFlick: allowFlick
+            )
+            state.suppressTrackpadMomentumScroll = true
         case .windowMove,
              .windowResize:
             if allowFlick {
@@ -251,7 +307,9 @@ extension MouseEventHandler {
             )
         else { return }
         state.workspaceSwipeFired = true
-        controller?.workspaceNavigationHandler.switchWorkspaceRelative(isNext: isNext, monitorId: monitorId)
+        controller?.workspaceNavigationHandler.switchWorkspaceRelative(
+            isNext: isNext, monitorId: monitorId, animated: true
+        )
     }
 
     func finalizeCommittedGestureAfterTouchRelease(timestamp: TimeInterval) {
@@ -271,6 +329,9 @@ extension MouseEventHandler {
             } else if case .workspaceSwitch = state.activeGestureMode {
                 controller?.layoutRefreshController.workspaceSwipe.cancel(reason: "gesture-aborted")
                 state.suppressTrackpadMomentumScroll = true
+            } else if case .fullscreenStack = state.activeGestureMode {
+                controller?.dwindleLayoutHandler.fullscreenStackGesture.cancel()
+                state.suppressTrackpadMomentumScroll = true
             } else if state.activeGestureMode?.isWindowInteraction == true {
                 cancelGestureWindowInteraction()
             } else {
@@ -284,6 +345,7 @@ extension MouseEventHandler {
 
     func resetGestureState() {
         controller?.layoutRefreshController.workspaceSwipe.stopPreparing(warm: true)
+        controller?.dwindleLayoutHandler.fullscreenStackGesture.cancel()
         cancelGestureWindowInteraction()
         if state.lockedGestureContext?.overviewAction != nil {
             controller?.windowActionHandler.endOverviewGesture(timestamp: nil)

@@ -262,7 +262,7 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 | `invertDirection` | boolean | `true` | Inverts trackpad gesture direction. |
 | `workspaceSwipeEnabled` | boolean | `false` | Trackpad swipe switches to the next/previous workspace. |
 | `workspaceSwipeFingerCount` | integer | `3` | Workspace-swipe finger count: `2`, `3`, or `4`. |
-| `workspaceSwipeAxis` | string | `"vertical"` | Workspace-swipe axis: `horizontal` or `vertical`. |
+| `workspaceSwipeAxis` | string | `"vertical"` | Workspace-swipe axis: `horizontal` or `vertical`. Swiping across this axis pages a Dwindle fullscreen stack. |
 | `overviewGestureEnabled` *(optional)* | boolean | `false` | Enable the trackpad gesture that opens Overview with an upward swipe and closes it with a downward swipe. |
 | `overviewGestureFingerCount` *(optional)* | integer | `4` | Overview gesture finger count: `3` or `4`. |
 | `windowMoveEnabled` *(optional)* | boolean | `false` | Drag without clicking to swap the tiled window under the cursor in Dwindle. |
