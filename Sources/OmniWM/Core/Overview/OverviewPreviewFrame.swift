@@ -78,4 +78,9 @@ extension OverviewPreviewFrame {
             max(1, Int((Double(imageHeight) * scale).rounded(.down)))
         )
     }
+
+    func covers(_ request: OverviewPreviewRequest) -> Bool {
+        CGFloat(surface.width) * contentsRect.width + 1 >= CGFloat(request.pixelWidth)
+            && CGFloat(surface.height) * contentsRect.height + 1 >= CGFloat(request.pixelHeight)
+    }
 }

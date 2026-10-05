@@ -10,7 +10,7 @@ This reference follows current `main`; features newer than the latest release ar
 Complete reference for `settings.toml`, in the file's canonical order. The authoritative schema is [`CanonicalTOMLConfig.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/CanonicalTOMLConfig.swift); defaults come from [`SettingsExport.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/SettingsExport.swift) and [`BuiltInSettingsDefaults.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/BuiltInSettingsDefaults.swift).
 
 :::caution
-The current schema is strict — a missing required key in a version 4 file invalidates the whole file, `hotkeys` must list every required action exactly once, and an enumerated string key must use one of its listed values (an unknown value rejects the whole file, exactly like a missing key). Conflicting trackpad gesture finger counts under [`gestures`](#gestures) reject the whole file too. Edit values in place; see [Configuration](/config/configuration/).
+The current schema is strict — a missing required key in a version 4 file invalidates the whole file, `hotkeys` must list every required action exactly once, and an enumerated string key must use one of its listed values (an unknown value rejects the whole file, exactly like a missing key). Conflicting trackpad gesture finger counts under [`gestures`](#gestures), or one mouse button shared by a hotkey, `systemHyperTrigger`, or Overview, reject the whole file too. Edit values in place; see [Configuration](/config/configuration/).
 :::
 
 **Conventions**
@@ -47,7 +47,7 @@ Global switches: hotkeys, Hyper key, default layout, sleep, updates, IPC, animat
 | `updateChecksEnabled` | boolean | `true` | Automatic update checks. |
 | `ipcEnabled` | boolean | `false` | Enables the IPC server used by `omniwmctl`. |
 | `animationsEnabled` | boolean | `true` | Animates window layout changes and other OmniWM-authored motion. macOS Reduce Motion turns them off regardless of this key. |
-| `animationSpeed` *(optional)* | float | `1.0` | **Unreleased — available when building from `main`.** Tiling animation speed multiplier: `2.0` is twice as fast, `0.5` is half as fast. Applies to Dwindle layout changes and workspace swipe settling. Values are clamped to `0.25`–`4.0`; nonfinite values use `1.0`. Changes apply to newly started transitions. Direct gesture tracking, inertial scrolling, Overview, and Quake terminal animations keep their own behavior. |
+| `animationSpeed` *(optional)* | float | `1.0` | Tiling animation speed multiplier: `2.0` is twice as fast, `0.5` is half as fast. Applies to Dwindle layout changes and workspace swipe settling. Values are clamped to `0.25`–`4.0`; nonfinite values use `1.0`. Changes apply to newly started transitions. Direct gesture tracking, inertial scrolling, Overview, and Quake terminal animations keep their own behavior. |
 | `language` | string | unset | Interface language as a packaged localization code, such as `"ja"` or `"sr-Latn"`. Leave it unset to follow macOS. Takes effect the next time OmniWM starts. |
 
 ## focus
@@ -57,7 +57,7 @@ Pointer-driven focus and monitor-edge focus/move behavior.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `followsMouse` | boolean | `false` | Focuses a managed window when the pointer enters it, no click needed. |
-| `raiseOnMouseFocus` | boolean | `false` | Also raises the window when focus-follows-mouse focuses it. |
+| `raiseOnMouseFocus` | boolean | `false` | Also raises the window when focus-follows-mouse focuses it. A tiled window that a visible floating window overlaps from the front is focused without raising. |
 | `lockModifier` | string | `"off"` | Modifier that holds focus in place while pressed: `off`, `option`, `leftOption`, `rightOption`, `command`, `leftCommand`, `rightCommand`, `control`, `leftControl`, `rightControl`, `shift`, `leftShift`, `rightShift`. |
 | `floatingWindowsAlwaysOnTop` | boolean | `false` | Keeps floating windows in front of tiled windows: focus-follows-mouse focuses a tiled window without raising it while a floating window overlaps it, and no longer moves focus from a focused floating window to a tiled window (click the tiled window instead). |
 | `moveMouseToFocusedWindow` | boolean | `false` | Moves the pointer to the window that gains focus. |
@@ -155,7 +155,7 @@ Options for the Dwindle (BSP) layout.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| `smartSplit` | boolean | `false` | Automatically chooses the split direction based on cursor position. |
+| `smartSplit` | boolean | `false` | Automatically chooses the split direction from the active window's center relative to the target tile's center and aspect ratio. |
 | `defaultSplitRatio` | float | `1.0` | `1.0` = equal split, `<1.0` = first window smaller, `>1.0` = first window larger. |
 | `splitWidthMultiplier` | float | `1.0` | Biases when vertical vs. horizontal splits are preferred. |
 | `singleWindowFit` | string | `"fill"` | Size of a lone window: `fill` (the "Full Screen" fit, which uses the fullscreen layout frame and honors `fullscreenUsesOuterGaps`) or `WIDTHxHEIGHT` (no span mode in Dwindle). |
@@ -212,6 +212,8 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | --- | --- | --- | --- |
 | `enabled` | boolean | `true` | Shows the workspace bar. When off, all monitors' bars are off, including monitors with `enabled = true` overrides; those preferences return when the global bar is re-enabled. |
 | `hoverPreviewsEnabled` *(optional)* | boolean | `true` | Shows window thumbnail previews when hovering over bar icons. Turning it off releases the preview capture and cache while leaving the bar active. |
+| `notificationBadges` *(optional)* | string | `"off"` | App-wide Dock badges on existing icons: `off`, `dot`, or `text`. Global setting. |
+| `notificationBadgeRefreshIntervalSeconds` *(optional)* | float | `5.0` | Badge refresh interval, rounded to whole seconds and clamped to `1`–`60`. |
 | `showLabels` | boolean | `true` | Shows workspace names next to their numbers. |
 | `showFloatingWindows` | boolean | `false` | Includes floating windows' icons in workspace pills. |
 | `windowLevel` | string | `"popup"` | Bar window level: `normal`, `floating`, `status`, `popup`, `screensaver`. |
@@ -372,7 +374,7 @@ binding = "Unassigned"
 id = "toggleScratchpad.1"
 ```
 
-- `binding` is a human-readable chord: `+`-joined modifiers (`Control`, `Option`, `Shift`, `Command`, or the `Hyper` shorthand for the full [`hyperKeyModifiers`](#general) set) followed by a key name — or `"Unassigned"`. A `Left `/`Right ` prefix pins a modifier to one side (e.g. `"Left Option+H"`).
+- `binding` is a human-readable chord: `+`-joined modifiers (`Control`, `Option`, `Shift`, `Command`, or the `Hyper` shorthand for the full [`hyperKeyModifiers`](#general) set) followed by a key name — or `"Unassigned"`. A `Left `/`Right ` prefix pins a modifier to one side (e.g. `"Left Option+H"`). A binding can instead be an extra mouse button, `MouseButton2`–`MouseButton31`, alone or after modifiers without side prefixes (e.g. `"Option+MouseButton3"`); a button used by `systemHyperTrigger` or Overview cannot also be a hotkey.
 - The array is validated strictly: every required action must appear **exactly once**. Workspace `10+` action IDs are optional and appear while those workspaces exist. An unknown, unassignable, duplicate, or missing required action id rejects the whole file, so rebind by editing `binding` values in place.
 - The numeric suffix is zero-based for `switchWorkspace.N` and `moveToWorkspace.N` — `switchWorkspace.0` is *Switch to Workspace 1* (`Option + 1` by default) — and one-based for `switchWorkspaceSlot.N`, `moveToWorkspaceSlot.N`, `toggleScratchpad.N`, and `assignFocusedWindowToScratchpad.N`.
 

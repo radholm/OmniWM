@@ -12,7 +12,7 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
 
 ## Demo Video
 
-[![Watch the demo](https://img.youtube.com/vi/WcHjGkuD2Fc/maxresdefault.jpg)](https://youtu.be/WcHjGkuD2Fc)
+[![Watch the demo](https://img.youtube.com/vi/SWzGMEKtdbI/maxresdefault.jpg)](https://www.youtube.com/watch?v=SWzGMEKtdbI)
 
 <!-- contributors:start -->
 ## Contributors
@@ -162,6 +162,23 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
       <a href="https://github.com/albertilagan"><strong>Albert Ilagan</strong></a>
       <br>
       <sub>@albertilagan</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="https://mooola.co.za/">
+        <img src="https://mooola.co.za/assets/webp/app-logo.webp" width="72" alt="mooola">
+      </a>
+      <br>
+      <a href="https://mooola.co.za/"><strong>mooola</strong></a>
+      <br>
+      <sub>━━━━━━━━</sub>
+      <br>
+      <a href="https://github.com/imprisonedmind" title="Luke Stephens">
+        <img src="https://github.com/imprisonedmind.png?size=96" width="72" alt="Luke Stephens">
+      </a>
+      <br>
+      <a href="https://github.com/imprisonedmind"><strong>Luke Stephens</strong></a>
+      <br>
+      <sub>@imprisonedmind</sub>
     </td>
     <td align="center" valign="top">
       <a href="https://github.com/nrwl">
@@ -442,6 +459,9 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
       <a href="https://github.com/lgerlinski" title="Lukas Gerlinski">
         <img src="https://github.com/lgerlinski.png?size=96" width="72" alt="Lukas Gerlinski">
       </a>
+      <a href="https://github.com/imprisonedmind" title="Luke Stephens">
+        <img src="https://github.com/imprisonedmind.png?size=96" width="72" alt="Luke Stephens">
+      </a>
       <a href="https://github.com/zucram" title="Marcus Harlid Davin">
         <img src="https://github.com/zucram.png?size=96" width="72" alt="Marcus Harlid Davin">
       </a>
@@ -504,6 +524,9 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
       </a>
       <a href="https://github.com/YuriNachos" title="Yuri Chukhlib">
         <img src="https://github.com/YuriNachos.png?size=96" width="72" alt="Yuri Chukhlib">
+      </a>
+      <a href="https://github.com/hezhizhen" title="Zhizhen He">
+        <img src="https://github.com/hezhizhen.png?size=96" width="72" alt="Zhizhen He">
       </a>
       <a href="https://github.com/zicochaos" title="Zicochaos">
         <img src="https://github.com/zicochaos.png?size=96" width="72" alt="Zicochaos">
@@ -728,14 +751,14 @@ Settings > Hotkeys lists all actions that can be assigned a shortcut, including 
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Switch to Workspace 1-9 | `Option + 1-9` | `Shared` |
-| Move to Workspace 1-9 | `Option + Shift + 1-9` | `Shared` |
+| Move Focused Window to Workspace 1-9 | `Option + Shift + 1-9` | `Shared` |
 | Switch to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
-| Move to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
+| Move Focused Window to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
 | Switch to Last Active Workspace (Back and Forth) | `Control + Option + Tab` | `Shared` |
 | Switch to Next Workspace | `Unassigned` | `Shared` |
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
-| Move Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
-| Move Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
+| Move Focused Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
+| Move Focused Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
 
 When you create workspace 10 or higher, Settings > Hotkeys adds its Switch and Move actions as `Unassigned`.
 
@@ -744,15 +767,15 @@ When you create workspace 10 or higher, Settings > Hotkeys adds its Switch and M
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Focus Left / Right / Up / Down | `Option + Arrow Keys` | `Shared` |
-| Focus Down or Top / Up or Bottom | `Unassigned` | `Shared` |
-| Focus Previous Window | `Option + Tab` | `Shared` |
+| Focus Next / Previous Window (Wrap) | `Unassigned` | `Shared` |
+| Focus Previously Focused Window | `Option + Tab` | `Shared` |
 | Toggle Command Palette | `Control + Option + Space` | `Shared` |
 | Open Menu Anywhere | `Control + Option + M` | `Shared` |
 | Set Mark on Focused Window | `Unassigned` | `Shared` |
 | Remove Mark from Focused Window | `Unassigned` | `Shared` |
 | Close Focused Window | `Unassigned` | `Shared` |
 | Toggle Workspace Bar | `Unassigned` | `Shared` |
-| Toggle Hidden Icons Bar | `Unassigned` | `Shared` |
+| Toggle Hidden Icons Panel | `Unassigned` | `Shared` |
 | Toggle Quake Terminal | `` Option + ` `` | `Shared` |
 | Toggle Overview | `Option + Shift + O` | `Shared` |
 | Toggle System Stats | `Unassigned` | `Shared` |
@@ -762,17 +785,17 @@ When you create workspace 10 or higher, Settings > Hotkeys adds its Switch and M
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Move Left / Right / Up / Down | `Option + Shift + Arrow Keys` | `Shared` |
-| Reorder Window Up / Down | `Unassigned` | `Shared` |
+| Move Window to Previous / Next Position | `Unassigned` | `Shared` |
 
 #### Monitor
 
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
-| Focus Next Monitor | `Control + Command + Tab` | `Shared` |
-| Focus Previous Monitor | `Unassigned` | `Shared` |
-| Focus Last Monitor | `` Control + Command + ` `` | `Shared` |
-| Move Workspace to Left / Right / Up / Down Monitor | `Unassigned` | `Shared` |
-| Move Window to Left / Right / Up / Down Monitor | `Unassigned` | `Shared` |
+| Focus Next Monitor in Order | `Control + Command + Tab` | `Shared` |
+| Focus Previous Monitor in Order | `Unassigned` | `Shared` |
+| Focus Last Active Monitor | `` Control + Command + ` `` | `Shared` |
+| Move Workspace to Monitor on Left / Right / Above / Below | `Unassigned` | `Shared` |
+| Move Focused Window to Monitor on Left / Right / Above / Below | `Unassigned` | `Shared` |
 
 The workspace-to-monitor actions target the active workspace and intentionally use the same temporary runtime override as `omniwmctl workspace move-to-monitor --force`. They do not rewrite the workspace's Home Monitor or swap workspaces, and unsafe fullscreen, hidden-app, scratchpad, or focus states still block the move.
 
@@ -782,7 +805,7 @@ The window-to-monitor actions send the focused window directly to the current wo
 
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
-| Toggle Fullscreen | `Option + Return` | `Shared` |
+| Toggle OmniWM Fullscreen | `Option + Return` | `Shared` |
 | Toggle Native Fullscreen | `Unassigned` | `Shared` |
 | Balance Sizes | `Option + Shift + B` | `Shared` |
 | Cycle Size Forward | `Option + .` | `Shared` |
@@ -798,7 +821,7 @@ The window-to-monitor actions send the focused window directly to the current wo
 | Raise All Floating Windows | `Option + Shift + R` | `Shared` |
 | Rescue Off-Screen Floating Windows | `Unassigned` | `Shared` |
 | Toggle Focused Window Floating | `Unassigned` | `Shared` |
-| Assign Focused Window to Scratchpad 1-10 | `Unassigned` | `Shared` |
+| Toggle Scratchpad 1-10 Assignment for Focused Window | `Unassigned` | `Shared` |
 | Toggle Scratchpad 1-10 | `Unassigned` | `Shared` |
 
 #### Dwindle Groups
@@ -816,11 +839,22 @@ Dwindle groups use the existing Focus and Move bindings, so there are no separat
 
 Moving a tab directly from one existing group into another is intentionally a two-step operation: extract it first, then move the resulting singleton toward the destination group. A singleton at a genuine workspace edge can still use the normal cross-monitor Move behavior; a rejected group mutation does not fall through to tile swapping or monitor movement.
 
-The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
+The unassigned advanced actions are available in Settings > Hotkeys. `Focus Next / Previous Window (Wrap)` always wraps within the active Dwindle group. `Move Window to Previous / Next Position` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
 
 #### Quake Terminal (Inside Terminal)
 
-| Action | Shortcut |
+Customize tab and pane shortcuts with Ghostty `keybind` entries in `~/.config/ghostty/config.ghostty` (or your existing Ghostty config). User bindings override the defaults below; `unbind` removes a binding. Reload inside Quake with `Cmd + Shift + ,`, or relaunch OmniWM. The global toggle stays in **Settings → Hotkeys** and OmniWM's `settings.toml`.
+
+```ini
+keybind = cmd+t=unbind
+keybind = ctrl+shift+t=new_tab
+keybind = cmd+enter=new_split:right
+keybind = cmd+shift+enter=close_surface
+```
+
+See [Ghostty's keybinding syntax](https://ghostty.org/docs/config/keybind). Quake supports `new_tab`, `close_tab`, `goto_tab`, `next_tab`, `previous_tab`, `last_tab`, `new_split`, `goto_split`, `close_surface`, and `equalize_splits`, alongside Ghostty's terminal actions such as copy, paste, and font sizing.
+
+| Action | Default Shortcut |
 |--------|----------|
 | New Tab | `Cmd + T` |
 | Close Tab | `Cmd + W` |
@@ -908,6 +942,7 @@ A visual indicator showing your workspaces:
 - When `Deduplicate App Icons` is enabled, multiple windows from one app share an icon; click a grouped icon to open their window list, while a single-window icon focuses that window directly
 - Marks macOS-hidden windows with an eye-slash badge; selecting a hidden window unhides its app and focuses that exact window
 - Configure position, height, and appearance in Settings
+- Choose **Notch Mode → Right of Notch** to center the bar on displays without a notch and place it 8 points to the right of the notch on displays with one (`workspaceBar.notchMode = "rightOfNotch"`). Horizontal and vertical offsets still apply; reset them to zero for automatic placement.
 - Optionally show a System Stats button that opens a CPU, memory, GPU, disk, and uptime popup. `Toggle System Stats` and `omniwmctl command toggle-system-stats` drive the same popup, and both do nothing unless a monitor currently shows that workspace-bar button
 - Optionally hide the bar on a monitor while that monitor shows a macOS native fullscreen window, and bring it back on exit (`Hide in Native Fullscreen`); reserved tiled layout space is left untouched so windows do not shuffle around the fullscreen session
 - Exclude individual apps or choose alternate app icons across all monitors in Settings
@@ -955,6 +990,8 @@ Conceal selected menu-bar icons and reach them from a panel:
 - Revealed icons re-hide automatically after a configurable interval
 - An optional global hotkey is available and starts unassigned
 
+If you need more features for hiding status bar icons, I recommend [Thaw](https://github.com/thaw-app/Thaw). It also supports macOS 26, where OmniWM's built-in Hidden Bar is for macOS 27.
+
 ### Tips
 
 - **Workspaces** - Create named workspaces in Settings to organize by project or context (You can use emojis 🥳)
@@ -990,7 +1027,7 @@ A scratchpad is a slot that holds any number of floating windows and overlays th
 you are looking at. There are ten slots, numbered 1 to 10; a slot with no windows in it is inert and
 invisible.
 
-- **Assign Focused Window to Scratchpad N** moves the focused window into slot N, floating it if it
+- **Toggle Scratchpad N Assignment for Focused Window** moves the focused window into slot N, floating it if it
   was tiled. It stays visible if slot N is already revealed; otherwise it is parked off-screen. Pressing
   the same shortcut again on a window already in slot N returns it to the layout.
 - **Toggle Scratchpad N** reveals eligible windows in slot N on the monitor you are interacting with, or

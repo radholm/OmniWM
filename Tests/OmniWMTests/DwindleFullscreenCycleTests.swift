@@ -192,8 +192,9 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         in workspace: WorkspaceDescriptor.ID
     ) throws -> [WindowToken] {
         let order = try XCTUnwrap(engine.root(for: workspace)).collectAllWindows()
-        XCTAssertEqual(order.first, engine.selectedNode(in: workspace)?.tile?.activeToken)
-        return order
+        let selected = try XCTUnwrap(engine.selectedNode(in: workspace)?.tile?.activeToken)
+        let start = try XCTUnwrap(order.firstIndex(of: selected))
+        return Array(order[start...] + order[..<start])
     }
 
     private func layout(_ engine: DwindleLayoutEngine, in workspace: WorkspaceDescriptor.ID) -> [WindowToken: CGRect] {

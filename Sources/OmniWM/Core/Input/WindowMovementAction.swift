@@ -13,10 +13,12 @@ extension WindowMovementAction {
     func actionDisplayName() -> LocalizedStringResource {
         switch self {
         case .down: LocalizedStringResource(
-                "command.window.reorderDown", defaultValue: "Reorder Window Down", table: "Commands", bundle: .omniWM
+                "command.window.reorderDown", defaultValue: "Move Window to Next Position", table: "Commands",
+                bundle: .omniWM
             )
         case .up: LocalizedStringResource(
-                "command.window.reorderUp", defaultValue: "Reorder Window Up", table: "Commands", bundle: .omniWM
+                "command.window.reorderUp", defaultValue: "Move Window to Previous Position", table: "Commands",
+                bundle: .omniWM
             )
         }
     }

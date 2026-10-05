@@ -14,7 +14,8 @@ extension FocusNavigationAction {
     func actionDisplayName() -> LocalizedStringResource {
         switch self {
         case .previous: LocalizedStringResource(
-                "command.focus.previous", defaultValue: "Focus Previous Window", table: "Commands", bundle: .omniWM
+                "command.focus.previous", defaultValue: "Focus Previously Focused Window", table: "Commands",
+                bundle: .omniWM
             )
         case
             .windowDownOrTop,
@@ -26,10 +27,12 @@ extension FocusNavigationAction {
     private func windowTitle() -> LocalizedStringResource {
         switch self {
         case .windowDownOrTop: LocalizedStringResource(
-                "command.focus.windowDownOrTop", defaultValue: "Focus Down or Top", table: "Commands", bundle: .omniWM
+                "command.focus.windowDownOrTop", defaultValue: "Focus Next Window (Wrap)", table: "Commands",
+                bundle: .omniWM
             )
         case .windowUpOrBottom: LocalizedStringResource(
-                "command.focus.windowUpOrBottom", defaultValue: "Focus Up or Bottom", table: "Commands", bundle: .omniWM
+                "command.focus.windowUpOrBottom", defaultValue: "Focus Previous Window (Wrap)", table: "Commands",
+                bundle: .omniWM
             )
         case .previous:
             actionDisplayName()

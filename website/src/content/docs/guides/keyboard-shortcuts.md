@@ -7,7 +7,7 @@ sidebar:
 
 ## Customization and the Hyper modifier
 
-All global shortcuts are customizable in **Settings > Hotkeys**. `Hyper` is the literal `Control + Option + Shift + Command` chord by default; which modifiers make up `Hyper` is configurable in Settings > Hotkeys (for example, exclude `Shift` to keep `Hyper + Shift + …` free for extra bindings). Changing the combination retargets every shortcut that currently resolves to `Hyper` onto the new one, so the shortcut list updates in place as you toggle the modifiers.
+All global shortcuts are customizable in **Settings > Hotkeys**. A shortcut can also be an extra mouse button, alone or with modifiers: click the shortcut, then press the button over it. OmniWM consumes a bound press, so the app under the pointer does not also receive it, and a button used by the System Hyper Trigger or Overview must be unassigned there first. `Hyper` is the literal `Control + Option + Shift + Command` chord by default; which modifiers make up `Hyper` is configurable in Settings > Hotkeys (for example, exclude `Shift` to keep `Hyper + Shift + …` free for extra bindings). Changing the combination retargets every shortcut that currently resolves to `Hyper` onto the new one, so the shortcut list updates in place as you toggle the modifiers.
 
 Optionally pick a **System Hyper Trigger** — a single key (Caps Lock, F13–F20, or a left- or right-side modifier) or an extra mouse button that acts as `Hyper` while held (this needs the Input Monitoring permission). Leave the trigger as `None` if you already produce `Hyper` another way, such as a Karabiner Elements remap.
 
@@ -29,14 +29,14 @@ Confirm the binding and any registration warning in **Settings > Hotkeys**, then
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Switch to Workspace 1-9 | `Option + 1-9` | `Shared` |
-| Move to Workspace 1-9 | `Option + Shift + 1-9` | `Shared` |
+| Move Focused Window to Workspace 1-9 | `Option + Shift + 1-9` | `Shared` |
 | Switch to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
-| Move to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
+| Move Focused Window to Workspace Slot 1-9 (position on the current monitor) | `Unassigned` | `Shared` |
 | Switch to Last Active Workspace (Back and Forth) | `Control + Option + Tab` | `Shared` |
 | Switch to Next Workspace | `Unassigned` | `Shared` |
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
-| Move Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
-| Move Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
+| Move Focused Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
+| Move Focused Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
 
 Creating workspace 10 or higher adds its Switch and Move actions to **Settings > Hotkeys** as `Unassigned`. The rows disappear when the workspace is removed.
 
@@ -45,15 +45,15 @@ Creating workspace 10 or higher adds its Switch and Move actions to **Settings >
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Focus Left / Right / Up / Down | `Option + Arrow Keys` | `Shared` |
-| Focus Down or Top / Up or Bottom | `Unassigned` | `Shared` |
-| Focus Previous Window | `Option + Tab` | `Shared` |
+| Focus Next / Previous Window (Wrap) | `Unassigned` | `Shared` |
+| Focus Previously Focused Window | `Option + Tab` | `Shared` |
 | Toggle Command Palette | `Control + Option + Space` | `Shared` |
 | Open Menu Anywhere | `Control + Option + M` | `Shared` |
 | Set Mark on Focused Window | `Unassigned` | `Shared` |
 | Remove Mark from Focused Window | `Unassigned` | `Shared` |
 | Close Focused Window | `Unassigned` | `Shared` |
 | Toggle Workspace Bar | `Unassigned` | `Shared` |
-| Toggle Hidden Icons Bar | `Unassigned` | `Shared` |
+| Toggle Hidden Icons Panel | `Unassigned` | `Shared` |
 | Toggle Quake Terminal | `` Option + ` `` | `Shared` |
 | Toggle Overview | `Option + Shift + O` | `Shared` |
 | Toggle System Stats | `Unassigned` | `Shared` |
@@ -76,17 +76,17 @@ These shortcuts are local to the open Palette and yield to conflicting enabled g
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
 | Move Left / Right / Up / Down | `Option + Shift + Arrow Keys` | `Shared` |
-| Reorder Window Up / Down | `Unassigned` | `Shared` |
+| Move Window to Previous / Next Position | `Unassigned` | `Shared` |
 
 ## Monitor
 
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
-| Focus Next Monitor | `Control + Command + Tab` | `Shared` |
-| Focus Previous Monitor | `Unassigned` | `Shared` |
-| Focus Last Monitor | `` Control + Command + ` `` | `Shared` |
-| Move Workspace to Left / Right / Up / Down Monitor | `Unassigned` | `Shared` |
-| Move Window to Left / Right / Up / Down Monitor | `Unassigned` | `Shared` |
+| Focus Next Monitor in Order | `Control + Command + Tab` | `Shared` |
+| Focus Previous Monitor in Order | `Unassigned` | `Shared` |
+| Focus Last Active Monitor | `` Control + Command + ` `` | `Shared` |
+| Move Workspace to Monitor on Left / Right / Above / Below | `Unassigned` | `Shared` |
+| Move Focused Window to Monitor on Left / Right / Above / Below | `Unassigned` | `Shared` |
 
 The workspace-to-monitor actions target the active workspace and intentionally use the same temporary runtime override as `omniwmctl workspace move-to-monitor --force`. They do not rewrite the workspace's Home Monitor or swap workspaces, and unsafe fullscreen, hidden-app, scratchpad, or focus states still block the move.
 
@@ -96,7 +96,7 @@ The window-to-monitor actions send the focused window directly to the current wo
 
 | Action | Default Shortcut | Layout |
 |--------|------------------|--------|
-| Toggle Fullscreen | `Option + Return` | `Shared` |
+| Toggle OmniWM Fullscreen | `Option + Return` | `Shared` |
 | Toggle Native Fullscreen | `Unassigned` | `Shared` |
 | Balance Sizes | `Option + Shift + B` | `Shared` |
 | Cycle Size Forward | `Option + .` | `Shared` |
@@ -112,7 +112,7 @@ The window-to-monitor actions send the focused window directly to the current wo
 | Raise All Floating Windows | `Option + Shift + R` | `Shared` |
 | Rescue Off-Screen Floating Windows | `Unassigned` | `Shared` |
 | Toggle Focused Window Floating | `Unassigned` | `Shared` |
-| Assign Focused Window to Scratchpad 1-10 | `Unassigned` | `Shared` |
+| Toggle Scratchpad 1-10 Assignment for Focused Window | `Unassigned` | `Shared` |
 | Toggle Scratchpad 1-10 | `Unassigned` | `Shared` |
 
 ## Dwindle Groups
@@ -130,13 +130,13 @@ Dwindle groups use the existing Focus and Move bindings, so there are no separat
 
 Moving a tab directly from one existing group into another is intentionally a two-step operation: extract it first, then move the resulting singleton toward the destination group. A singleton at a genuine workspace edge can still use the normal cross-monitor Move behavior; a rejected group mutation does not fall through to tile swapping or monitor movement.
 
-The unassigned advanced actions are available in Settings > Hotkeys. `Focus Down or Top / Up or Bottom` always wraps within the active Dwindle group. `Reorder Window Up / Down` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
+The unassigned advanced actions are available in Settings > Hotkeys. `Focus Next / Previous Window (Wrap)` always wraps within the active Dwindle group. `Move Window to Previous / Next Position` changes the active member's position by one without wrapping. `Move Container` is the whole-structure escape hatch and never transfers to another monitor at a workspace edge. Dwindle join/extract and Move Container operations are intentionally unavailable while Overview is open; leave Overview before changing a Dwindle tree.
 
 ## Quake Terminal (Inside Terminal)
 
-These shortcuts work inside the [Quake Terminal](/features/quake-terminal/) itself:
+These are the default shortcuts inside the [Quake Terminal](/features/quake-terminal/). Customize tab and pane shortcuts in your [Ghostty configuration](/features/quake-terminal/#inside-terminal-shortcuts).
 
-| Action | Shortcut |
+| Action | Default Shortcut |
 |--------|----------|
 | New Tab | `Cmd + T` |
 | Close Tab | `Cmd + W` |

@@ -1,7 +1,2246 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Notification Badges" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شارات الإشعارات"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifikationsmærker"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilungskennzeichen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σήματα γνωστοποιήσεων"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicadores de notificación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilmoitusmerkit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pastilles de notification"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "תגי התראות"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सूचना बैज"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Badge di notifica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知バッジ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 배지"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varslingsmerker"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meldingsbadges"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plakietki powiadomień"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значки уведомлений"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznake obaveštenja"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notisbrickor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значки сповіщень"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知角标"
+          }
+        }
+      }
+    },
+    "Dot" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نقطة"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prik"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κουκκίδα"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piste"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Point"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "נקודה"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बिंदु"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "점"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikk"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stip"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kropka"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Точка"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tačka"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkt"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Крапка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圆点"
+          }
+        }
+      }
+    },
+    "Text" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نص"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κείμενο"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teksti"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "טקסט"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टेक्स्ट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキスト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文本"
+          }
+        }
+      }
+    },
+    "Refresh Interval" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فاصل التحديث"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdateringsinterval"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualisierungsintervall"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διάστημα ανανέωσης"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervalo de actualización"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Päivitysväli"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervalle d’actualisation"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מרווח רענון"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रीफ़्रेश अंतराल"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervallo di aggiornamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新間隔"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로 고침 간격"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oppdateringsintervall"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verversingsinterval"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interwał odświeżania"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интервал обновления"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interval osvežavanja"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uppdateringsintervall"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інтервал оновлення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新间隔"
+          }
+        }
+      }
+    },
+    "%@ notification badge: %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شارة إشعارات %@: %@"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifikationsmærke for %@: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilungskennzeichen für %@: %@"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σήμα γνωστοποίησης %@: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicador de notificación de %@: %@"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovelluksen %@ ilmoitusmerkki: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pastille de notification de %@ : %@"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "תג התראות של %@: %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ का सूचना बैज: %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Badge di notifica di %@: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の通知バッジ：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 알림 배지: %@"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varslingsmerke for %@: %@"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meldingsbadge van %@: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plakietka powiadomień aplikacji %@: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значок уведомления %@: %@"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznaka obaveštenja za %@: %@"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notisbricka för %@: %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значок сповіщення %@: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 通知角标：%@"
+          }
+        }
+      }
+    },
+    "Press keys or a mouse button..." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على المفاتيح أو زر الماوس..."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk på taster eller en museknap..."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tasten oder eine Maustaste drücken..."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πατήστε πλήκτρα ή ένα κουμπί ποντικιού..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presione teclas o un botón del ratón..."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paina näppäimiä tai hiiren painiketta..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur des touches ou un bouton de souris..."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לחצו על מקשים או על כפתור עכבר..."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कुंजियाँ या कोई माउस बटन दबाएँ..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi tasti o un pulsante del mouse..."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーまたはマウスボタンを押す..."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키 또는 마우스 버튼을 누르세요..."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trykk på taster eller en museknapp..."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk op toetsen of een muisknop..."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naciśnij klawisze lub przycisk myszy..."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите клавиши или кнопку мыши..."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite tastere ili dugme miša..."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck på tangenter eller en musknapp..."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Натисніть клавіші або кнопку миші..."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下按键或鼠标按钮..."
+          }
+        }
+      }
+    },
+    "Recording. Press a key combination or a mouse button." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التسجيل. اضغط على مجموعة مفاتيح أو زر ماوس."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optager. Tryk på en tastekombination eller en museknap."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme. Drücken Sie eine Tastenkombination oder eine Maustaste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καταγραφή. Πατήστε έναν συνδυασμό πλήκτρων ή ένα κουμπί ποντικιού."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabando. Presione una combinación de teclas o un botón del ratón."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallennetaan. Paina näppäinyhdistelmää tai hiiren painiketta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement en cours. Appuyez sur une combinaison de touches ou un bouton de souris."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מקליט. לחצו על צירוף מקשים או על כפתור עכבר."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रिकॉर्डिंग। कोई कुंजी संयोजन या माउस बटन दबाएँ।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrazione. Premi una combinazione di tasti o un pulsante del mouse."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記録中。キーの組み合わせまたはマウスボタンを押してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 중입니다. 키 조합 또는 마우스 버튼을 누르세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tar opp. Trykk på en tastekombinasjon eller en museknapp."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnemen. Druk op een toetscombinatie of een muisknop."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trwa rejestrowanie skrótu. Naciśnij kombinację klawiszy lub przycisk myszy."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись. Нажмите комбинацию клавиш или кнопку мыши."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snimanje. Pritisnite kombinaciju tastera ili dugme miša."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spelar in. Tryck på en tangentkombination eller en musknapp."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запис. Натисніть комбінацію клавіш або кнопку миші."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在录制。请按下组合键或鼠标按钮。"
+          }
+        }
+      }
+    },
+    "Press a key combination or a mouse button. Press Escape to cancel recording." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على مجموعة مفاتيح أو زر ماوس. اضغط على Escape لإلغاء التسجيل."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk på en tastekombination eller en museknap. Tryk på Escape for at annullere optagelsen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücken Sie eine Tastenkombination oder eine Maustaste. Drücken Sie Escape, um die Aufnahme abzubrechen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πατήστε έναν συνδυασμό πλήκτρων ή ένα κουμπί ποντικιού. Πατήστε Escape για να ακυρώσετε την καταγραφή."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presione una combinación de teclas o un botón del ratón. Presione Escape para cancelar la grabación."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paina näppäinyhdistelmää tai hiiren painiketta. Peruuta tallennus painamalla Escape."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur une combinaison de touches ou un bouton de souris. Appuyez sur Échap pour annuler l’enregistrement."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לחצו על צירוף מקשים או על כפתור עכבר. לחצו על Escape כדי לבטל את ההקלטה."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोई कुंजी संयोजन या माउस बटन दबाएँ। रिकॉर्डिंग रद्द करने के लिए Escape दबाएँ।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi una combinazione di tasti o un pulsante del mouse. Premi Esc per annullare la registrazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーの組み合わせまたはマウスボタンを押してください。記録をキャンセルするには Esc キーを押してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키 조합 또는 마우스 버튼을 누르세요. 기록을 취소하려면 Esc를 누르세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trykk på en tastekombinasjon eller en museknapp. Trykk Esc for å avbryte opptaket."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk op een toetscombinatie of een muisknop. Druk op Escape om de opname te annuleren."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naciśnij kombinację klawiszy lub przycisk myszy. Naciśnij Escape, aby anulować nagrywanie."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите комбинацию клавиш или кнопку мыши. Нажмите Escape, чтобы отменить запись."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite kombinaciju tastera ili dugme miša. Pritisnite Escape da biste otkazali snimanje."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck på en tangentkombination eller en musknapp. Tryck på Esc för att avbryta inspelningen."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Натисніть комбінацію клавіш або кнопку миші. Натисніть Escape, щоб скасувати запис."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请按下组合键或鼠标按钮。按 Escape 键取消录制。"
+          }
+        }
+      }
+    },
+    "Click a shortcut, then press keys or an extra mouse button. Buttons used by System Hyper or Overview must be unassigned there first." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر على اختصار، ثم اضغط على المفاتيح أو زر ماوس إضافيًا. يجب أولًا إلغاء تعيين الأزرار التي يستخدمها System Hyper أو «نظرة عامة» من إعداداتهما."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klik på en genvej, og tryk derefter på taster eller en ekstra museknap. Knapper, der bruges af System Hyper eller Oversigt, skal først fjernes der."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicken Sie auf ein Tastenkürzel und drücken Sie dann Tasten oder eine zusätzliche Maustaste. Tasten, die System Hyper oder die Übersicht verwenden, müssen dort zuerst freigegeben werden."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κάντε κλικ σε μια συντόμευση και, στη συνέχεια, πατήστε πλήκτρα ή ένα επιπλέον κουμπί ποντικιού. Τα κουμπιά που χρησιμοποιούνται από το System Hyper ή την Επισκόπηση πρέπει πρώτα να αποδεσμευτούν εκεί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en un atajo y luego pulsa teclas o un botón adicional del ratón. Los botones que usan System Hyper o Vista general deben desasignarse allí primero."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napsauta pikanäppäintä ja paina sitten näppäimiä tai hiiren lisäpainiketta. System Hyperin tai Yleiskatsauksen käyttämien painikkeiden määritys on ensin poistettava niiden asetuksista."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur un raccourci, puis appuyez sur des touches ou sur un bouton de souris supplémentaire. Les boutons utilisés par System Hyper ou Overview doivent d’abord y être désaffectés."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לחצו על קיצור, ואז לחצו על מקשים או על כפתור עכבר נוסף. יש קודם לבטל בהגדרות שלהם את השיוך של כפתורים שמשמשים את System Hyper או את Overview."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "किसी शॉर्टकट पर क्लिक करें, फिर कुंजियाँ या कोई अतिरिक्त माउस बटन दबाएँ। सिस्टम हाइपर या ओवरव्यू द्वारा उपयोग किए जा रहे बटनों का असाइनमेंट पहले वहीं हटाना होगा।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic su una scorciatoia, poi premi dei tasti o un pulsante aggiuntivo del mouse. I pulsanti usati da System Hyper o da Panoramica devono prima essere rimossi lì."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ショートカットをクリックしてから、キーまたは追加のマウスボタンを押してください。System Hyper またはオーバービューで使用中のボタンは、先にそちらで割り当てを解除する必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단축키를 클릭한 다음 키 또는 추가 마우스 버튼을 누르세요. System Hyper 또는 개요에서 사용 중인 버튼은 먼저 해당 설정에서 지정을 해제해야 합니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klikk på en snarvei, og trykk deretter på taster eller en ekstra museknapp. Knapper som brukes av System Hyper eller Oversikt, må først fjernes der."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klik op een sneltoets en druk daarna op toetsen of een extra muisknop. Knoppen die door System Hyper of Overview worden gebruikt, moeten daar eerst worden losgekoppeld."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kliknij skrót, a następnie naciśnij klawisze lub dodatkowy przycisk myszy. Najpierw usuń tam przypisanie przycisków używanych przez System Hyper lub Widok ogólny."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щёлкните сочетание клавиш, затем нажмите клавиши или дополнительную кнопку мыши. Кнопки, которые использует System Hyper или Overview, сначала нужно отвязать в их настройках."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kliknite na prečicu, a zatim pritisnite tastere ili dodatno dugme miša. Dugmadi koju koriste System Hyper ili Pregled prvo morate tamo da uklonite dodelu."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicka på ett kortkommando och tryck sedan på tangenter eller en extra musknapp. Knappar som används av System Hyper eller Översikt måste först tas bort där."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Клацніть комбінацію клавіш, потім натисніть клавіші або додаткову кнопку миші. Кнопки, які використовують System Hyper або Overview, спершу потрібно відв’язати в їхніх налаштуваннях."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按一个快捷键，然后按下按键或额外的鼠标按钮。System Hyper 或概览正在使用的按钮必须先在相应设置中取消分配。"
+          }
+        }
+      }
+    },
+    "Press to open or close Overview. Buttons assigned to System Hyper or a hotkey are unavailable." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط لفتح «نظرة عامة» أو إغلاقها. الأزرار المخصصة لـ System Hyper أو لاختصار غير متاحة."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk for at åbne eller lukke Oversigt. Knapper tildelt System Hyper eller en genvejstast er ikke tilgængelige."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücken Sie, um die Übersicht zu öffnen oder zu schließen. Tasten, die System Hyper oder einem Hotkey zugewiesen sind, sind nicht verfügbar."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πατήστε για να ανοίξετε ή να κλείσετε την Επισκόπηση. Τα κουμπιά που έχουν αντιστοιχιστεί στο System Hyper ή σε συντόμευση δεν είναι διαθέσιμα."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsa para abrir o cerrar Vista general. Los botones asignados a System Hyper o a un atajo no están disponibles."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa tai sulje Yleiskatsaus painamalla. System Hyperille tai pikanäppäimelle määritetyt painikkeet eivät ole käytettävissä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez pour ouvrir ou fermer Overview. Les boutons affectés à System Hyper ou à un raccourci ne sont pas disponibles."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לחצו כדי לפתוח או לסגור את Overview. כפתורים שמשויכים ל-System Hyper או לקיצור מקשים אינם זמינים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओवरव्यू खोलने या बंद करने के लिए दबाएँ। सिस्टम हाइपर या किसी हॉटकी को असाइन किए गए बटन उपलब्ध नहीं हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi per aprire o chiudere Panoramica. I pulsanti assegnati a System Hyper o a una scorciatoia non sono disponibili."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "押すとオーバービューを開閉します。System Hyper またはホットキーに割り当てられたボタンは使用できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눌러서 개요를 열거나 닫습니다. System Hyper 또는 단축키에 할당된 버튼은 사용할 수 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trykk for å åpne eller lukke Oversikt. Knapper tildelt System Hyper eller en hurtigtast er utilgjengelige."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk om Overview te openen of te sluiten. Knoppen die aan System Hyper of een sneltoets zijn toegewezen, zijn niet beschikbaar."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naciśnij, aby otworzyć lub zamknąć Widok ogólny. Przyciski przypisane do System Hyper lub skrótu są niedostępne."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите, чтобы открыть или закрыть Overview. Кнопки, назначенные System Hyper или горячей клавише, недоступны."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite da otvorite ili zatvorite Pregled. Dugmad dodeljena funkciji System Hyper ili prečici nisu dostupna."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck för att öppna eller stänga översikten. Knappar som är tilldelade System Hyper eller ett kortkommando är otillgängliga."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Натисніть, щоб відкрити або закрити Overview. Кнопки, призначені для System Hyper або комбінації клавіш, недоступні."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下打开或关闭概览。分配给 System Hyper 或热键的按钮不可用。"
+          }
+        }
+      }
+    },
+    "This mouse button is assigned to a hotkey. Clear that hotkey or choose another button." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زر الماوس هذا مخصص لاختصار. امسح ذلك الاختصار أو اختر زرًا آخر."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknap er tildelt en genvejstast. Ryd den genvejstast, eller vælg en anden knap."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Maustaste ist einem Hotkey zugewiesen. Löschen Sie diesen Hotkey oder wählen Sie eine andere Taste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτό το κουμπί ποντικιού έχει αντιστοιχιστεί σε συντόμευση. Καταργήστε αυτή τη συντόμευση ή επιλέξτε άλλο κουμπί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este botón del ratón está asignado a un atajo. Elimina ese atajo o elige otro botón."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä hiiren painike on määritetty pikanäppäimelle. Tyhjennä se pikanäppäin tai valitse toinen painike."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce bouton de souris est affecté à un raccourci. Effacez ce raccourci ou choisissez un autre bouton."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כפתור העכבר הזה משויך לקיצור מקשים. נקו את קיצור המקשים או בחרו כפתור אחר."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह माउस बटन किसी हॉटकी को असाइन है। उस हॉटकी को साफ़ करें या कोई दूसरा बटन चुनें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo pulsante del mouse è assegnato a una scorciatoia. Cancella quella scorciatoia o scegli un altro pulsante."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このマウスボタンはホットキーに割り当てられています。そのホットキーをクリアするか、別のボタンを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 마우스 버튼은 단축키에 할당되어 있습니다. 해당 단축키를 지우거나 다른 버튼을 선택하세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknappen er tildelt en hurtigtast. Fjern hurtigtasten, eller velg en annen knapp."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze muisknop is aan een sneltoets toegewezen. Wis die sneltoets of kies een andere knop."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten przycisk myszy jest przypisany do skrótu. Wyczyść ten skrót lub wybierz inny przycisk."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта кнопка мыши назначена горячей клавише. Очистите эту горячую клавишу или выберите другую кнопку."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovo dugme miša je dodeljeno prečici. Obrišite tu prečicu ili izaberite drugo dugme."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här musknappen är tilldelad ett kortkommando. Rensa det kortkommandot eller välj en annan knapp."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю кнопку миші призначено комбінації клавіш. Видаліть цю комбінацію або виберіть іншу кнопку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此鼠标按钮已分配给某个热键。请清除该热键或选择其他按钮。"
+          }
+        }
+      }
+    },
+    "This mouse button is the System Hyper trigger. Change System Hyper first or choose another button." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زر الماوس هذا هو مشغّل System Hyper. غيّر System Hyper أولًا أو اختر زرًا آخر."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknap er udløseren for System Hyper. Skift System Hyper først, eller vælg en anden knap."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Maustaste ist der Auslöser für System Hyper. Ändern Sie zuerst System Hyper oder wählen Sie eine andere Taste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτό το κουμπί ποντικιού είναι ο ενεργοποιητής του System Hyper. Αλλάξτε πρώτα το System Hyper ή επιλέξτε άλλο κουμπί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este botón del ratón es el activador de System Hyper. Cambia primero System Hyper o elige otro botón."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä hiiren painike on System Hyperin laukaisin. Vaihda ensin System Hyper tai valitse toinen painike."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce bouton de souris est le déclencheur de System Hyper. Modifiez d’abord System Hyper ou choisissez un autre bouton."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כפתור העכבר הזה הוא המפעיל של System Hyper. שנו קודם את System Hyper או בחרו כפתור אחר."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह माउस बटन सिस्टम हाइपर का ट्रिगर है। पहले सिस्टम हाइपर बदलें या कोई दूसरा बटन चुनें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo pulsante del mouse è l’attivatore di System Hyper. Modifica prima System Hyper o scegli un altro pulsante."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このマウスボタンは System Hyper のトリガーです。先に System Hyper を変更するか、別のボタンを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 마우스 버튼은 System Hyper 트리거입니다. 먼저 System Hyper를 변경하거나 다른 버튼을 선택하세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknappen er utløseren for System Hyper. Endre System Hyper først, eller velg en annen knapp."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze muisknop is de trigger voor System Hyper. Wijzig eerst System Hyper of kies een andere knop."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten przycisk myszy jest wyzwalaczem System Hyper. Najpierw zmień System Hyper lub wybierz inny przycisk."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта кнопка мыши — триггер System Hyper. Сначала измените System Hyper или выберите другую кнопку."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovo dugme miša je okidač za System Hyper. Prvo promenite System Hyper ili izaberite drugo dugme."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här musknappen är utlösaren för System Hyper. Ändra System Hyper först eller välj en annan knapp."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ця кнопка миші — тригер System Hyper. Спершу змініть System Hyper або виберіть іншу кнопку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此鼠标按钮是 System Hyper 的触发器。请先更改 System Hyper 或选择其他按钮。"
+          }
+        }
+      }
+    },
+    "This mouse button toggles Overview. Unassign it in Overview settings first or choose another button." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زر الماوس هذا يفتح «نظرة عامة» ويغلقها. ألغِ تعيينه في إعدادات «نظرة عامة» أولًا أو اختر زرًا آخر."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknap åbner og lukker Oversigt. Fjern tildelingen i indstillingerne for Oversigt først, eller vælg en anden knap."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Maustaste öffnet und schließt die Übersicht. Entfernen Sie die Zuweisung zuerst in den Übersicht-Einstellungen oder wählen Sie eine andere Taste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτό το κουμπί ποντικιού ανοίγει και κλείνει την Επισκόπηση. Καταργήστε πρώτα την αντιστοίχισή του στις ρυθμίσεις της Επισκόπησης ή επιλέξτε άλλο κουμπί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este botón del ratón abre y cierra Vista general. Desasígnalo primero en los ajustes de Vista general o elige otro botón."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä hiiren painike avaa ja sulkee Yleiskatsauksen. Poista sen määritys ensin Yleiskatsauksen asetuksista tai valitse toinen painike."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce bouton de souris ouvre et ferme Overview. Désaffectez-le d’abord dans les réglages d’Overview ou choisissez un autre bouton."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כפתור העכבר הזה פותח וסוגר את Overview. בטלו קודם את השיוך שלו בהגדרות Overview או בחרו כפתור אחר."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह माउस बटन ओवरव्यू खोलता और बंद करता है। पहले ओवरव्यू सेटिंग्स में इसका असाइनमेंट हटाएँ या कोई दूसरा बटन चुनें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo pulsante del mouse apre e chiude Panoramica. Rimuovi prima l’assegnazione nelle impostazioni di Panoramica o scegli un altro pulsante."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このマウスボタンはオーバービューを開閉します。先にオーバービュー設定で割り当てを解除するか、別のボタンを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 마우스 버튼은 개요를 열고 닫습니다. 먼저 개요 설정에서 지정을 해제하거나 다른 버튼을 선택하세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne museknappen åpner og lukker Oversikt. Fjern tilordningen i innstillingene for Oversikt først, eller velg en annen knapp."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze muisknop opent en sluit Overview. Maak de toewijzing eerst ongedaan in de instellingen van Overview of kies een andere knop."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten przycisk myszy otwiera i zamyka Widok ogólny. Najpierw usuń jego przypisanie w ustawieniach Widoku ogólnego lub wybierz inny przycisk."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта кнопка мыши открывает и закрывает Overview. Сначала снимите назначение в настройках Overview или выберите другую кнопку."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovo dugme miša otvara i zatvara Pregled. Prvo uklonite dodelu u podešavanjima Pregleda ili izaberite drugo dugme."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här musknappen öppnar och stänger översikten. Ta bort tilldelningen i inställningarna för Översikt först eller välj en annan knapp."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ця кнопка миші відкриває й закриває Overview. Спершу скасуйте призначення в налаштуваннях Overview або виберіть іншу кнопку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此鼠标按钮用于打开和关闭概览。请先在概览设置中取消分配，或选择其他按钮。"
+          }
+        }
+      }
+    },
+    "Customize terminal tab and pane shortcuts in ~/.config/ghostty/config.ghostty. Reload with Cmd + Shift + , or relaunch OmniWM." : {},
+    "Move below the menu bar, place it to the right of the notch (centered on displays without a notch), split around it, or fill the area to its left, covering application menus. Without a notch, Fill Left covers the left half of the menu bar. Notch modes are ignored at Bottom, Left, and Right." : {},
+    "Right of Notch" : {},
+    "%@×" : {},
+    "1× is the default. Higher values make window and workspace transitions faster." : {},
+    "Tiling Animation Speed" : {},
     "" : {},
+    "Gaps at Screen Edges" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画面端の隙間"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstände an den Bildschirmrändern"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mellomrom ved skjermkantene"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Luckor vid skärmkanterna"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espacios en los bordes de la pantalla"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏幕边缘间隙"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रीन किनारों पर अंतराल"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفجوات عند حواف الشاشة"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razmaci na ivicama ekrana"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κενά στις άκρες της οθόνης"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "רווחים בקצוות המסך"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отступы у краёв экрана"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstępy przy krawędziach ekranu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проміжки біля країв екрана"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espaces aux bords de l’écran"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruimte aan schermranden"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spazi ai bordi dello schermo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välit näytön reunoilla"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mellemrum ved skærmkanterne"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화면 가장자리 간격"
+          }
+        }
+      },
+      "extractionState" : "stale"
+    },
+    "Enable Overview" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーバービューを有効にする"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersicht aktivieren"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiver oversikt"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivera översikt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar vista general"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用概览"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओवरव्यू सक्षम करें"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تفعيل النظرة العامة"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključi pregled"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποίηση επισκόπησης"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "הפעלת סקירה"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включить обзор"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz widok ogólny"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкнути огляд"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer la vue d’ensemble"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overzicht inschakelen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abilita panoramica"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota yleiskatsaus käyttöön"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivér oversigt"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오버뷰 활성화"
+          }
+        }
+      }
+    },
+    "Enable the global Workspace Bar to use monitor settings." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モニターごとの設定を使用するには、グローバルのワークスペースバーを有効にしてください。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivieren Sie die globale Workspace-Leiste, um die Monitoreinstellungen zu verwenden."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiver den globale arbeidsområdelinjen for å bruke skjerminnstillingene."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivera det globala arbetsytefältet för att använda skärminställningarna."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa la barra de espacios de trabajo global para usar los ajustes de cada monitor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要使用显示器设置，请启用全局工作区栏。"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मॉनिटर सेटिंग्स का उपयोग करने के लिए वैश्विक कार्यस्थल बार सक्षम करें।"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعّل شريط مساحات العمل العام لاستخدام إعدادات الشاشات."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključite globalnu traku radnih prostora da biste koristili podešavanja monitora."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποιήστε την καθολική γραμμή χώρων εργασίας για να χρησιμοποιήσετε τις ρυθμίσεις οθονών."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "יש להפעיל את סרגל סביבות העבודה הגלובלי כדי להשתמש בהגדרות הצגים."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включите общую панель рабочих пространств, чтобы использовать настройки мониторов."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz globalny pasek obszarów roboczych, aby korzystać z ustawień monitorów."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкніть глобальну панель робочих просторів, щоб користуватися налаштуваннями моніторів."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez la barre globale des espaces de travail pour utiliser les réglages des moniteurs."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel de globale werkruimtebalk in om de monitorinstellingen te gebruiken."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abilita la barra globale degli spazi di lavoro per usare le impostazioni dei monitor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota yleinen työtilapalkki käyttöön, jotta voit käyttää näyttökohtaisia asetuksia."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivér den globale arbejdsområdelinje for at bruge skærmindstillingerne."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모니터별 설정을 사용하려면 전역 워크스페이스 바를 활성화하세요."
+          }
+        }
+      }
+    },
+    "This feature is disabled." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この機能は無効になっています。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Funktion ist deaktiviert."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne funksjonen er deaktivert."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här funktionen är inaktiverad."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta función está desactivada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此功能已禁用。"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह सुविधा अक्षम है।"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه الميزة معطّلة."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ova funkcija je onemogućena."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτή η λειτουργία είναι απενεργοποιημένη."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "התכונה הזו מושבתת."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта функция отключена."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta funkcja jest wyłączona."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю функцію вимкнено."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette fonctionnalité est désactivée."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze functie is uitgeschakeld."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa funzione è disabilitata."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä ominaisuus on poistettu käytöstä."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne funktion er deaktiveret."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 기능은 비활성화되어 있습니다."
+          }
+        }
+      }
+    },
+    "Window Hover Previews" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィンドウのホバープレビュー"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenstervorschau beim Darüberfahren"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forhåndsvisning av vinduer ved musepeking"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förhandsvisning av fönster vid hovring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista previa de ventanas al pasar el cursor"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "悬停时预览窗口"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "होवर करने पर विंडो का पूर्वावलोकन"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "معاينة النوافذ عند تمرير المؤشر"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregled prozora pri prelasku pokazivačem"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπισκόπηση παραθύρων κατά την τοποθέτηση του δείκτη"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "תצוגה מקדימה של חלונות בריחוף"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предпросмотр окон при наведении"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podgląd okien po najechaniu kursorem"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередній перегляд вікон після наведення"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu des fenêtres au survol"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Venstervoorbeelden bij aanwijzen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteprime delle finestre al passaggio del puntatore"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkunoiden esikatselu osoittimen ollessa niiden kohdalla"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forhåndsvisning af vinduer ved markørplacering"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마우스를 올렸을 때 창 미리보기"
+          }
+        }
+      }
+    },
     "\n\n%@ is not currently in your PATH, so Terminal may not find `omniwmctl` until you add that directory." : {
       "localizations" : {
         "ja" : {
@@ -5578,7 +7817,6 @@
         }
       }
     },
-    "%@×" : {},
     "%lld app rules" : {
       "localizations" : {
         "ja" : {
@@ -9139,7 +11377,6 @@
         }
       }
     },
-    "1× is the default. Higher values make window and workspace transitions faster." : {},
     "@%@" : {
       "localizations" : {
         "ja" : {
@@ -10504,7 +12741,6 @@
         }
       }
     },
-    "A window cannot be summoned beside itself. Choose a different marked window." : {},
     "AX Role" : {
       "localizations" : {
         "ja" : {
@@ -14470,16 +16706,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "수직 분할과 수평 분할 중 언제 선호할지 영향을 미칩니다"
-          }
-        }
-      }
-    },
-    "After moving a window to another workspace, switches there and keeps it focused. When off, you stay in the source workspace." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "After moving a window to another workspace, switches there and keeps it focused. When off, you stay in the source workspace."
           }
         }
       }
@@ -19321,126 +21547,126 @@
         }
       }
     },
-    "Automatically choose split direction based on cursor position" : {
+    "Automatically choose split direction" : {
       "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カーソルの位置に基づいて分割方向を自動的に選択する"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatisch die Aufteilungsausrichtung basierend auf der Cursorposition wählen"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Velg automatisk delt retning basert på markørens posisjon"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Välj automatiskt delningsriktning baserat på markörens position"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elija automáticamente la dirección de división en función de la posición del cursor"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "根据光标位置自动选择分割方向"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कर्सर स्थिति के आधार पर स्वचालित रूप से विभाजन दिशा चुनें"
-          }
-        },
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اختر اتجاهًا منقسمًا تلقائيًا بناءً على موقع المؤشر"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatski izaberite podeljenu pravcu na osnovu pozicije kursora"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Αυτόματη επιλογή κατεύθυνσης με βάση τη θέση του δρομέα"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "בחר באופן אוטומטי כיוון מפוצל בהתבסס על מיקום הסמן"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Автоматически выбрать разделенный направление в зависимости от положения курсора"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatycznie wybierz kierunek podziału na podstawie położenia wskaźnika kursora"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Автоматично вибирати напрямок поділу за положенням вказівника"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisissez automatiquement la direction de division en fonction de la position du curseur"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gesplitste richting automatisch kiezen op basis van de positie van de cursor"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegliere automaticamente la direzione di divisione in base alla posizione del cursore"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valitse automaattisesti poikittaissuunta kursorin sijainnin perusteella"
+            "value" : "اختر اتجاه التقسيم تلقائيًا"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vælg automatisk delt retning baseret på markørens position"
+            "value" : "Vælg automatisk opdelingsretning"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch die Aufteilungsausrichtung wählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματη επιλογή κατεύθυνσης διαχωρισμού"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elija automáticamente la dirección de división"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse automaattisesti jakosuunta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez automatiquement la direction de division"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "בחר באופן אוטומטי את כיוון הפיצול"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्वचालित रूप से विभाजन दिशा चुनें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegliere automaticamente la direzione di divisione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割方向を自動的に選択する"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "커서 위치에 따라 자동으로 분할 방향을 선택합니다"
+            "value" : "자동으로 분할 방향을 선택합니다"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velg automatisk delingsretning"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splitsrichting automatisch kiezen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatycznie wybierz kierunek podziału"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически выбирать направление разделения"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatski izaberite smer podele"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj automatiskt delningsriktning"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматично вибирати напрямок поділу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动选择分割方向"
           }
         }
       }
@@ -24909,10 +27135,6 @@
         }
       }
     },
-    "Choose a mark to remove from the selected window" : {},
-    "Choose a mark to remove from the selected window (Control-Option-Shift-R)" : {},
-    "Choose a mark to remove from the selected window." : {},
-    "Choose a mark to remove from the selected window. Shortcut Control-Option-Shift-R." : {},
     "Choose an App-Provided Icon" : {
       "localizations" : {
         "ja" : {
@@ -25409,7 +27631,6 @@
         }
       }
     },
-    "Choose which mark to remove from this window." : {},
     "Choose…" : {
       "localizations" : {
         "ja" : {
@@ -30429,7 +32650,7 @@
         "sr-Latn" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kontrola + Shift ()"
+            "value" : "Kontrola+Shift (⌃⇧)"
           }
         },
         "el" : {
@@ -30465,13 +32686,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contrôle + Déplacement (=)"
+            "value" : "Contrôle+Maj (⌃⇧)"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Controle+Shift (...)"
+            "value" : "Control+Shift (⌃⇧)"
           }
         },
         "it" : {
@@ -32361,8 +34582,6 @@
         }
       }
     },
-    "Could not move this window into the empty workspace. Press Enter to focus it instead." : {},
-    "Could not summon this window right now. Press Enter to focus it instead." : {},
     "Could not update the login item: %@" : {
       "localizations" : {
         "ja" : {
@@ -38818,130 +41037,7 @@
         }
       }
     },
-    "Detecting menu-bar apps…" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メニューバーアプリを検出する..."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erkennung von Menüleisten-Apps..."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oppdage menybar-apper..."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detekterar menybar-appar…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detectando aplicaciones de la barra de menú..."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检测菜单栏应用程序......"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "मेनू-बार ऐप्स का पता लगाना..."
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تحديد تطبيقات شريط القائمة..."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Istraživanje aplikacija meni-bar ..."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ανίχνευση εφαρμογών μενού-bar..."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "זיהוי יישומי תפריט-בר..."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Определение приложений с меню-бар…"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wykrywanie aplikacji z paskiem menu…"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пошук програм у смузі меню…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Détection des applications de la barre des menus…"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menubalkapps detecteren…"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rilevamento delle applicazioni menu-bar..."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Havaitsee valikkopalkkisovellukset..."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detekterer menulinjens apps..."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "메뉴바 앱을 감지하고 있습니다..."
-          }
-        }
-      }
-    },
+    "Off in System Settings" : {},
     "Developer" : {
       "localizations" : {
         "ar" : {
@@ -42048,9 +44144,6 @@
         }
       }
     },
-    "Drag Tile Edges to Resize" : {},
-    "Drag Title Bar to Swap" : {},
-    "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them." : {},
     "Drag tiles, or use the arrow buttons below." : {
       "localizations" : {
         "ja" : {
@@ -44531,130 +46624,6 @@
         }
       }
     },
-    "Enable Overview" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーバービューを有効にする"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Übersicht aktivieren"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktiver oversikt"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivera översikt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activar vista general"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用概览"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ओवरव्यू सक्षम करें"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تفعيل النظرة العامة"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uključi pregled"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ενεργοποίηση επισκόπησης"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "הפעלת סקירה"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Включить обзор"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Włącz widok ogólny"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Увімкнути огляд"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activer la vue d’ensemble"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Overzicht inschakelen"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abilita panoramica"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ota yleiskatsaus käyttöön"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivér oversigt"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오버뷰 활성화"
-          }
-        }
-      }
-    },
     "Enable Quake Terminal" : {
       "localizations" : {
         "ja" : {
@@ -44899,130 +46868,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크스페이스 바 활성화"
-          }
-        }
-      }
-    },
-    "Enable the global Workspace Bar to use monitor settings." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "モニターごとの設定を使用するには、グローバルのワークスペースバーを有効にしてください。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivieren Sie die globale Workspace-Leiste, um die Monitoreinstellungen zu verwenden."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktiver den globale arbeidsområdelinjen for å bruke skjerminnstillingene."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivera det globala arbetsytefältet för att använda skärminställningarna."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activa la barra de espacios de trabajo global para usar los ajustes de cada monitor."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要使用显示器设置，请启用全局工作区栏。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "मॉनिटर सेटिंग्स का उपयोग करने के लिए वैश्विक कार्यस्थल बार सक्षम करें।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "فعّل شريط مساحات العمل العام لاستخدام إعدادات الشاشات."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uključite globalnu traku radnih prostora da biste koristili podešavanja monitora."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ενεργοποιήστε την καθολική γραμμή χώρων εργασίας για να χρησιμοποιήσετε τις ρυθμίσεις οθονών."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "יש להפעיל את סרגל סביבות העבודה הגלובלי כדי להשתמש בהגדרות הצגים."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Включите общую панель рабочих пространств, чтобы использовать настройки мониторов."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Włącz globalny pasek obszarów roboczych, aby korzystać z ustawień monitorów."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Увімкніть глобальну панель робочих просторів, щоб користуватися налаштуваннями моніторів."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activez la barre globale des espaces de travail pour utiliser les réglages des moniteurs."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schakel de globale werkruimtebalk in om de monitorinstellingen te gebruiken."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abilita la barra globale degli spazi di lavoro per usare le impostazioni dei monitor."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ota yleinen työtilapalkki käyttöön, jotta voit käyttää näyttökohtaisia asetuksia."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivér den globale arbejdsområdelinje for at bruge skærmindstillingerne."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모니터별 설정을 사용하려면 전역 워크스페이스 바를 활성화하세요."
           }
         }
       }
@@ -45275,7 +47120,6 @@
         }
       }
     },
-    "Enter a name you can search for in the Windows palette." : {},
     "Enter a value from 5 through 100 percent." : {
       "localizations" : {
         "ja" : {
@@ -45525,7 +47369,6 @@
         }
       }
     },
-    "Enter jumps. %@" : {},
     "Enter jumps. Shift-Enter summons right." : {
       "localizations" : {
         "ja" : {
@@ -53217,131 +55060,6 @@
         }
       }
     },
-    "Gaps at Screen Edges" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画面端の隙間"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abstände an den Bildschirmrändern"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mellomrom ved skjermkantene"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Luckor vid skärmkanterna"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Espacios en los bordes de la pantalla"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "屏幕边缘间隙"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "स्क्रीन किनारों पर अंतराल"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الفجوات عند حواف الشاشة"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Razmaci na ivicama ekrana"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Κενά στις άκρες της οθόνης"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "רווחים בקצוות המסך"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отступы у краёв экрана"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Odstępy przy krawędziach ekranu"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Проміжки біля країв екрана"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Espaces aux bords de l’écran"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ruimte aan schermranden"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spazi ai bordi dello schermo"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Välit näytön reunoilla"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mellemrum ved skærmkanterne"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "화면 가장자리 간격"
-          }
-        }
-      },
-      "extractionState" : "stale"
-    },
     "General" : {
       "localizations" : {
         "ja" : {
@@ -58673,6 +60391,256 @@
           }
         }
       }
+    },
+    "Tabbed mode off" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブモード オフ"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab-Modus aus"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanemodus av"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flikläge av"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de pestañas desactivado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标签页模式已关闭"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब मोड बंद"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع علامات التبويب متوقف"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim kartica isključen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία καρτελών ανενεργή"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מצב כרטיסיות כבוי"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Режим вкладок выключен"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb kart wyłączony"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Режим вкладок вимкнено"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode onglets désactivé"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabbladmodus uit"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modalità schede disattivata"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välilehtitila pois"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanetilstand fra"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭 모드 끔"
+          }
+        }
+      },
+      "extractionState" : "stale"
+    },
+    "Tabbed mode on" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブモード オン"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab-Modus ein"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanemodus på"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flikläge på"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de pestañas activado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标签页模式已开启"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब मोड चालू"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع علامات التبويب مفعّل"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim kartica uključen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία καρτελών ενεργή"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מצב כרטיסיות מופעל"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Режим вкладок включён"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb kart włączony"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Режим вкладок увімкнено"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode onglets activé"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabbladmodus aan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modalità schede attiva"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välilehtitila päällä"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanetilstand til"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭 모드 켬"
+          }
+        }
+      },
+      "extractionState" : "stale"
     },
     "Hiding requires macOS 27 or later." : {
       "localizations" : {
@@ -68731,7 +70699,6 @@
         }
       }
     },
-    "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier." : {},
     "Left/Right-specific shortcuts need Input Monitoring permission to work" : {
       "localizations" : {
         "ja" : {
@@ -70840,15 +72807,6 @@
         }
       }
     },
-    "Mark names must be non-empty and contain no control characters. Try another name." : {},
-    "Mark selected window" : {},
-    "Mark selected window…" : {},
-    "Mark the selected window" : {},
-    "Mark the selected window (Control-Option-Shift-M)" : {},
-    "Mark: %@" : {},
-    "Marked the selected window as ‘%@’." : {},
-    "Marks the selected window row." : {},
-    "Marks the selected window row. Shortcut Control-Option-Shift-M." : {},
     "Match Your Real Desk" : {
       "localizations" : {
         "ja" : {
@@ -76809,7 +78767,6 @@
         }
       }
     },
-    "Move below the notch, split around it, or fill the area to its left, covering application menus. Without a notch, Fill Left covers the left half of the menu bar. Notch modes are ignored at Bottom, Left, and Right." : {},
     "Move or close all windows in this workspace before deleting it" : {
       "localizations" : {
         "ja" : {
@@ -81399,7 +83356,6 @@
         }
       }
     },
-    "No mark was changed." : {},
     "No matching hotkeys." : {
       "localizations" : {
         "ja" : {
@@ -83385,7 +85341,6 @@
       },
       "extractionState" : "stale"
     },
-    "No windows found. Check the mark name or try a title, app, or workspace." : {},
     "No workspaces configured" : {
       "localizations" : {
         "ja" : {
@@ -87621,126 +89576,126 @@
         }
       }
     },
-    "OmniWM keyboard shortcuts are disabled while a password field or secure text entry is active." : {
+    "macOS Secure Input is on. Until it turns off, some shortcuts may not work: Hyper and left/right-specific shortcuts, and those on letter, number or symbol keys without Control or Command." : {
       "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWMキーボードショートカットは、パスワードフィールドまたは安全なテキスト入力がアクティブになっている間無効になります。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM Tastenkürzel sind deaktiviert, wenn ein Passwortfeld oder eine sichere Texteingabe aktiviert ist."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWMs hurtigtaster er deaktivert mens et passordfelt eller sikker tekstinntasting er aktiv."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM tangentbordsgenvägar är inaktiverade medan ett lösenordsfält eller säker textinmatning är aktivt."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM Los atajos de teclado están desactivados mientras que un campo de contraseña o una entrada de texto segura está activa."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM 键盘快捷键在密码字段或安全文本输入功能启用时被禁用。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM कीबोर्ड शॉर्टकट तब अक्षम हो जाते हैं जब पासवर्ड फ़ील्ड या सुरक्षित टेक्स्ट एंट्री सक्रिय होती है।"
-          }
-        },
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تُعطّل اختصارات لوحة المفاتيح OmniWM أثناء تفعيل حقل كلمة المرور أو إدخال النص الآمن."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM Ključne tastature su onemogućene dok je lozinsko polje ili siguran tekst ulaz aktivan."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Οι συντομεύσεις πληκτρολογίου OmniWM απενεργοποιούνται ενώ ένα πεδίο κωδικού πρόσβασης ή ασφαλής καταχώρηση κειμένου είναι ενεργή."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM קיצורי מקשים מנוטרלים בעוד שדה ססמה או רשומת טקסט מאובטחת פעילים."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM краткие клавиши клавиатуры отключены, пока поле для пароля или безопасное текстовое введение активно."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM skróty klawiaturowe są wyłączone, gdy jest aktywny pole hasła lub zabezpieczona wprowadzana tekst."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Клавіатурні скорочення OmniWM вимкнено, поки активне поле пароля або захищене введення тексту."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les raccourcis clavier OmniWM sont désactivés alors qu'un champ de mot de passe ou une entrée de texte sécurisée est actif."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM sneltoetsen zijn uitgeschakeld terwijl een wachtwoordveld of beveiligde tekstinvoer actief is."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le scorciatoie da tastiera OmniWM sono disattivate mentre è attivo un campo password o una voce di testo sicura."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM:n pikanäppäimet eivät ole käytössä, kun salasanakenttä tai suojattu tekstinsyöttö on aktiivinen."
+            "value" : "الإدخال الآمن في macOS مُفعّل. إلى أن يتم إيقافه، قد لا تعمل بعض الاختصارات: اختصارات Hyper والاختصارات الخاصة بالجانب الأيسر/الأيمن، والاختصارات على مفاتيح الحروف أو الأرقام أو الرموز دون Control أو Command."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OmniWM tastaturgenveje deaktiveres, mens et kodeordsfelt eller en sikker tekstindgang er aktiv."
+            "value" : "Sikker input i macOS er slået til. Indtil det slås fra, virker nogle genveje muligvis ikke: Hyper-genveje og venstre/højre-specifikke genveje samt genveje på bogstav-, tal- eller symboltaster uden Control eller Command."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die sichere Eingabe von macOS ist aktiv. Bis sie deaktiviert wird, funktionieren einige Kurzbefehle möglicherweise nicht: Hyper- und links/rechts-spezifische Kurzbefehle sowie Kurzbefehle auf Buchstaben-, Zahlen- oder Symboltasten ohne Control oder Command."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η ασφαλής είσοδος του macOS είναι ενεργή. Μέχρι να απενεργοποιηθεί, ορισμένες συντομεύσεις ενδέχεται να μη λειτουργούν: οι συντομεύσεις Hyper και αριστερής/δεξιάς πλευράς, καθώς και όσες βρίσκονται σε πλήκτρα γραμμάτων, αριθμών ή συμβόλων χωρίς Control ή Command."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La entrada segura de macOS está activada. Hasta que se desactive, es posible que algunos atajos no funcionen: los atajos Hyper y los específicos de izquierda/derecha, y los de teclas de letras, números o símbolos sin Control ni Command."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSin turvallinen syöte on käytössä. Kunnes se poistuu käytöstä, osa pikanäppäimistä ei välttämättä toimi: Hyper- ja vasen/oikea-kohtaiset pikanäppäimet sekä kirjain-, numero- tai symbolinäppäinten pikanäppäimet ilman Control- tai Command-näppäintä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'entrée sécurisée de macOS est activée. Tant qu'elle reste active, certains raccourcis risquent de ne pas fonctionner : les raccourcis Hyper et spécifiques gauche/droite, ainsi que ceux sur des touches de lettre, de chiffre ou de symbole sans Contrôle ni Commande."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "הקלט המאובטח של macOS פעיל. עד שיכובה, ייתכן שחלק מקיצורי המקשים לא יפעלו: קיצורי Hyper וקיצורים ייעודיים לצד שמאל/ימין, וכן קיצורים על מקשי אותיות, ספרות או סמלים ללא Control או Command."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS का सुरक्षित इनपुट चालू है। इसके बंद होने तक, कुछ शॉर्टकट शायद काम न करें: Hyper और बाएँ/दाएँ-विशिष्ट शॉर्टकट, तथा Control या Command के बिना अक्षर, संख्या या प्रतीक कुंजियों वाले शॉर्टकट।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'input protetto di macOS è attivo. Finché non viene disattivato, alcune scorciatoie potrebbero non funzionare: le scorciatoie Hyper e specifiche per sinistra/destra, e quelle su tasti di lettere, numeri o simboli senza Control o Command."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSのセキュア入力がオンになっています。オフになるまで、一部のショートカットは動作しない場合があります：Hyperおよび左右指定のショートカットと、ControlまたはCommandを含まない文字・数字・記号キーのショートカットです。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OmniWM 키보드 단축키는 비밀번호 필드 또는 보안 텍스트 입력이 활성화되어 있는 동안 비활성화됩니다."
+            "value" : "macOS 보안 입력이 켜져 있습니다. 꺼질 때까지 일부 단축키가 작동하지 않을 수 있습니다: Hyper 및 왼쪽/오른쪽 지정 단축키와 Control 또는 Command가 없는 문자, 숫자 또는 기호 키의 단축키입니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sikker inndata i macOS er på. Til den slås av, kan det hende at noen snarveier ikke fungerer: Hyper-snarveier og venstre/høyre-spesifikke snarveier, samt snarveier på bokstav-, tall- eller symboltaster uten Control eller Command."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beveiligde invoer van macOS staat aan. Totdat deze uitgaat, werken sommige sneltoetsen mogelijk niet: Hyper- en links/rechts-specifieke sneltoetsen, en sneltoetsen op letter-, cijfer- of symbooltoetsen zonder Control of Command."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezpieczne wprowadzanie w macOS jest włączone. Dopóki nie zostanie wyłączone, niektóre skróty mogą nie działać: skróty Hyper i skróty zależne od lewej/prawej strony oraz skróty na klawiszach liter, cyfr lub symboli bez klawisza Control ani Command."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Безопасный ввод macOS включён. Пока он не отключится, некоторые сочетания могут не работать: сочетания Hyper и сочетания с левыми/правыми модификаторами, а также сочетания на клавишах букв, цифр или символов без Control или Command."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezbedni ulaz u macOS-u je uključen. Dok se ne isključi, neke prečice možda neće raditi: Hyper prečice i prečice za levu/desnu stranu, kao i prečice na tasterima slova, brojeva ili simbola bez Control ili Command."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Säker inmatning i macOS är på. Tills den stängs av kanske vissa kortkommandon inte fungerar: Hyper- och vänster/höger-specifika kortkommandon samt kortkommandon på bokstavs-, siffer- eller symboltangenter utan Control eller Command."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Захищене введення macOS увімкнено. Доки його не вимкнено, деякі сполучення можуть не працювати: сполучення Hyper і сполучення з лівими/правими модифікаторами, а також сполучення на клавішах літер, цифр або символів без Control чи Command."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 安全输入已开启。在其关闭之前，部分快捷键可能无法使用：Hyper 快捷键和区分左右的快捷键，以及不含 Control 或 Command 的字母、数字或符号键快捷键。"
           }
         }
       }
@@ -92529,7 +94484,7 @@
         "sr-Latn" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opcija + Shift ()"
+            "value" : "Opcija+Shift (⌥⇧)"
           }
         },
         "el" : {
@@ -92565,13 +94520,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Option+Shift (=)"
+            "value" : "Option+Maj (⌥⇧)"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Optie+Shift (...)"
+            "value" : "Optie+Shift (⌥⇧)"
           }
         },
         "it" : {
@@ -93471,16 +95426,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@에 대해 선택한 전역 바깥쪽 여백 값을 재정의합니다. %2$@"
-          }
-        }
-      }
-    },
-    "Overrides the display orientation used for directional placement." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Overrides the display orientation used for directional placement."
           }
         }
       }
@@ -96835,254 +98780,6 @@
         }
       }
     },
-    "Press a key combination. Press Escape to cancel recording." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キーの組み合わせを押します。録音をキャンセルするには、Escキーを押してください。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drücken Sie eine Tastenkombination. Drücken Sie Escape, um die Aufnahme zu beenden."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trykk på en tastekombinasjon. Trykk Esc for å avbryte opptaket."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryck på en tangentkombination. Tryck på Esc för att avbryta inspelningen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Presione una combinación de teclas. Presione Escape para cancelar la grabación."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按下一个键组合。按 Escape 键取消录制。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "एक कीपैड संयोजन दबाएं। रिकॉर्डिंग रद्द करने के लिए एस्केप दबाएं।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اضغط على مجموعة من المفاتيح. اضغط على Escape لإلغاء التسجيل."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pritisnite ključnu kombinaciju. Pritisnite Escape da biste otkazali snimanje."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Πατήστε έναν συνδυασμό πλήκτρων. Πατήστε το Escape για να ακυρώσετε την εγγραφή."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "לחצו על צירוף מקשים. לחצו על Escape כדי לבטל את ההקלטה."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите комбинацию клавиш. Нажмите Escape, чтобы отменить запись."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Naciśnij kombinację klawiszy. Naciśnij Escape, aby anulować nagrywanie."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Натисніть комбінацію клавіш. Натисніть Escape, щоб скасувати запис."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appuyez sur une combinaison de touches. Appuyez sur Échap pour annuler l’enregistrement."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Druk op een toetscombinatie. Druk op Escape om de opname te annuleren."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Premere una combinazione di tasti. Premere Escape per annullare la registrazione."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paina avainyhdistelmää. Paina Escape peruuttaaksesi nauhoituksen."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryk på en nøglekombination. Tryk på Flugt for at annullere optagelse."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "키 조합을 누르세요. 녹음을 취소하려면 Esc를 누르세요."
-          }
-        }
-      }
-    },
-    "Press keys..." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キーを押す..."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tasten drücken..."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trykk på nøklene..."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryck på tangenter..."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Presione las teclas..."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按键......"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कुंजी दबाएं..."
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اضغط على المفاتيح..."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Printerski ključ..."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Πατήστε τα πλήκτρα..."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "לחץ על מקשים..."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите клавиши..."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Naciśnij klawisze..."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Натисніть клавіші..."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appuyez sur les touches..."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Druk op toetsen..."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Premi i tasti..."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paina näppäimiä..."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryk på taster..."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "키를 누르세요..."
-          }
-        }
-      }
-    },
     "Press to open OmniWM controls." : {
       "localizations" : {
         "ja" : {
@@ -97203,254 +98900,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OmniWM 컨트롤을 열려면 누르세요."
-          }
-        }
-      }
-    },
-    "Press to open or close Overview. Buttons assigned to System Hyper are unavailable." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーバービューを開くか閉じるには、ボタンを押してください。System Hyperに割り当てられたボタンは使用できません。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drücken Sie, um die Übersicht zu öffnen oder zu schließen. Die den System Hyper zugewiesenen Schaltflächen sind nicht verfügbar."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trykk for å åpne eller lukke Oversikt. Knapper tildelt System Hyper er utilgjengelige."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryck för att öppna eller stänga översikten. Knapparna som är tilldelade System Hyper är otillgängliga."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pulsa para abrir o cerrar Vista general. Los botones asignados a System Hyper no están disponibles."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按一下打开或关闭概览。分配给 System Hyper 的按钮不可用。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ओवरव्यू खोलने या बंद करने के लिए दबाएं। सिस्टम हाइपर को असाइन किए गए बटन अनुपलब्ध हैं।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اضغط لفتح «نظرة عامة» أو إغلاقها. الأزرار المخصصة لـ System Hyper غير متاحة."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pritisnite da otvorite ili zatvorite Pregled. Dugmad dodeljena funkciji System Hyper nisu dostupna."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Πατήστε για να ανοίξετε ή να κλείσετε την Επισκόπηση. Τα κουμπιά που έχουν αντιστοιχιστεί στο System Hyper δεν είναι διαθέσιμα."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "לחץ לפתוח או לסגור Overview. הכפתורים המוקצה למערכת היפר אינם זמינים."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите, чтобы открыть или закрыть Overview. Кнопки, назначенные на System Hyper, недоступны."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Naciśnij, aby otworzyć lub zamknąć Widok ogólny. Przyciski przypisane do System Hyper są niedostępne."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Натисніть, щоб відкрити або закрити Overview. Кнопки, призначені для System Hyper, недоступні."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appuyez pour ouvrir ou fermer Overview. Les boutons affectés à System Hyper ne sont pas disponibles."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Druk om Overview te openen of te sluiten. Knoppen die aan System Hyper zijn toegewezen, zijn niet beschikbaar."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Premere per aprire o chiudere Panoramica. I pulsanti assegnati a System Hyper non sono disponibili."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paina avataksesi tai sulkeaksesi Yleiskatsaus. Systeemi Hyper -järjestelmälle osoitettuja nappuloita ei ole saatavilla."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryk på for at åbne eller lukke Oversigt. Knapper tildelt System Hyper er ikke tilgængelige."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "개요를 열거나 닫으려면 누르십시오. System Hyper에 할당된 버튼은 사용할 수 없습니다."
-          }
-        }
-      }
-    },
-    "Press to open the OmniWM menu. Right-click or Option-click to show hidden icons when Hidden Bar is enabled." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWMメニューを開くには、押してください。隠しバーが有効になっている場合、右クリックまたはオプションクリックで隠されたアイコンを表示できます。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drücken Sie, um das OmniWM-Menü zu öffnen. Klicken Sie mit der rechten Maustaste oder mit der Option, um versteckte Symbole anzuzeigen, wenn die Versteckte Leiste aktiviert ist."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trykk for å åpne OmniWM-menyen. Høyreklikk eller alternativklikk for å vise skjulte ikoner når skjult linje er aktivert."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryck för att öppna OmniWM-menyn. Högerklicka eller alternativklicka för att visa dolda ikoner när Hidden Bar är aktivt."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pulsa para abrir el menú de OmniWM. Haz clic con el botón derecho o con la tecla Opción pulsada para mostrar los iconos ocultos cuando Barra oculta esté activada."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按下可打开 OmniWM 菜单。启用隐藏栏后，右键单击或按住 Option 键单击可显示隐藏的图标。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OmniWM मेनू खोलने के लिए दबाएं। जब हिडन बार सक्षम हो जाता है, तो छिपे हुए आइकन दिखाने के लिए राइट-क्लिक या ऑप्शन-क्लिक करें।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اضغط لفتح قائمة OmniWM. انقر بزر الماوس الأيمن أو انقر مع الضغط على Option لإظهار الأيقونات المخفية عند تفعيل الشريط المخفي."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pritisnite da otvorite meni OmniWM-a. Kliknite desnim tasterom miša ili uz taster Option da prikažete skrivene ikone kada je uključena Skrivena traka."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Πατήστε για να ανοίξετε το μενού του OmniWM. Κάντε δεξί κλικ ή κλικ με πατημένο το Option για να εμφανίσετε τα κρυφά εικονίδια όταν είναι ενεργή η Κρυφή γραμμή."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "לחץ כדי לפתוח את OmniWM תפריט. לחיצה ימנית או לחיצה אפשרות כדי להראות סמלים מוסתרים כאשר בר מוסתר מופעל."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите, чтобы открыть меню OmniWM. Щелкните правой кнопкой мыши или клавишей Option, чтобы показать скрытые иконки, когда включена скрытая панель."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Naciśnij, aby otworzyć menu OmniWM. Gdy włączona jest funkcja Hidden Bar, kliknij prawym przyciskiem myszy lub kliknij z przytrzymanym klawiszem Option, aby pokazać ukryte ikony."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Натисніть, щоб відкрити меню OmniWM. Клацніть правою кнопкою або з утриманням Option, щоб показати приховані піктограми, коли ввімкнено Hidden Bar."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appuyez pour ouvrir le menu OmniWM. Faites un clic droit ou Option-clic pour afficher les icônes masquées lorsque Hidden Bar est activé."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Druk om het OmniWM-menu te openen. Klik met de rechtermuisknop of Option-klik om verborgen pictogrammen te tonen wanneer Hidden Bar is ingeschakeld."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Premere per aprire il menu OmniWM. Fare clic con il tasto destro del mouse o fare clic sull'opzione per mostrare le icone nascoste quando è abilitata la barra nascosta."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paina avataksesi OmniWM-valikon. Klikkaa hiiren oikealla painikkeella tai Option-klikkaamalla voit näyttää piilotetut kuvakkeet, kun piilopalkki on käytössä."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryk på for at åbne menuen OmniWM. Højreklik eller Option-klik for at vise skjulte ikoner, når skjult Bar er aktiveret."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "눌러 OmniWM 메뉴를 여세요. Hidden Bar가 켜져 있으면 오른쪽 클릭하거나 Option 키를 누른 채 클릭하여 숨겨진 아이콘을 표시하세요."
           }
         }
       }
@@ -102293,130 +103742,6 @@
         }
       }
     },
-    "Recording. Press a key combination." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "録音。キーの組み合わせを押します。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aufnahme. Drücken Sie eine Tastenkombination."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opptak. Trykk på en tastekombinasjon."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uppspelning. Tryck på en tangentkombination."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grabación. Presione una combinación de teclas."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "录制。按下一个键组合。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "रिकॉर्डिंग। एक कुंजी संयोजन दबाएं।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التسجيل. اضغط على مجموعة من المفاتيح."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zapisivanje . Pritisnite ključnu kombinaciju."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Καταγραφή. Πατήστε έναν συνδυασμό πλήκτρων."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "מקליט. לחץ על קוד מפתח."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запись. Нажмите комбинацию клавиш."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trwa rejestrowanie skrótu. Naciśnij kombinację klawiszy."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запис. Натисніть комбінацію клавіш."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enregistrement en cours. Appuyez sur une combinaison de touches."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opname. Druk op een toetscombinatie."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Registrazione. Premere una combinazione di tasti."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nauhoitan. Paina avainyhdistelmää."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Optager. Tryk på en nøglekombination."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기록 중입니다. 키 조합을 누르세요."
-          }
-        }
-      }
-    },
     "Records aggregate operation counts, CPU energy, CPU time, wakeups and memory with one final write. It does not enable detailed event traces. Use Instruments or powermetrics separately to measure WindowServer and GPU energy." : {
       "localizations" : {
         "ja" : {
@@ -103905,7 +105230,6 @@
         }
       }
     },
-    "Remove Mark" : {},
     "Remove Workspace %@" : {
       "localizations" : {
         "ja" : {
@@ -104030,8 +105354,6 @@
         }
       }
     },
-    "Remove a window mark" : {},
-    "Remove mark…" : {},
     "Remove or fix the keys in %@." : {
       "localizations" : {
         "ja" : {
@@ -104653,7 +105975,6 @@
         }
       }
     },
-    "Removed mark ‘%@’ from the selected window." : {},
     "Rename Workspace" : {
       "localizations" : {
         "ja" : {
@@ -108624,137 +109945,6 @@
           }
         }
       }
-    },
-    "Resize Increment" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize Increment"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مقدار تغيير الحجم"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trin for størrelsesændring"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schrittweite der Größenänderung"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Βήμα αλλαγής μεγέθους"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Incremento de cambio de tamaño"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koon muutoksen askel"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de redimensionnement"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "צעד שינוי הגודל"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आकार बदलने की मात्रा"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Incremento di ridimensionamento"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サイズ変更の刻み幅"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "크기 조절 단위"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trinn for størrelsesendring"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stapgrootte bij formaatwijziging"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Krok zmiany rozmiaru"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Шаг изменения размера"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Korak promene veličine"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Steg för storleksändring"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Крок зміни розміру"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "调整大小的步长"
-          }
-        }
-      },
-      "extractionState" : "stale"
     },
     "Resize diagonally" : {
       "localizations" : {
@@ -116834,8 +118024,6 @@
         }
       }
     },
-    "Select a current window result first." : {},
-    "Select a current window row before changing its marks." : {},
     "Select a rule from the sidebar to edit it, or add a new rule to get started." : {
       "localizations" : {
         "ja" : {
@@ -116960,7 +118148,6 @@
         }
       }
     },
-    "Select a window row before changing its marks." : {},
     "Selected Border Matches Focus Border" : {
       "localizations" : {
         "ja" : {
@@ -117469,7 +118656,6 @@
         }
       }
     },
-    "Set Mark" : {},
     "Set Up…" : {
       "localizations" : {
         "ja" : {
@@ -118834,10 +120020,6 @@
         }
       }
     },
-    "Shift-Enter moves here (empty workspace)." : {},
-    "Shift-Enter summons right." : {},
-    "Shift-Enter unavailable for this window." : {},
-    "Shift-Enter unavailable without an anchor." : {},
     "Shortcut %@" : {
       "localizations" : {
         "ja" : {
@@ -123059,137 +124241,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스팬 모드"
-          }
-        }
-      },
-      "extractionState" : "stale"
-    },
-    "Span-cycling commands use these presets in order. Duplicates are allowed." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Span-cycling commands use these presets in order. Duplicates are allowed."
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تستخدم أوامر التبديل الدوري بين الأحجام هذه الإعدادات المسبقة بالترتيب. يُسمح بتكرار القيم."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kommandoer til at skifte mellem forudindstillede størrelser gennemløber disse forudindstillinger i rækkefølge. Dubletter er tilladt."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Befehle zum zyklischen Größenwechsel verwenden diese Vorgaben in der angegebenen Reihenfolge. Duplikate sind erlaubt."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Οι εντολές κυκλικής εναλλαγής μεγέθους χρησιμοποιούν αυτές τις προεπιλογές με τη σειρά. Επιτρέπονται διπλότυπες τιμές."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los comandos para alternar entre tamaños predefinidos recorren estos preajustes en orden. Se permiten duplicados."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esiasetettuja kokoja selaavat komennot käyvät nämä esiasetukset läpi järjestyksessä. Sama esiasetus saa esiintyä useammin kuin kerran."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les commandes de changement cyclique de taille utilisent ces préréglages dans l’ordre indiqué. Les doublons sont autorisés."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "פקודות המעבר המחזורי בין גדלים משתמשות בערכים המוגדרים מראש לפי הסדר. מותר לחזור על ערכים."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आकारों को चक्रीय क्रम में बदलने वाली कमांड इन प्रीसेट का दिए गए क्रम में उपयोग करती हैं। एक ही मान दोहराया जा सकता है।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I comandi per scorrere ciclicamente le dimensioni usano queste preimpostazioni nell’ordine indicato. Sono ammessi duplicati."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サイズを順に切り替えるコマンドでは、これらのプリセットを上から順に使用します。同じ値を複数設定することもできます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "크기를 순환하며 전환하는 명령은 이 프리셋을 순서대로 사용합니다. 같은 값을 여러 번 지정할 수 있습니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kommandoer for å veksle mellom forhåndsinnstilte størrelser bruker disse forhåndsinnstillingene i rekkefølge. Duplikater er tillatt."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opdrachten om cyclisch van formaat te wisselen gebruiken deze voorinstellingen in de aangegeven volgorde. Dubbele waarden zijn toegestaan."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Polecenia cyklicznej zmiany rozmiaru korzystają z tych ustawień w podanej kolejności. Powtórzenia są dozwolone."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Команды циклического переключения размеров используют эти предустановленные значения по порядку. Повторяющиеся значения допустимы."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Komande za ciklično menjanje veličine koriste ove unapred podešene vrednosti po redu. Dozvoljeno je ponavljanje vrednosti."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kommandon för att växla mellan förinställda storlekar går igenom dessa förinställningar i ordning. Dubbletter är tillåtna."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Команди циклічного перемикання розмірів використовують ці попередньо задані значення у вказаному порядку. Значення можуть повторюватися."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "循环切换尺寸的命令会按顺序使用这些预设。允许设置重复值。"
           }
         }
       },
@@ -127670,8 +128721,6 @@
         }
       }
     },
-    "Summon right is not supported by the current layout. Press Enter to focus this window instead." : {},
-    "Summon right is unavailable. Focus a managed window in the active workspace first." : {},
     "Summon to the Right" : {
       "localizations" : {
         "ja" : {
@@ -129786,256 +130835,6 @@
         }
       }
     },
-    "Tabbed mode off" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "タブモード オフ"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tab-Modus aus"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fanemodus av"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Flikläge av"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modo de pestañas desactivado"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "标签页模式已关闭"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "टैब मोड बंद"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "وضع علامات التبويب متوقف"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Režim kartica isključen"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Λειτουργία καρτελών ανενεργή"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "מצב כרטיסיות כבוי"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Режим вкладок выключен"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryb kart wyłączony"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Режим вкладок вимкнено"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode onglets désactivé"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabbladmodus uit"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modalità schede disattivata"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Välilehtitila pois"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fanetilstand fra"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "탭 모드 끔"
-          }
-        }
-      },
-      "extractionState" : "stale"
-    },
-    "Tabbed mode on" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "タブモード オン"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tab-Modus ein"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fanemodus på"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Flikläge på"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modo de pestañas activado"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "标签页模式已开启"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "टैब मोड चालू"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "وضع علامات التبويب مفعّل"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Režim kartica uključen"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Λειτουργία καρτελών ενεργή"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "מצב כרטיסיות מופעל"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Режим вкладок включён"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tryb kart włączony"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Режим вкладок увімкнено"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode onglets activé"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabbladmodus aan"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modalità schede attiva"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Välilehtitila päällä"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fanetilstand til"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "탭 모드 켬"
-          }
-        }
-      },
-      "extractionState" : "stale"
-    },
     "Technical staircase" : {
       "localizations" : {
         "ja" : {
@@ -130532,7 +131331,6 @@
         }
       }
     },
-    "That mark changed while the chooser was open. Choose a current mark and try again." : {},
     "The Command Palette shortcut (Control+Option+Space) matches an enabled macOS system shortcut. macOS documents this chord for “Select next source in Input menu,” so both can fire together. Reassign this hotkey or clear the matching macOS shortcut in System Settings → Keyboard → Keyboard Shortcuts → Input Sources." : {
       "localizations" : {
         "ja" : {
@@ -132647,8 +133445,6 @@
         }
       }
     },
-    "The selected window has no marks to remove. Select a marked window." : {},
-    "The selected window is already marked ‘%@’." : {},
     "The target window is no longer available." : {
       "localizations" : {
         "ja" : {
@@ -133021,7 +133817,6 @@
         }
       }
     },
-    "The window is no longer eligible. Reopen the Palette and choose a current managed window." : {},
     "Theme" : {
       "localizations" : {
         "ja" : {
@@ -133146,7 +133941,6 @@
         }
       }
     },
-    "This app is hidden. Press Enter to unhide and focus it; Shift-Enter cannot summon it." : {},
     "This app may create its Dock icon only while running." : {
       "localizations" : {
         "ja" : {
@@ -133391,130 +134185,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 배치는 연결된 디스플레이에 대해 저장됩니다. 변경 사항은 이 배치에만 적용됩니다."
-          }
-        }
-      }
-    },
-    "This feature is disabled." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この機能は無効になっています。"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diese Funktion ist deaktiviert."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denne funksjonen er deaktivert."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Den här funktionen är inaktiverad."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esta función está desactivada."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此功能已禁用。"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "यह सुविधा अक्षम है।"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هذه الميزة معطّلة."
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ova funkcija je onemogućena."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Αυτή η λειτουργία είναι απενεργοποιημένη."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "התכונה הזו מושבתת."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Эта функция отключена."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ta funkcja jest wyłączona."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Цю функцію вимкнено."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette fonctionnalité est désactivée."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deze functie is uitgeschakeld."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Questa funzione è disabilitata."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tämä ominaisuus on poistettu käytöstä."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denne funktion er deaktiveret."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 기능은 비활성화되어 있습니다."
           }
         }
       }
@@ -134015,7 +134685,6 @@
         }
       }
     },
-    "This marked window is no longer available. Search again for a current result." : {},
     "This preview updates when you return from Display Settings." : {
       "localizations" : {
         "ja" : {
@@ -134512,10 +135181,6 @@
         }
       }
     },
-    "This window cannot be summoned right now. Press Enter to focus it instead." : {},
-    "This window is no longer in the current results. Search again before focusing it." : {},
-    "This window or mark is no longer available. Search again for a current result." : {},
-    "This workspace is not empty. Focus a managed window here before using Shift-Enter." : {},
     "Tile" : {
       "localizations" : {
         "ja" : {
@@ -134888,7 +135553,6 @@
         }
       }
     },
-    "Tiling Animation Speed" : {},
     "Title" : {
       "localizations" : {
         "ja" : {
@@ -143729,130 +144393,6 @@
         }
       }
     },
-    "Window Hover Previews" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ウィンドウのホバープレビュー"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fenstervorschau beim Darüberfahren"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forhåndsvisning av vinduer ved musepeking"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Förhandsvisning av fönster vid hovring"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vista previa de ventanas al pasar el cursor"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "悬停时预览窗口"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "होवर करने पर विंडो का पूर्वावलोकन"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "معاينة النوافذ عند تمرير المؤشر"
-          }
-        },
-        "sr-Latn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pregled prozora pri prelasku pokazivačem"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Προεπισκόπηση παραθύρων κατά την τοποθέτηση του δείκτη"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "תצוגה מקדימה של חלונות בריחוף"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Предпросмотр окон при наведении"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podgląd okien po najechaniu kursorem"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Попередній перегляд вікон після наведення"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aperçu des fenêtres au survol"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Venstervoorbeelden bij aanwijzen"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anteprime delle finestre al passaggio del puntatore"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ikkunoiden esikatselu osoittimen ollessa niiden kohdalla"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forhåndsvisning af vinduer ved markørplacering"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "마우스를 올렸을 때 창 미리보기"
-          }
-        }
-      }
-    },
     "Window Level" : {
       "localizations" : {
         "ja" : {
@@ -144225,9 +144765,6 @@
         }
       }
     },
-    "Window mark name" : {},
-    "Window mark to remove" : {},
-    "Window moved to the empty workspace." : {},
     "Window placement or sizing" : {
       "localizations" : {
         "ja" : {
@@ -144352,7 +144889,6 @@
         }
       }
     },
-    "Window summoned right." : {},
     "Window tabs" : {
       "localizations" : {
         "ja" : {
@@ -153116,7 +153652,6 @@
         }
       }
     },
-    "‘%@’ is already used by another window. Choose a different mark name." : {},
     "⇧ Shift" : {
       "localizations" : {
         "ja" : {
@@ -153613,7 +154148,327 @@
         }
       }
     },
+    "Enter jumps. %@" : {},
+    "Mark selected window…" : {},
+    "Mark Window…" : {},
+    "No windows found. Check the mark name or try a title, app, or workspace." : {},
+    "Remove mark…" : {},
+    "Remove Mark…" : {},
+    "Shift-Enter moves here (empty workspace)." : {},
+    "Shift-Enter summons right." : {},
+    "Shift-Enter unavailable without an anchor." : {},
+    "Choose a mark to remove from the selected window." : {},
+    "Choose a mark to remove from the selected window" : {},
+    "Remove a window mark" : {},
+    "This window is no longer in the current results. Search again before focusing it." : {},
+    "Mark the selected window (Control-Option-Shift-M)" : {},
+    "Mark the selected window" : {},
+    "That mark changed while the chooser was open. Choose a current mark and try again." : {},
+    "No mark was changed." : {},
+    "Set Mark" : {},
+    "Window summoned right." : {},
+    "Marks the selected window row." : {},
+    "The selected window has no marks to remove. Select a marked window." : {},
+    "‘%@’ is already used by another window. Choose a different mark name." : {},
+    "Could not summon this window right now. Press Enter to focus it instead." : {},
+    "This workspace is not empty. Focus a managed window here before using Shift-Enter." : {},
+    "Remove Mark" : {},
+    "This window cannot be summoned right now. Press Enter to focus it instead." : {},
+    "Window moved to the empty workspace." : {},
+    "Select a window row before changing its marks." : {},
+    "Mark: %@" : {},
+    "Mark names must be non-empty and contain no control characters. Try another name." : {},
+    "Window mark to remove" : {},
+    "The window is no longer eligible. Reopen the Palette and choose a current managed window." : {},
+    "Marks the selected window row. Shortcut Control-Option-Shift-M." : {},
+    "Enter a name you can search for in the Windows palette." : {},
+    "Select a current window result first." : {},
+    "Choose a mark to remove from the selected window (Control-Option-Shift-R)" : {},
+    "The selected window is already marked ‘%@’." : {},
+    "This marked window is no longer available. Search again for a current result." : {},
+    "This app is hidden. Press Enter to unhide and focus it; Shift-Enter cannot summon it." : {},
+    "Summon right is not supported by the current layout. Press Enter to focus this window instead." : {},
+    "Select a current window row before changing its marks." : {},
+    "Mark window" : {},
+    "A window cannot be summoned beside itself. Choose a different marked window." : {},
+    "Could not move this window into the empty workspace. Press Enter to focus it instead." : {},
+    "Removed mark ‘%@’ from the selected window." : {},
+    "Marked the selected window as ‘%@’." : {},
+    "Choose a mark to remove from the selected window. Shortcut Control-Option-Shift-R." : {},
+    "Window mark name" : {},
+    "This window or mark is no longer available. Search again for a current result." : {},
+    "Summon right is unavailable. Focus a managed window in the active workspace first." : {},
+    "Choose which mark to remove from this window." : {},
+    "Shift-Enter unavailable for this window." : {},
+    "Resize Increment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize Increment"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقدار تغيير الحجم"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trin for størrelsesændring"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrittweite der Größenänderung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βήμα αλλαγής μεγέθους"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incremento de cambio de tamaño"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koon muutoksen askel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de redimensionnement"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "צעד שינוי הגודל"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आकार बदलने की मात्रा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incremento di ridimensionamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイズ変更の刻み幅"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "크기 조절 단위"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trinn for størrelsesendring"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stapgrootte bij formaatwijziging"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Krok zmiany rozmiaru"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шаг изменения размера"
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korak promene veličine"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steg för storleksändring"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Крок зміни розміру"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整大小的步长"
+          }
+        }
+      },
+      "extractionState" : "stale"
+    },
+    "Span-cycling commands use these presets in order. Duplicates are allowed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Span-cycling commands use these presets in order. Duplicates are allowed."
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تستخدم أوامر التبديل الدوري بين الأحجام هذه الإعدادات المسبقة بالترتيب. يُسمح بتكرار القيم."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommandoer til at skifte mellem forudindstillede størrelser gennemløber disse forudindstillinger i rækkefølge. Dubletter er tilladt."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Befehle zum zyklischen Größenwechsel verwenden diese Vorgaben in der angegebenen Reihenfolge. Duplikate sind erlaubt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι εντολές κυκλικής εναλλαγής μεγέθους χρησιμοποιούν αυτές τις προεπιλογές με τη σειρά. Επιτρέπονται διπλότυπες τιμές."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los comandos para alternar entre tamaños predefinidos recorren estos preajustes en orden. Se permiten duplicados."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esiasetettuja kokoja selaavat komennot käyvät nämä esiasetukset läpi järjestyksessä. Sama esiasetus saa esiintyä useammin kuin kerran."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les commandes de changement cyclique de taille utilisent ces préréglages dans l’ordre indiqué. Les doublons sont autorisés."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "פקודות המעבר המחזורי בין גדלים משתמשות בערכים המוגדרים מראש לפי הסדר. מותר לחזור על ערכים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आकारों को चक्रीय क्रम में बदलने वाली कमांड इन प्रीसेट का दिए गए क्रम में उपयोग करती हैं। एक ही मान दोहराया जा सकता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I comandi per scorrere ciclicamente le dimensioni usano queste preimpostazioni nell’ordine indicato. Sono ammessi duplicati."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイズを順に切り替えるコマンドでは、これらのプリセットを上から順に使用します。同じ値を複数設定することもできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "크기를 순환하며 전환하는 명령은 이 프리셋을 순서대로 사용합니다. 같은 값을 여러 번 지정할 수 있습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommandoer for å veksle mellom forhåndsinnstilte størrelser bruker disse forhåndsinnstillingene i rekkefølge. Duplikater er tillatt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdrachten om cyclisch van formaat te wisselen gebruiken deze voorinstellingen in de aangegeven volgorde. Dubbele waarden zijn toegestaan."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Polecenia cyklicznej zmiany rozmiaru korzystają z tych ustawień w podanej kolejności. Powtórzenia są dozwolone."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команды циклического переключения размеров используют эти предустановленные значения по порядку. Повторяющиеся значения допустимы."
+          }
+        },
+        "sr-Latn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komande za ciklično menjanje veličine koriste ove unapred podešene vrednosti po redu. Dozvoljeno je ponavljanje vrednosti."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommandon för att växla mellan förinställda storlekar går igenom dessa förinställningar i ordning. Dubbletter är tillåtna."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команди циклічного перемикання розмірів використовують ці попередньо задані значення у вказаному порядку. Значення можуть повторюватися."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "循环切换尺寸的命令会按顺序使用这些预设。允许设置重复值。"
+          }
+        }
+      },
+      "extractionState" : "stale"
+    },
+    "After moving a window to another workspace, switches there and keeps it focused. When off, you stay in the source workspace." : {},
+    "Drag Tile Edges to Resize" : {},
+    "Drag Title Bar to Swap" : {},
+    "Drag a Dwindle tiled window by its title bar and drop it on another tile to swap them." : {},
     "Dwindle" : {},
+    "Left-drag the gap between two tiled windows, or a tiled window's edge, to resize the split without a modifier." : {},
+    "Overrides the display orientation used for directional placement." : {},
     "Shared" : {},
     "This rule matches windows but has no effect — set a layout, workspace, or minimum size." : {},
     "Tiling layout (Dwindle)" : {}

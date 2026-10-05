@@ -18,6 +18,7 @@ extension WorkspaceManager {
              let .windowModeChanged(_, workspaceId, _, _, _),
              let .hiddenStateChanged(_, workspaceId, _, _, _),
              let .windowMinimizedChanged(_, workspaceId, _, _),
+             let .windowNativeWithdrawalChanged(_, workspaceId, _, _),
              let .managedReplacementMetadataChanged(_, workspaceId, _, _, _):
             noteInvalidation(workspaceId: workspaceId, domains: [.workspace, .layout, .focus])
 
@@ -129,6 +130,7 @@ extension WorkspaceManager {
              .floatingStateChanged,
              .hiddenApplicationsChanged,
              .windowMinimizedChanged,
+             .windowNativeWithdrawalChanged,
              .layoutOperationPerformed,
              .manualLayoutOverrideChanged,
              .systemSleep,

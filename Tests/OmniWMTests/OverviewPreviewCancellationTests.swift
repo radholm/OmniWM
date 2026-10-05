@@ -12,8 +12,7 @@ final class OverviewPreviewCancellationTests: XCTestCase {
         var control: OverviewPreviewTestStream?
         var startCount = 0
         let capture = OverviewThumbnailCapture(
-            environment: OverviewEnvironment(),
-            ownedWindowRegistry: OwnedWindowRegistry(),
+            coordinator: PreviewCaptureCoordinator(ownedWindowRegistry: OwnedWindowRegistry()),
             hasCaptureAccess: { true },
             streamFactory: { request, output in
                 let stream = OverviewPreviewTestStream(
@@ -50,8 +49,7 @@ final class OverviewPreviewCancellationTests: XCTestCase {
     func testImmediatelySupersededQueuedStartNeverEntersFactory() async {
         var factoryCalls = 0
         let capture = OverviewThumbnailCapture(
-            environment: OverviewEnvironment(),
-            ownedWindowRegistry: OwnedWindowRegistry(),
+            coordinator: PreviewCaptureCoordinator(ownedWindowRegistry: OwnedWindowRegistry()),
             hasCaptureAccess: { true },
             streamFactory: { request, output in
                 factoryCalls += 1

@@ -30,7 +30,7 @@ final class ActionCatalogLookupTests: XCTestCase {
 
         for expected in [
             "movewindowtomonitor left",
-            "move window to left monitor",
+            "move focused window to monitor on left",
             "shared",
             "adjacent monitor",
             "send window",
@@ -46,6 +46,21 @@ final class ActionCatalogLookupTests: XCTestCase {
     func testCanonicalEnglishTitlesStayIndependentOfCurrentCatalogLanguage() {
         XCTAssertEqual(ActionCatalog.spec(for: .focus(.left))?.title, "Focus Left")
         XCTAssertEqual(ActionCatalog.spec(for: .workspace(.switchTo(1)))?.title, "Switch to Workspace 2")
+    }
+
+    func testClarifiedTitlesNameTheirActualTargetsAndDirection() {
+        let cases: [(HotkeyCommand, String)] = [
+            (.focusNavigation(.previous), "Focus Previously Focused Window"),
+            (.focusNavigation(.windowDownOrTop), "Focus Next Window (Wrap)"),
+            (.monitorFocus(.previous), "Focus Previous Monitor in Order"),
+            (.monitorFocus(.last), "Focus Last Active Monitor"),
+            (.fullscreen(.managed), "Toggle OmniWM Fullscreen"),
+            (.workspace(.moveTo(1)), "Move Focused Window to Workspace 2")
+        ]
+
+        for (command, expectedTitle) in cases {
+            XCTAssertEqual(ActionCatalog.spec(for: command)?.title, expectedTitle)
+        }
     }
 
     func testCanonicalSourceTitleIgnoresTranslatedCatalogValue() throws {

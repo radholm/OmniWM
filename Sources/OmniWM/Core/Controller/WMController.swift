@@ -212,6 +212,9 @@ final class WMController {
     var effectiveAppearanceObserver: NSKeyValueObservation?
     @ObservationIgnored
     var borderUsesDarkAppearance = false
+    @ObservationIgnored var cachedMonitorLayout: MonitorLayoutCacheEntry?
+    @ObservationIgnored var cachedInnerGap: InnerGapCacheEntry?
+    @ObservationIgnored var cachedBorderConfig: BorderConfigCacheEntry?
 
     init(
         settings: SettingsStore,
@@ -291,7 +294,6 @@ extension WMController {
         let shouldEnableHotkeys = desiredHotkeysEnabled
             && isEnabled
             && hasStartedServices
-            && !serviceLifecycleManager.isSecureInputActive
         hotkeysEnabled = shouldEnableHotkeys
         if shouldEnableHotkeys {
             hotkeys.start()
@@ -338,6 +340,7 @@ extension WMController {
             hiddenWorkspaceBarMonitorIds.insert(monitor.id)
         }
 
+        cachedMonitorLayout = nil
         workspaceManager.invalidateAllLayouts()
         layoutRefreshController.requestRelayout(reason: .monitorSettingsChanged)
         surfaceReconciler.noteWorldChanged()
@@ -406,24 +409,13 @@ extension WMController {
         systemHyperTriggerFailure = hotkeys.systemHyperTriggerFailure
     }
 
-    var statusBarRefreshIsEnabled: Bool {
-        statusBarController != nil && settings.statusBar.showWorkspaceName
-    }
-
-    var hasWorkspaceBarDataConsumers: Bool {
-        workspaceBarRefreshIsEnabled
-            || statusBarRefreshIsEnabled
-            || ipcApplicationBridge?.hasSubscribers(for: .workspaceBar) == true
-            || ipcApplicationBridge?.hasSubscribers(for: .windowsChanged) == true
-            || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
-    }
-
     func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
         guard resolved.enabled, !hiddenWorkspaceBarMonitorIds.contains(monitor.id) else { return false }
         return settings.workspaceBar.revealModifier == .off || isWorkspaceBarRevealHeld
     }
 
     func pruneHiddenWorkspaceBarMonitorIds() {
+        cachedMonitorLayout = nil
         hiddenWorkspaceBarMonitorIds = hiddenWorkspaceBarMonitorIds.filter { monitorId in
             guard let monitor = workspaceManager.monitor(byId: monitorId) else { return false }
             return settings.workspaceBar.resolved(for: monitor).enabled

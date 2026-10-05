@@ -149,7 +149,7 @@ extension LayoutRefreshController {
             return refreshedEntry.token
         } else {
             if isMinimized {
-                controller.axManager.setWindowMinimized(true, token: window.identity.token)
+                controller.axManager.setWindowNativeSuppressed(true, token: window.identity.token)
             }
             return controller.workspaceManager.addWindow(
                 ax,
@@ -158,7 +158,8 @@ extension LayoutRefreshController {
                 to: wsForWindow,
                 mode: admittedMode,
                 ruleEffects: ruleEffects,
-                allowsNativeFocusAdoption: !appFullscreen && !isMinimized,
+                allowsNativeFocusAdoption: !appFullscreen && !isMinimized
+                    && window.candidate.windowServerInfo?.isOrderedIn != false,
                 isMinimized: isMinimized,
                 managedReplacementMetadata: managedReplacementMetadata
             )

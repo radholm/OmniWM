@@ -59,7 +59,7 @@ struct WorldView {
     }
 
     var borderConfig: BorderConfig {
-        BorderConfig.from(settings: controller.settings, isDark: controller.borderUsesDarkAppearance)
+        controller.resolvedBorderConfig()
     }
 
     func entry(for token: WindowToken) -> WindowState? {
@@ -76,6 +76,10 @@ struct WorldView {
 
     func isManagedWindowDisplayable(_ token: WindowToken) -> Bool {
         controller.isManagedWindowDisplayable(token)
+    }
+
+    func hasPendingWindowClose(for entry: WindowState) -> Bool {
+        controller.axEventHandler.hasPendingWindowClose(entry.token, workspaceId: entry.workspaceId)
     }
 
     func isWorkspaceVisible(_ workspaceId: WorkspaceDescriptor.ID) -> Bool {

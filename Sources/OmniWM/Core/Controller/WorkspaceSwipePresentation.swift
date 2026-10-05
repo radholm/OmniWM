@@ -85,7 +85,7 @@ final class WorkspaceSwipePresentation {
     private var preview: WorkspaceSwipePreview?
     var wallpaperParallax: WorkspaceWallpaperParallax?
     var observesWallpaperSettings = false
-    private let mediaTimeProvider: () -> TimeInterval
+    let mediaTimeProvider: () -> TimeInterval
     var keyboardSwitchTask: Task<Void, Never>?
     var keyboardSwitchFallback: (() -> Void)?
     static let keyboardPreviewWaitSeconds: TimeInterval = 0.12
@@ -469,6 +469,15 @@ extension WorkspaceSwipePresentation {
         preview?.remove(token: token)
     }
 
+    func syncAvailability() {
+        guard let controller, preview != nil,
+              !controller.motionPolicy.animationsEnabled || !controller.settings.gestures.workspaceSwipeEnabled
+        else { return }
+        cancel(reason: "disabled")
+        preview?.release()
+        preview = nil
+    }
+
     func previewSurface(_ controller: WMController) -> WorkspaceSwipePreview {
         if let preview { return preview }
         let preview = WorkspaceSwipePreview(ownedWindowRegistry: controller.ownedWindowRegistry)
@@ -485,16 +494,5 @@ extension WorkspaceSwipePresentation {
             destinationOffset: flight.offset(destination: true),
             wallpaperFrame: wallpaperFrame
         )
-    }
-
-    func trace(_ action: String, progress: Double = 0) {
-        guard TrackpadScrollTrace.shared.isActive else { return }
-        TrackpadScrollTrace.record(.workspacePresentation(
-            renderer: "preview",
-            action: action,
-            progress: progress,
-            velocity: flight?.motion.velocity(at: mediaTimeProvider()),
-            target: flight?.motion.target
-        ))
     }
 }

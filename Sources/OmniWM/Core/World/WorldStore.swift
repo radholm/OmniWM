@@ -195,6 +195,12 @@ final class WorldStore {
             model.setObservedState(state, for: token)
             refreshProjectionExclusions(in: [workspaceId])
 
+        case let .windowNativeWithdrawalChanged(token, workspaceId, withdrawn, _):
+            guard var state = windows.entry(for: token)?.observedState else { return }
+            state.isNativeWithdrawn = withdrawn
+            model.setObservedState(state, for: token)
+            refreshProjectionExclusions(in: [workspaceId])
+
         case let .appVisibilityInvalidated(pid, _, _):
             appVisibilityGenerationByPID[pid, default: 0] &+= 1
 
@@ -396,7 +402,7 @@ extension WorldStore {
             let tiledEntries = windows.windows(in: workspaceId).filter { $0.mode == .tiling }
             let authoritativeTokens = Set(tiledEntries.lazy.map(\.token))
             let excludedTokens = Set(tiledEntries.lazy.filter {
-                self.hiddenAppPIDs.contains($0.pid) || $0.observedState.isMinimized
+                self.hiddenAppPIDs.contains($0.pid) || $0.observedState.isNativeSuppressed
             }.map(\.token))
             dwindleEngine?.setExcludedTokens(
                 excludedTokens, authoritativeTokens: authoritativeTokens, in: workspaceId

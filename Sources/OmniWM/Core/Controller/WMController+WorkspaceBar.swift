@@ -10,6 +10,18 @@ extension WMController {
         settings.workspaceBar.enabled
     }
 
+    var statusBarRefreshIsEnabled: Bool {
+        statusBarController != nil && settings.statusBar.showWorkspaceName
+    }
+
+    var hasWorkspaceBarDataConsumers: Bool {
+        workspaceBarRefreshIsEnabled
+            || statusBarRefreshIsEnabled
+            || ipcApplicationBridge?.hasSubscribers(for: .workspaceBar) == true
+            || ipcApplicationBridge?.hasSubscribers(for: .windowsChanged) == true
+            || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
+    }
+
     func setWorkspaceBarEnabled(_ enabled: Bool) {
         if settings.workspaceBar.enabled != enabled {
             settings.workspaceBar.enabled = enabled
@@ -29,6 +41,10 @@ extension WMController {
 
     func requestWorkspaceBarRefresh() {
         surfaceReconciler.noteWorldChanged()
+    }
+
+    func updateWorkspaceBarNotificationBadgeSettings() {
+        workspaceBarManager.syncNotificationBadges()
     }
 
     func refreshStatusBar() {
@@ -60,6 +76,7 @@ extension WMController {
     }
 
     func updateWorkspaceBarSettings(forceIconReload: Bool = false) {
+        updateWorkspaceBarNotificationBadgeSettings()
         workspaceBarManager.syncHoverPreview(controller: self, settings: settings)
         synchronizeWorkspaceBarIconOverrides(
             forceReload: forceIconReload

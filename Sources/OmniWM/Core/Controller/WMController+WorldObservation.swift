@@ -7,6 +7,7 @@ import OmniWMIPC
 
 extension WMController {
     func handleSessionStateChanged(surfaceScope: SessionSurfaceInvalidationScope) {
+        intentLedger.cancelConfirmedWorkerRaise(unlessFocused: workspaceManager.nativeManagedFocusToken)
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()
