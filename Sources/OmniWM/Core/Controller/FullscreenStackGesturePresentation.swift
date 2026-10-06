@@ -19,6 +19,7 @@ final class FullscreenStackGesturePresentation {
         /// Whether the page turn can be drawn; without it, the swipe still pages the stack on release.
         var canShow: Bool
         var shown = false
+        var settle: Settle?
 
         init(
             slide: FullscreenSlide,
@@ -41,8 +42,7 @@ final class FullscreenStackGesturePresentation {
                 timestamp: timestamp,
                 recognitionMovement: recognitionMovement.map {
                     SwipeEvent(delta: $0.delta * sign, timestamp: $0.timestamp)
-                },
-                springConfig: FullscreenStackGesturePresentation.springConfig
+                }
             )
         }
     }
@@ -60,13 +60,44 @@ final class FullscreenStackGesturePresentation {
         }
     }
 
-    /// Softer than the workspace swipe's spring, so the page turn stays visible while it settles.
-    nonisolated static let springConfig = SpringConfig(
-        dampingRatio: 1,
-        stiffness: 140,
-        epsilon: 0.0001,
-        velocityEpsilon: 0.01
-    )
+    /// A timed ease to the settled page, so a fast flick still shows the whole page turn.
+    struct Settle: Equatable {
+        let from: Double
+        let to: Double
+        let start: TimeInterval
+        let duration: TimeInterval
+
+        /// Settling a whole page takes about as long as the keyboard page turn; shorter remainders take less.
+        init(from: Double, to: Double, start: TimeInterval, motion: MotionSnapshot = .enabled) {
+            self.from = from
+            self.to = to
+            self.start = start
+            let remaining = min(abs(to - from), 1)
+            duration = motion.animationsEnabled
+                ? (Self.minimumDuration + (Self.pageDuration - Self.minimumDuration) * remaining) / motion
+                .animationSpeed
+                : 0
+        }
+
+        static let minimumDuration: TimeInterval = 0.4
+        static let pageDuration: TimeInterval = 0.85
+
+        func progress(at time: TimeInterval) -> Double {
+            let left = 1 - fraction(at: time)
+            let eased = 1 - left * left
+            return from + (to - from) * eased
+        }
+
+        func isComplete(at time: TimeInterval) -> Bool {
+            fraction(at: time) >= 1
+        }
+
+        private func fraction(at time: TimeInterval) -> Double {
+            guard duration > 0 else { return 1 }
+            return min(max((time - start) / duration, 0), 1)
+        }
+    }
+
     /// How long a recognized swipe waits for the background capture before capturing on the main thread.
     static let prefetchWait: TimeInterval = 0.06
     /// Captured stack windows are reused for the next swipe this long; fresh captures replace them when ready.
@@ -100,6 +131,7 @@ final class FullscreenStackGesturePresentation {
     /// Captures the stacked windows off the main thread as soon as fingers touch, before the swipe is recognized.
     /// Recent captures of the same workspace are used meanwhile, so a quick swipe doesn't wait for them.
     func prepare(workspaceId: WorkspaceDescriptor.ID) {
+        finishSettling()
         guard flight == nil, let handler, handler.snapshotTransitionsEnabled else { return }
         prefetchTask?.cancel()
         preparedWorkspaceId = workspaceId
@@ -129,6 +161,7 @@ final class FullscreenStackGesturePresentation {
         timestamp: TimeInterval,
         recognitionMovement: SwipeEvent?
     ) -> Bool {
+        finishSettling()
         guard flight == nil, let handler,
               let monitor = handler.controller?.workspaceManager.monitor(for: workspaceId),
               let slide = handler.peekFullscreenSlide(in: workspaceId, forward: forward)
@@ -176,11 +209,7 @@ final class FullscreenStackGesturePresentation {
             end(paging: false)
             return true
         }
-        if flight.shown {
-            startDisplayLink(for: flight.monitor)
-        } else {
-            end(paging: flight.motion.target == 1)
-        }
+        settle(flight, to: flight.motion.target ?? 0)
         return true
     }
 
@@ -194,15 +223,37 @@ final class FullscreenStackGesturePresentation {
             return
         }
         guard flight.motion.target == nil else { return }
-        if flight.shown, flight.motion.animate(
-            to: 0,
-            animationTime: mediaTimeProvider(),
-            motion: handler?.controller?.motionPolicy.snapshot() ?? .enabled
-        ) {
-            startDisplayLink(for: flight.monitor)
-        } else {
+        guard flight.motion.animate(to: 0, animationTime: mediaTimeProvider()) else {
             end(paging: false)
+            return
         }
+        settle(flight, to: 0)
+    }
+
+    private func settle(_ flight: Flight, to target: Double) {
+        guard flight.shown else {
+            end(paging: target == 1)
+            return
+        }
+        let now = mediaTimeProvider()
+        let settle = Settle(
+            from: min(max(flight.motion.progress(at: now), 0), 1),
+            to: target,
+            start: now,
+            motion: handler?.controller?.motionPolicy.snapshot() ?? .enabled
+        )
+        flight.settle = settle
+        guard !settle.isComplete(at: now) else {
+            end(paging: target == 1)
+            return
+        }
+        startDisplayLink(for: flight.monitor)
+    }
+
+    /// A new swipe lands the page turn that is still settling, so quick successive swipes each page the stack.
+    private func finishSettling() {
+        guard let flight, let target = flight.motion.target else { return }
+        end(paging: target == 1)
     }
 
     /// Shows the page turn without waiting any longer for the background capture.
@@ -229,7 +280,8 @@ final class FullscreenStackGesturePresentation {
 
     private func present(_ flight: Flight, at timestamp: TimeInterval) {
         guard flight.shown else { return }
-        let progress = min(max(flight.motion.progress(at: timestamp), 0), 1)
+        let raw = flight.settle?.progress(at: timestamp) ?? flight.motion.progress(at: timestamp)
+        let progress = min(max(raw, 0), 1)
         handler?.snapshotTransition.scrubStack(flight.items, at: CGFloat(progress))
     }
 
@@ -240,7 +292,7 @@ final class FullscreenStackGesturePresentation {
         }
         let now = mediaTimeProvider()
         present(flight, at: now)
-        if flight.motion.isComplete(at: now) { end(paging: flight.motion.target == 1) }
+        if flight.settle?.isComplete(at: now) ?? true { end(paging: flight.motion.target == 1) }
     }
 
     private func end(paging: Bool) {

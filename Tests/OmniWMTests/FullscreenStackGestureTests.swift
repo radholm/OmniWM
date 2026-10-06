@@ -69,21 +69,25 @@ final class FullscreenStackGestureTests: XCTestCase {
         assertEqual(effect.pose(at: 1.3, size: size).transform, effect.pose(at: 1, size: size).transform)
     }
 
-    func testStackSpringSettlesSlowerThanWorkspaceSwipe() {
-        let workspace = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 0)
-        let stack = WorkspaceSwipeMotion(
-            cumulativeUnits: 0,
-            timestamp: 0,
-            springConfig: FullscreenStackGesturePresentation.springConfig
+    func testSettleTakesAboutAKeyboardPageTurnRegardlessOfFlickSpeed() {
+        typealias Settle = FullscreenStackGesturePresentation.Settle
+        let whole = Settle(from: 0, to: 1, start: 0)
+        XCTAssertEqual(whole.duration, Settle.pageDuration, accuracy: 1e-9)
+        let half = Settle(from: 0.5, to: 1, start: 10)
+        XCTAssertGreaterThan(half.duration, Settle.minimumDuration)
+        XCTAssertLessThan(half.duration, Settle.pageDuration)
+        XCTAssertEqual(half.progress(at: 10), 0.5, accuracy: 1e-9)
+        XCTAssertLessThan(half.progress(at: 10 + half.duration / 4), 0.85)
+        XCTAssertFalse(half.isComplete(at: 10 + half.duration * 0.9))
+        XCTAssertTrue(half.isComplete(at: 10 + half.duration))
+        XCTAssertEqual(half.progress(at: 10 + half.duration), 1, accuracy: 1e-9)
+        XCTAssertEqual(Settle(from: 0.5, to: 1, start: 0, motion: .disabled).duration, 0)
+        XCTAssertEqual(
+            Settle(from: 0, to: 1, start: 0, motion: MotionSnapshot(animationsEnabled: true, animationSpeed: 2))
+                .duration,
+            Settle.pageDuration / 2,
+            accuracy: 1e-9
         )
-        for motion in [workspace, stack] {
-            motion.update(cumulativeUnits: 180, timestamp: 0.1)
-            XCTAssertTrue(motion.release(timestamp: 0.1, allowFlick: true, animationTime: 0))
-            XCTAssertEqual(motion.target, 1)
-        }
-        XCTAssertLessThan(stack.progress(at: 0.1), workspace.progress(at: 0.1))
-        XCTAssertGreaterThan(stack.progress(at: 0.1), 0.6)
-        XCTAssertTrue(stack.isComplete(at: 2))
     }
 
     @MainActor
