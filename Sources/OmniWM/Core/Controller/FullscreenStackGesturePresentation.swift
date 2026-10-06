@@ -15,6 +15,9 @@ final class FullscreenStackGesturePresentation {
         let monitor: Monitor
         let inputSign: Double
         let motion: WorkspaceSwipeMotion
+        let beganAt: TimeInterval
+        /// Whether the page turn can be drawn; without it, the swipe still pages the stack on release.
+        var canShow: Bool
         var shown = false
 
         init(
@@ -23,11 +26,14 @@ final class FullscreenStackGesturePresentation {
             monitor: Monitor,
             cumulative: Double,
             timestamp: TimeInterval,
-            recognitionMovement: SwipeEvent?
+            recognitionMovement: SwipeEvent?,
+            beganAt: TimeInterval
         ) {
             self.slide = slide
             self.items = items
             self.monitor = monitor
+            self.beganAt = beganAt
+            canShow = items.contains { $0.stackEffect != nil }
             let sign: Double = cumulative < 0 ? -1 : 1
             inputSign = sign
             motion = WorkspaceSwipeMotion(
@@ -35,7 +41,8 @@ final class FullscreenStackGesturePresentation {
                 timestamp: timestamp,
                 recognitionMovement: recognitionMovement.map {
                     SwipeEvent(delta: $0.delta * sign, timestamp: $0.timestamp)
-                }
+                },
+                springConfig: FullscreenStackGesturePresentation.springConfig
             )
         }
     }
@@ -53,11 +60,26 @@ final class FullscreenStackGesturePresentation {
         }
     }
 
+    /// Softer than the workspace swipe's spring, so the page turn stays visible while it settles.
+    nonisolated static let springConfig = SpringConfig(
+        dampingRatio: 1,
+        stiffness: 140,
+        epsilon: 0.0001,
+        velocityEpsilon: 0.01
+    )
+    /// How long a recognized swipe waits for the background capture before capturing on the main thread.
+    static let prefetchWait: TimeInterval = 0.06
+    /// Captured stack windows are reused for the next swipe this long; fresh captures replace them when ready.
+    static let imageCacheLifetime: TimeInterval = 30
+
     private weak var handler: DwindleLayoutHandler?
     private var flight: Flight?
     private var preparedWorkspaceId: WorkspaceDescriptor.ID?
     private var prefetchedImages: [Int: CGImage] = [:]
     private var prefetchTask: Task<Void, Never>?
+    private var cachedImages: [Int: CGImage] = [:]
+    private var cachedWorkspaceId: WorkspaceDescriptor.ID?
+    private var cachedAt: TimeInterval = 0
     private var displayLink: CADisplayLink?
     private let mediaTimeProvider: () -> TimeInterval
 
@@ -72,24 +94,29 @@ final class FullscreenStackGesturePresentation {
 
     /// Whether a swipe on `workspaceId` can page its fullscreen stack.
     func canPage(workspaceId: WorkspaceDescriptor.ID) -> Bool {
-        guard let handler, handler.snapshotTransitionsEnabled else { return false }
-        return handler.peekFullscreenSlide(in: workspaceId, forward: true) != nil
+        handler?.peekFullscreenSlide(in: workspaceId, forward: true) != nil
     }
 
     /// Captures the stacked windows off the main thread as soon as fingers touch, before the swipe is recognized.
+    /// Recent captures of the same workspace are used meanwhile, so a quick swipe doesn't wait for them.
     func prepare(workspaceId: WorkspaceDescriptor.ID) {
-        guard flight == nil, let handler else { return }
+        guard flight == nil, let handler, handler.snapshotTransitionsEnabled else { return }
         prefetchTask?.cancel()
         preparedWorkspaceId = workspaceId
-        prefetchedImages = [:]
+        let now = mediaTimeProvider()
+        prefetchedImages = cachedWorkspaceId == workspaceId && now - cachedAt < Self.imageCacheLifetime
+            ? cachedImages : [:]
         let windowIds = handler.snapshotItems(workspaceId: workspaceId, targets: [:]).map(\.windowId)
         prefetchTask = Task { @MainActor [weak self, weak handler] in
             guard let handler else { return }
             let images = await handler.snapshotTransition.prefetchImages(for: windowIds)
             guard !Task.isCancelled, let self, preparedWorkspaceId == workspaceId else { return }
-            prefetchedImages = images
+            prefetchedImages.merge(images) { _, fresh in fresh }
+            cachedImages = prefetchedImages
+            cachedWorkspaceId = workspaceId
+            cachedAt = mediaTimeProvider()
             prefetchTask = nil
-            if let flight, !flight.shown { show(flight) }
+            if let flight, flight.canShow, !flight.shown, flight.motion.target == nil { show(flight) }
         }
     }
 
@@ -102,22 +129,23 @@ final class FullscreenStackGesturePresentation {
         timestamp: TimeInterval,
         recognitionMovement: SwipeEvent?
     ) -> Bool {
-        guard flight == nil, let handler, handler.snapshotTransitionsEnabled,
+        guard flight == nil, let handler,
               let monitor = handler.controller?.workspaceManager.monitor(for: workspaceId),
               let slide = handler.peekFullscreenSlide(in: workspaceId, forward: forward)
         else { return false }
-        let items = slide.items(from: handler.snapshotItems(workspaceId: workspaceId, targets: [:]))
-        guard items.contains(where: { $0.stackEffect != nil }) else { return false }
+        let items = handler.snapshotTransitionsEnabled
+            ? slide.items(from: handler.snapshotItems(workspaceId: workspaceId, targets: [:])) : []
         let flight = Flight(
             slide: slide,
             items: items,
             monitor: monitor,
             cumulative: cumulative,
             timestamp: timestamp,
-            recognitionMovement: recognitionMovement
+            recognitionMovement: recognitionMovement,
+            beganAt: mediaTimeProvider()
         )
         self.flight = flight
-        if prefetchTask == nil || preparedWorkspaceId != workspaceId { show(flight) }
+        if flight.canShow, prefetchTask == nil || preparedWorkspaceId != workspaceId { show(flight) }
         return true
     }
 
@@ -125,16 +153,21 @@ final class FullscreenStackGesturePresentation {
     func update(cumulative: Double, timestamp: TimeInterval) -> Bool {
         guard let flight, flight.motion.target == nil else { return false }
         flight.motion.update(cumulativeUnits: cumulative * flight.inputSign, timestamp: timestamp)
+        if flight.canShow, !flight.shown, mediaTimeProvider() - flight.beganAt >= Self.prefetchWait {
+            showNow(flight)
+        }
         present(flight, at: mediaTimeProvider())
         return true
     }
 
     /// Settles the page turn on the next window or back; returns `false` when no page turn is being scrubbed.
+    /// When the page turn couldn't be drawn, the stack still pages if the swipe went far or fast enough.
     @discardableResult
     func release(timestamp: TimeInterval, allowFlick: Bool) -> Bool {
         guard let flight else { return false }
         guard flight.motion.target == nil else { return true }
-        guard flight.shown, flight.motion.release(
+        if flight.canShow, !flight.shown { showNow(flight) }
+        guard flight.motion.release(
             timestamp: timestamp,
             allowFlick: allowFlick,
             animationTime: mediaTimeProvider(),
@@ -143,7 +176,11 @@ final class FullscreenStackGesturePresentation {
             end(paging: false)
             return true
         }
-        startDisplayLink(for: flight.monitor)
+        if flight.shown {
+            startDisplayLink(for: flight.monitor)
+        } else {
+            end(paging: flight.motion.target == 1)
+        }
         return true
     }
 
@@ -168,6 +205,13 @@ final class FullscreenStackGesturePresentation {
         }
     }
 
+    /// Shows the page turn without waiting any longer for the background capture.
+    private func showNow(_ flight: Flight) {
+        prefetchTask?.cancel()
+        prefetchTask = nil
+        show(flight)
+    }
+
     private func show(_ flight: Flight) {
         guard let handler, self.flight === flight else { return }
         guard handler.snapshotTransition.begin(
@@ -176,7 +220,7 @@ final class FullscreenStackGesturePresentation {
             animated: false,
             prefetched: prefetchedImages
         ) else {
-            self.flight = nil
+            flight.canShow = false
             return
         }
         flight.shown = true
@@ -207,12 +251,12 @@ final class FullscreenStackGesturePresentation {
         self.flight = nil
         preparedWorkspaceId = nil
         prefetchedImages = [:]
-        guard let handler, flight.shown else { return }
-        handler.snapshotTransition.scrubStack(flight.items, at: paging ? 1 : 0)
+        guard let handler else { return }
+        if flight.shown { handler.snapshotTransition.scrubStack(flight.items, at: paging ? 1 : 0) }
         if paging, handler.controller?.activeWorkspace()?.id == flight.slide.workspaceId {
-            handler.cycleFullscreen(forward: flight.slide.forward, animated: false)
+            handler.cycleFullscreen(forward: flight.slide.forward, animated: !flight.shown)
         }
-        handler.snapshotTransition.finish(after: 0, settled: { true })
+        if flight.shown { handler.snapshotTransition.finish(after: 0, settled: { true }) }
     }
 
     private func startDisplayLink(for monitor: Monitor) {

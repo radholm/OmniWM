@@ -9,7 +9,7 @@ final class WorkspaceSwipeMotion {
     private static let resistance = 0.55
     private static let stretch = 0.30
     private static let projectionDecay = 1000 * log(0.997)
-    private static let springConfig = SpringConfig(
+    static let defaultSpringConfig = SpringConfig(
         dampingRatio: 1,
         stiffness: 1000,
         epsilon: 0.0001,
@@ -23,8 +23,15 @@ final class WorkspaceSwipeMotion {
     private var lastTimestamp: TimeInterval
     private var spring: SpringAnimation?
     private(set) var target: Double?
+    private let springConfig: SpringConfig
 
-    init(cumulativeUnits: Double, timestamp: TimeInterval, recognitionMovement: SwipeEvent? = nil) {
+    init(
+        cumulativeUnits: Double,
+        timestamp: TimeInterval,
+        recognitionMovement: SwipeEvent? = nil,
+        springConfig: SpringConfig = defaultSpringConfig
+    ) {
+        self.springConfig = springConfig
         originUnits = cumulativeUnits.isFinite ? cumulativeUnits : 0
         lastTimestamp = timestamp.isFinite ? timestamp : 0
         tracker.seed(recognitionMovement.map {
@@ -84,7 +91,7 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: velocity,
             startTime: animationTime,
-            config: motion.scaled(Self.springConfig)
+            config: motion.scaled(springConfig)
         )
         return true
     }
@@ -99,7 +106,7 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: 0,
             startTime: animationTime,
-            config: motion.scaled(Self.springConfig)
+            config: motion.scaled(springConfig)
         )
         return true
     }
@@ -117,7 +124,7 @@ final class WorkspaceSwipeMotion {
             to: destination,
             initialVelocity: currentVelocity,
             startTime: animationTime,
-            config: motion.scaled(Self.springConfig)
+            config: motion.scaled(springConfig)
         )
         return true
     }

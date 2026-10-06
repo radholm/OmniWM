@@ -69,6 +69,63 @@ final class FullscreenStackGestureTests: XCTestCase {
         assertEqual(effect.pose(at: 1.3, size: size).transform, effect.pose(at: 1, size: size).transform)
     }
 
+    func testStackSpringSettlesSlowerThanWorkspaceSwipe() {
+        let workspace = WorkspaceSwipeMotion(cumulativeUnits: 0, timestamp: 0)
+        let stack = WorkspaceSwipeMotion(
+            cumulativeUnits: 0,
+            timestamp: 0,
+            springConfig: FullscreenStackGesturePresentation.springConfig
+        )
+        for motion in [workspace, stack] {
+            motion.update(cumulativeUnits: 180, timestamp: 0.1)
+            XCTAssertTrue(motion.release(timestamp: 0.1, allowFlick: true, animationTime: 0))
+            XCTAssertEqual(motion.target, 1)
+        }
+        XCTAssertLessThan(stack.progress(at: 0.1), workspace.progress(at: 0.1))
+        XCTAssertGreaterThan(stack.progress(at: 0.1), 0.6)
+        XCTAssertTrue(stack.isComplete(at: 2))
+    }
+
+    @MainActor
+    func testReleasePagesTheStackEvenWhenThePageTurnCannotBeDrawn() throws {
+        let controller = WindowAdmissionTestSupport.controller()
+        let manager = controller.workspaceManager
+        let workspaceId = try XCTUnwrap(WindowAdmissionTestSupport.workspace(
+            named: "1", layoutType: .dwindle, controller: controller
+        ))
+        _ = manager.focusWorkspace(named: "1")
+        controller.dwindleLayoutHandler.enableDwindleLayout()
+        let tokens = (1 ... 3).map { WindowToken(pid: 777_001, windowId: 777_100 + $0) }
+        for token in tokens {
+            _ = WindowAdmissionTestSupport.track(token, in: workspaceId, controller: controller)
+        }
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        _ = manager.withEngineMutationScope {
+            engine.syncWindows(tokens, in: workspaceId, focusedToken: tokens[0])
+        }
+        let fullscreen = try XCTUnwrap(manager.withEngineMutationScope {
+            engine.toggleFullscreen(in: workspaceId)
+        })
+        let gesture = controller.dwindleLayoutHandler.fullscreenStackGesture
+        XCTAssertTrue(gesture.canPage(workspaceId: workspaceId))
+
+        XCTAssertTrue(gesture.begin(
+            workspaceId: workspaceId, forward: true, cumulative: 20, timestamp: 0, recognitionMovement: nil
+        ))
+        gesture.update(cumulative: 260, timestamp: 0.1)
+        XCTAssertTrue(gesture.release(timestamp: 0.12, allowFlick: true))
+        XCTAssertFalse(gesture.hasPresentation)
+        let paged = engine.fullscreenTokens(in: workspaceId)
+        XCTAssertEqual(paged.count, 1)
+        XCTAssertNotEqual(paged.first, fullscreen)
+
+        XCTAssertTrue(gesture.begin(
+            workspaceId: workspaceId, forward: true, cumulative: 20, timestamp: 1, recognitionMovement: nil
+        ))
+        XCTAssertTrue(gesture.release(timestamp: 1.5, allowFlick: true))
+        XCTAssertEqual(engine.fullscreenTokens(in: workspaceId), paged, "a short, slow swipe settles back")
+    }
+
     private func assertEqual(
         _ lhs: CATransform3D,
         _ rhs: CATransform3D,
