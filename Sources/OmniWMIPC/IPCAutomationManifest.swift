@@ -49,6 +49,7 @@ public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Se
     case workspaceNumber = "workspace-number"
     case scratchpadIndex = "scratchpad-index"
     case layout
+    case paletteMode = "palette-mode"
     case resizeAxis = "resize-axis"
     case resizeOperation = "resize-operation"
 
@@ -61,6 +62,8 @@ public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Se
             "<number>"
         case .layout:
             "<default|dwindle>"
+        case .paletteMode:
+            "<windows|menu|clipboard|commands|applications|files>"
         case .resizeAxis:
             "<horizontal|vertical>"
         case .resizeOperation:
@@ -121,6 +124,10 @@ public struct IPCCommandArgumentDescriptor: Codable, Equatable, Sendable {
     static let layout = Self(
         kind: .layout,
         summary: "Workspace layout selection."
+    )
+    static let paletteMode = Self(
+        kind: .paletteMode,
+        summary: "Command palette mode."
     )
     static let resizeAxis = Self(
         kind: .resizeAxis,

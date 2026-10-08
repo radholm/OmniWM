@@ -122,8 +122,10 @@ struct WorldView {
                         barHeight: geometry.barHeight,
                         accentColor: resolved.accentColor,
                         textColor: resolved.textColor,
-                        orientation: resolved.position.isVertical ? .vertical : .horizontal
-                    )
+                        orientation: resolved.position.isVertical ? .vertical : .horizontal,
+                        secureInputActive: controller.isSecureInputIndicated
+                    ),
+                    retainWhileHidden: controller.canAutoHideWorkspaceBar(on: monitor, resolved: resolved)
                 )
             )
         }

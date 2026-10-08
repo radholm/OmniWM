@@ -55,6 +55,7 @@ final class IPCCommandBoundaryTests: XCTestCase {
             ("switch-workspace-slot", "slotNumber"), ("scratchpad-assign", "scratchpadIndex"),
             ("move-group", "direction"),
             ("move-to-workspace-on-monitor", "workspaceNumber"), ("set-workspace-layout", "layout"),
+            ("open-command-palette-mode", "mode"),
             ("resize", "axis"), ("resize-focused", "operation")
         ]
         for payload in payloads {
@@ -152,6 +153,8 @@ final class IPCCommandBoundaryTests: XCTestCase {
             .integer(1)
         case .layout:
             .layout(.dwindle)
+        case .paletteMode:
+            .paletteMode(.clipboard)
         case .resizeAxis:
             .resizeAxis(.horizontal)
         case .resizeOperation:

@@ -205,6 +205,7 @@ enum ActionCatalog {
              .fullscreen,
              .openCommandPalette,
              .raiseAllFloatingWindows,
+             .toggleFloatingFocus,
              .rescueOffscreenWindows,
              .windowState,
              .openMenuAnywhere,
@@ -237,6 +238,10 @@ enum ActionCatalog {
             )
         case .raiseAllFloatingWindows: LocalizedStringResource(
                 "command.floating.raiseAll", defaultValue: "Raise All Floating Windows", table: "Commands",
+                bundle: .omniWM
+            )
+        case .toggleFloatingFocus: LocalizedStringResource(
+                "command.floating.toggleFocus", defaultValue: "Toggle Floating/Tiled Focus", table: "Commands",
                 bundle: .omniWM
             )
         case .rescueOffscreenWindows: LocalizedStringResource(
@@ -283,6 +288,8 @@ enum ActionCatalog {
             .openCommandPalette
         case .raiseAllFloatingWindows:
             .raiseAllFloatingWindows
+        case .toggleFloatingFocus:
+            .toggleFloatingFocus
         case .rescueOffscreenWindows:
             .rescueOffscreenWindows
         case let .fullscreen(command):

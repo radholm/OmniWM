@@ -151,6 +151,7 @@ Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever
 | `command toggle-focused-window-floating` | — | shared | Toggle focused window between tiled and floating |
 | `command close-focused-window` | — | shared | Close the focused managed window through its close button; returns `window_action_failed` when the window has no close button or refuses the press |
 | `command raise-all-floating-windows` | — | shared | Raise all visible floating windows |
+| `command toggle-floating-focus` | — | shared | Toggle focus between the floating and tiled windows of the active workspace |
 | `command rescue-offscreen-windows` | — | shared | Clamp tracked floating windows back onto their visible monitors |
 | `command scratchpad assign <number>` | — | shared | Assign the focused window to scratchpad 1-10, or remove it when already there |
 | `command scratchpad toggle <number>` | — | shared | Show or hide the windows in scratchpad 1-10 |
@@ -160,6 +161,7 @@ Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever
 | Command | Arguments | Layout | Description |
 |---------|-----------|--------|-------------|
 | `command open-command-palette` | — | shared | Toggle the command palette |
+| `command open-command-palette` | `<windows\|menu\|clipboard\|commands\|applications\|files>` | shared | Open the command palette in a mode; switch to it if open, close it if already there |
 | `command open-menu-anywhere` | — | shared | Open the menu surface |
 | `command toggle-workspace-bar` | — | shared | Toggle workspace bar visibility |
 | `command hidden-bar panel` | — | shared | Toggle the panel containing configured hidden menu-bar items |

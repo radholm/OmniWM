@@ -36,6 +36,7 @@ final class SettingsStore {
     var onExternalSettingsReloaded: (@MainActor () -> Void)?
     var onConfigNoticeChanged: (@MainActor () -> Void)?
     var onTrackpadGestureAvailabilityChanged: (@MainActor (Bool) -> Void)?
+    var onPointerSettingsChanged: (@MainActor () -> Void)?
     var onWorkspaceHotkeysChanged: (@MainActor () -> Void)?
     var liveWorkspaceNamesForHotkeys: (@MainActor () -> [String])?
     private(set) var configNotice: SettingsConfigNotice?
@@ -272,7 +273,7 @@ final class SettingsStore {
         syncQuakeTerminalCustomFrameToRuntimeState()
 
         focus.onChange = { [weak self] in self?.scheduleSave() }
-        pointer.onChange = { [weak self] in self?.scheduleSave() }
+        pointer.onChange = { [weak self] in self?.pointerSettingsDidChange() }
         monitors.onChange = { [weak self] in self?.scheduleSave() }
         gaps.onChange = { [weak self] in self?.layoutConfigurationDidChange() }
         dwindle.onChange = { [weak self] in self?.scheduleSave() }
@@ -442,6 +443,11 @@ extension SettingsStore {
 
         appearanceMode = export.appearanceMode
         tabRailAppIcons = export.tabRailAppIcons
+    }
+
+    private func pointerSettingsDidChange() {
+        onPointerSettingsChanged?()
+        scheduleSave()
     }
 
     private func notifyTrackpadAvailabilityIfChanged() {

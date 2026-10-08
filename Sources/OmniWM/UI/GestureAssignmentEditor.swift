@@ -90,12 +90,13 @@ struct GestureAssignmentEdit: Equatable {
             }
         case let .fingers(count):
             precondition(action.supportedFingerCounts.contains(count))
+            let threeOrFour = ThreeOrFourFingerCount(rawValue: count)
             guard let fingers = GestureFingerCount(rawValue: count) else {
                 preconditionFailure("Unsupported gesture finger count")
             }
             switch action {
             case .workspaces: candidate.workspaceSwipeFingerCount = fingers
-            case .overview: candidate.overviewGestureFingerCount = OverviewGestureFingerCount(rawValue: count)
+            case .overview: candidate.overviewGestureFingerCount = threeOrFour
             case .move: candidate.windowMoveFingerCount = fingers
             case .resize: candidate.windowResizeFingerCount = fingers
             }

@@ -165,7 +165,7 @@ extension CanonicalTOMLConfig {
             updateChecksEnabled: general.updateChecksEnabled,
             ipcEnabled: general.ipcEnabled,
             gestures: gestures.normalized(),
-            statusBar: statusBar,
+            statusBar: statusBarForExport(),
             hiddenBar: hiddenBar,
             animationsEnabled: general.animationsEnabled,
             animationSpeed: AnimationSpeed.normalized(general.animationSpeed ?? 1),
@@ -185,5 +185,11 @@ extension CanonicalTOMLConfig {
         overview.mouseScrollSpeed = overview.mouseScrollSpeed ?? 1
         overview.workspaceGrid = overview.workspaceGrid ?? true
         return overview
+    }
+
+    private func statusBarForExport() -> SettingsExport.StatusBar {
+        var statusBar = statusBar
+        statusBar.showIcon = statusBar.showIcon ?? true
+        return statusBar
     }
 }

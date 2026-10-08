@@ -42,6 +42,7 @@ final class WMController {
     }
 
     let secureInputMonitor = SecureInputMonitor()
+    let secureInputIndicator = SecureInputIndicatorController()
     let lockScreenObserver = LockScreenObserver()
     var isLockScreenActive: Bool = false {
         didSet {
@@ -102,9 +103,9 @@ final class WMController {
     @ObservationIgnored
     let floatDemotionTracker = FloatDemotionTracker()
     @ObservationIgnored
-    private var hiddenWorkspaceBarMonitorIds: Set<Monitor.ID> = []
+    private(set) var hiddenWorkspaceBarMonitorIds: Set<Monitor.ID> = []
     @ObservationIgnored
-    private var isWorkspaceBarRevealHeld = false
+    private(set) var isWorkspaceBarRevealHeld = false
     @ObservationIgnored
     private lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
         let monitor = WorkspaceBarRevealMonitor()
@@ -300,7 +301,7 @@ extension WMController {
         } else {
             hotkeys.stop()
         }
-        refreshHotkeyFailureSnapshots()
+        refreshHotkeyPresentation()
     }
 
     func borderSettingsChanged() {
@@ -366,6 +367,7 @@ extension WMController {
 
     func setFocusFollowsMouse(_ enabled: Bool) {
         focusFollowsMouseEnabled = enabled
+        mouseEventHandler.reconcileMouseMoveSubscription()
         guard !enabled,
               let request = intentLedger.activeManagedRequest,
               request.origin == .focusFollowsMouse
@@ -396,6 +398,7 @@ extension WMController {
 
     func setWorkspaceBarRevealHeld(_ revealed: Bool) {
         guard isWorkspaceBarRevealHeld != revealed else { return }
+        workspaceBarManager.refreshAutoHide()
         isWorkspaceBarRevealHeld = revealed
         surfaceReconciler.noteWorldChanged()
     }
@@ -407,11 +410,6 @@ extension WMController {
     func refreshHotkeyFailureSnapshots() {
         hotkeyRegistrationFailures = hotkeys.registrationFailures
         systemHyperTriggerFailure = hotkeys.systemHyperTriggerFailure
-    }
-
-    func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
-        guard resolved.enabled, !hiddenWorkspaceBarMonitorIds.contains(monitor.id) else { return false }
-        return settings.workspaceBar.revealModifier == .off || isWorkspaceBarRevealHeld
     }
 
     func pruneHiddenWorkspaceBarMonitorIds() {
@@ -466,11 +464,10 @@ extension WMController {
     func syncMouseWarpPolicy(for monitors: [Monitor]? = nil) -> Bool {
         let effectiveMonitors = monitors ?? workspaceManager.monitors
         let shouldEnable = shouldUseMouseWarp(for: effectiveMonitors)
-
+        mouseEventHandler.reconcileMouseMoveSubscription()
         guard shouldEnable != isMouseWarpPolicyEnabled else {
             return shouldEnable
         }
-
         if shouldEnable {
             mouseWarpHandler.setup()
         } else {

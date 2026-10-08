@@ -70,6 +70,15 @@ enum TrackpadGestureIntent {
         var windowResizeFingerCount = 3
         /// The workspace under the fingers shows a fullscreen stack that a swipe across the workspace axis pages.
         var fullscreenStackAvailable = false
+
+        var minimumFingerCount: Int {
+            var minimum = Int.max
+            if workspaceSwipeEnabled { minimum = min(minimum, workspaceSwipeFingerCount) }
+            if overviewAction != nil { minimum = min(minimum, overviewFingerCount) }
+            if windowMoveEnabled { minimum = min(minimum, windowMoveFingerCount) }
+            if windowResizeEnabled { minimum = min(minimum, windowResizeFingerCount) }
+            return minimum == .max ? 0 : minimum
+        }
     }
 
     static let workspaceSwipeTriggerUnits: CGFloat = 140.0

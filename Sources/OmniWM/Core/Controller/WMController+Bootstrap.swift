@@ -39,6 +39,9 @@ extension WMController {
         traceCaptureCoordinator.onStateChange = { [weak self] in
             self?.statusBarController?.handleTraceCaptureStateChange()
         }
+        secureInputIndicator.openHotkeysSettings = { [weak self] in
+            self?.statusBarController?.openSettings(section: .hotkeys)
+        }
         tabRailManager.onSelect = { [weak self] info, visualIndex, token in
             self?.dwindleLayoutHandler.selectGroupMember(
                 info: info, visualIndex: visualIndex, expectedToken: token
@@ -105,6 +108,9 @@ extension WMController {
         self.hiddenBarController.configureMotion(motionPolicy)
         self.hiddenBarController.onCursorWarp = { [weak self] point in
             self?.mouseWarpHandler.noteProgrammaticCursorMove(to: point)
+        }
+        ownedWindowRegistry.onWindowWillClose = { [weak self] in
+            self?.releaseStaleOwnedSurfaceFocus()
         }
     }
 

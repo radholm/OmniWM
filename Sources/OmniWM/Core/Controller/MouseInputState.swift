@@ -59,6 +59,7 @@ struct MouseInputState {
     var runLoopSource: CFRunLoopSource?
     var moveTap: CFMachPort?
     var moveTapRunLoopSource: CFRunLoopSource?
+    var moveTapDeliversMouseMoved = false
     var currentHoveredEdges: ResizeEdge = []
     var isResizing: Bool = false
     var isMoving: Bool = false

@@ -38,6 +38,7 @@ final class WorkspaceSwipePresentation {
 
         var settlement: AXFrameSettlement?
         var wallpaper: (from: CGRect, to: CGRect)?
+        var handoff: Handoff?
 
         init(
             preparation: Preparation,
@@ -82,7 +83,7 @@ final class WorkspaceSwipePresentation {
     weak var refreshController: LayoutRefreshController?
     var preparation: Preparation?
     private(set) var flight: Flight?
-    private var preview: WorkspaceSwipePreview?
+    var preview: WorkspaceSwipePreview?
     var wallpaperParallax: WorkspaceWallpaperParallax?
     var observesWallpaperSettings = false
     let mediaTimeProvider: () -> TimeInterval
@@ -92,6 +93,11 @@ final class WorkspaceSwipePresentation {
     static let keyboardPreviewWait: Duration = .seconds(keyboardPreviewWaitSeconds)
     /// When the current swipe started capturing previews; a swipe waits for fresh ones as long as a keyboard switch.
     private var preparedAt: TimeInterval?
+    var handoffWindowInfo: @MainActor (Set<UInt32>) async throws -> [UInt32: WindowServerInfo]? = {
+        try await SkyLight.shared.queryWindowInfoDeferred(windowIds: $0)
+    }
+
+    var handoffSleep: @MainActor (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
 
     init(
         refreshController: LayoutRefreshController,
@@ -260,6 +266,7 @@ final class WorkspaceSwipePresentation {
             return
         }
         self.flight = nil
+        flight.handoff?.cancel()
         flight.settlement?.onChange = nil
         if controller?.axManager.workspaceFrameSettlement === flight.settlement {
             controller?.axManager.workspaceFrameSettlement = nil
@@ -270,7 +277,7 @@ final class WorkspaceSwipePresentation {
         trace(reason, progress: flight.progress)
         controller?.surfaceReconciler.noteWorldChanged()
         refreshController?.stopDisplayLinkIfIdle(for: flight.preparation.monitor.displayId)
-        if reason == "completed" || reason == "placement-failed" || reason == "cancelled" {
+        if ["completed", "placement-failed", "handoff-unconfirmed", "cancelled"].contains(reason) {
             refreshController?.collectUnusedWorkspacesIfIdle()
             warmPreviews()
         }
@@ -281,7 +288,7 @@ final class WorkspaceSwipePresentation {
         if settlement.tokens.contains(where: {
             refreshController?.hasPendingRevealTransaction(for: $0.windowId) == true
         }) { return }
-        cancel(reason: settlement.failed ? "placement-failed" : "completed")
+        confirmHandoff(flight)
     }
 
     func didSubmitPlacement() {
@@ -465,27 +472,6 @@ extension WorkspaceSwipePresentation {
 }
 
 extension WorkspaceSwipePresentation {
-    func windowRemoved(_ token: WindowToken) {
-        preview?.remove(token: token)
-    }
-
-    func syncAvailability() {
-        guard let controller, preview != nil,
-              !controller.motionPolicy.animationsEnabled || !controller.settings.gestures.workspaceSwipeEnabled
-        else { return }
-        cancel(reason: "disabled")
-        preview?.release()
-        preview = nil
-    }
-
-    func previewSurface(_ controller: WMController) -> WorkspaceSwipePreview {
-        if let preview { return preview }
-        let preview = WorkspaceSwipePreview(ownedWindowRegistry: controller.ownedWindowRegistry)
-        preview.animationSpeed = { [weak controller] in controller?.motionPolicy.animationSpeed ?? 1 }
-        self.preview = preview
-        return preview
-    }
-
     private func present(_ flight: Flight, at timestamp: TimeInterval) {
         flight.progress = flight.motion.progress(at: timestamp)
         let wallpaperFrame = panWallpaper(for: flight)

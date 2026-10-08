@@ -404,6 +404,99 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
         XCTAssertNil(swipe.preparation)
     }
 
+    func testCommittedSwipeKeepsOverlayUntilWindowServerParksTheSourceWindow() async throws {
+        let fixture = try previewFixture()
+        try await cachePreviewThroughWarmup(fixture)
+        var parked = false
+        var reads = 0
+        fixture.swipe.handoffSleep = { _ in try await Task.sleep(for: .seconds(3_600)) }
+        fixture.swipe.handoffWindowInfo = { ids in
+            reads += 1
+            return Dictionary(uniqueKeysWithValues: ids.map {
+                ($0, Self.windowInfo(id: $0, appKitFrame: parked ? Self.parkedFrame : Self.sourceFrame))
+            })
+        }
+        commitSwipe(fixture)
+
+        fixture.swipe.didSubmitPlacement()
+        await waitUntil { reads == 1 }
+
+        XCTAssertTrue(fixture.swipe.hasPresentation)
+        parked = true
+        fixture.swipe.windowFrameChanged(764_942)
+        await waitUntil { !fixture.swipe.hasPresentation }
+        XCTAssertFalse(fixture.swipe.hasPresentation)
+        XCTAssertEqual(reads, 2)
+    }
+
+    func testHandoffDeadlineRemovesTheOverlayWithoutConfirmation() async throws {
+        let fixture = try previewFixture()
+        try await cachePreviewThroughWarmup(fixture)
+        var deadline: CheckedContinuation<Void, Never>?
+        var reads = 0
+        fixture.swipe.handoffSleep = { _ in await withCheckedContinuation { deadline = $0 } }
+        fixture.swipe.handoffWindowInfo = { ids in
+            reads += 1
+            return Dictionary(uniqueKeysWithValues: ids.map {
+                ($0, Self.windowInfo(id: $0, appKitFrame: Self.sourceFrame))
+            })
+        }
+        commitSwipe(fixture)
+
+        fixture.swipe.didSubmitPlacement()
+        await waitUntil { deadline != nil && reads == 1 }
+
+        XCTAssertTrue(fixture.swipe.hasPresentation)
+        deadline?.resume()
+        await waitUntil { !fixture.swipe.hasPresentation }
+        XCTAssertFalse(fixture.swipe.hasPresentation)
+    }
+
+    func testHandoffDoesNotWaitForSourceWindowsAlreadyParkedAtTheDisplayEdge() {
+        let monitor = makeMonitor(1, x: 0, y: 0)
+        let visible = WorkspaceSwipePreview.Item(
+            handle: WindowHandle(id: WindowToken(pid: 764_961, windowId: 11)), frame: Self.sourceFrame
+        )
+        let edgeSliver = CGRect(x: monitor.visibleFrame.maxX - 1, y: 50, width: 600, height: 500)
+        let parked = WorkspaceSwipePreview.Item(
+            handle: WindowHandle(id: WindowToken(pid: 764_961, windowId: 12)), frame: edgeSliver
+        )
+        let destination = WorkspaceSwipePresentation.Workspace(id: UUID(), items: [])
+        let flight = WorkspaceSwipePresentation.Flight(
+            preparation: WorkspaceSwipePresentation.Preparation(
+                monitor: monitor, frame: monitor.visibleFrame,
+                source: WorkspaceSwipePresentation.Workspace(id: UUID(), items: [visible, parked]),
+                previous: destination, next: destination
+            ),
+            destination: destination, axis: .vertical, cumulative: 20, isNext: true, timestamp: 1,
+            recognitionMovement: nil
+        )
+        let handoff = WorkspaceSwipePresentation.Handoff(flight: flight)
+
+        XCTAssertEqual(handoff.windowIds, [11])
+        XCTAssertFalse(handoff.shortfalls(in: [
+            11: Self.windowInfo(id: 11, appKitFrame: Self.sourceFrame),
+            12: Self.windowInfo(id: 12, appKitFrame: edgeSliver)
+        ]).isEmpty)
+        XCTAssertTrue(handoff.shortfalls(in: [
+            11: Self.windowInfo(id: 11, appKitFrame: Self.parkedFrame),
+            12: Self.windowInfo(id: 12, appKitFrame: edgeSliver)
+        ]).isEmpty)
+    }
+
+    func testHandoffWithoutWindowServerAccessRemovesTheOverlayAtSettlement() async throws {
+        let fixture = try previewFixture()
+        try await cachePreviewThroughWarmup(fixture)
+        fixture.swipe.handoffSleep = { _ in try await Task.sleep(for: .seconds(3_600)) }
+        fixture.swipe.handoffWindowInfo = { _ in nil }
+        commitSwipe(fixture)
+
+        fixture.swipe.didSubmitPlacement()
+
+        await waitUntil { !fixture.swipe.hasPresentation }
+        XCTAssertFalse(fixture.swipe.hasPresentation)
+    }
+
     private func makeSnapshotImage() throws -> CGImage {
         let context = try XCTUnwrap(CGContext(
             data: nil, width: 64, height: 48, bitsPerComponent: 8, bytesPerRow: 0,
@@ -513,5 +606,102 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
         wallpaper.desktopImageURL = { _ in nil }
         wallpaper.captureWallpaper = { _ in image }
         return WorkspaceSwipeBackdrop(wallpaperCache: wallpaper)
+    }
+
+    private static let sourceFrame = CGRect(x: 50, y: 50, width: 600, height: 500)
+
+    private static let parkedFrame = CGRect(x: 100_000, y: 100_000, width: 600, height: 500)
+
+    private static func windowInfo(id: UInt32, appKitFrame: CGRect) -> WindowServerInfo {
+        WindowServerInfo(id: id, pid: 764_941, level: 0, frame: ScreenCoordinateSpace.toWindowServer(rect: appKitFrame))
+    }
+
+    private func commitSwipe(_ fixture: PreviewFixture) {
+        fixture.clock.now = 1
+        XCTAssertFalse(fixture.swipe.prepare(monitorId: fixture.monitor.id, timestamp: 1))
+        fixture.clock.now = 1.4
+        fixture.swipe.begin(axis: .vertical, cumulative: 20, timestamp: 1.01)
+        XCTAssertTrue(fixture.swipe.update(cumulative: 260, timestamp: 1.11))
+        XCTAssertTrue(fixture.swipe.release(timestamp: 1.4, allowFlick: true))
+        fixture.swipe.tick(displayId: fixture.monitor.displayId, timestamp: 3)
+        XCTAssertEqual(fixture.swipe.flight?.phase, .waitingForPlacement)
+    }
+
+    private func waitUntil(_ condition: () -> Bool) async {
+        var attempts = 0
+        while !condition(), attempts < 1_000 {
+            attempts += 1
+            await Task.yield()
+        }
+    }
+
+    private final class PreviewClock {
+        var now: TimeInterval = 1.4
+    }
+
+    private struct PreviewFixture {
+        let clock: PreviewClock
+        let controller: WMController
+        let driver: OverviewPreviewTestDriver
+        let capture: OverviewThumbnailCapture
+        let preview: WorkspaceSwipePreview
+        let swipe: WorkspaceSwipePresentation
+        let monitor: Monitor
+        let handle: WindowHandle
+    }
+
+    private func previewFixture() throws -> PreviewFixture {
+        let driver = OverviewPreviewTestDriver()
+        let capture = driver.makeCapture()
+        let preview = try WorkspaceSwipePreview(
+            ownedWindowRegistry: OwnedWindowRegistry(), previewCapture: capture,
+            backdrop: makeBackdrop(), hasCaptureAccess: { true }
+        )
+        let clock = PreviewClock()
+        let (controller, swipe, monitor, source) = try fixture(previewSurface: preview) { clock.now }
+        controller.dwindleLayoutHandler.enableDwindleLayout()
+        let pid: pid_t = 764_941
+        let windowId = 764_942
+        let token = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
+            pid: pid, windowId: windowId, to: source
+        )
+        controller.workspaceManager.setCachedConstraints(.unconstrained, for: token)
+        let engine = try XCTUnwrap(controller.dwindleEngine)
+        _ = controller.workspaceManager.withEngineMutationScope(in: source) {
+            engine.addWindow(token: token, to: source, activeWindowFrame: nil)
+        }
+        controller.axManager.confirmFrameWrite(
+            for: windowId, frame: CGRect(x: 50, y: 50, width: 600, height: 500)
+        )
+        let preparation = try XCTUnwrap(swipe.makePreparation(monitorId: monitor.id))
+        XCTAssertEqual(preparation.source.items.map(\.handle.token), [token])
+        let handle = try XCTUnwrap(preparation.source.items.first?.handle)
+        return PreviewFixture(
+            clock: clock, controller: controller, driver: driver, capture: capture, preview: preview, swipe: swipe,
+            monitor: monitor, handle: handle
+        )
+    }
+
+    private func cachePreviewThroughWarmup(_ fixture: PreviewFixture) async throws {
+        fixture.preview.warm(
+            source: [WorkspaceSwipePreview.Item(handle: fixture.handle, frame: Self.sourceFrame)],
+            destination: [], monitor: fixture.monitor
+        )
+        await fixture.driver.waitForStarts(1)
+        fixture.driver.completeAllStarts()
+        await publish(try makeOverviewPreviewFrame(), through: fixture.driver.streams[0], into: fixture.capture)
+        XCTAssertNotNil(fixture.capture.preview(for: fixture.handle))
+    }
+
+    private func publish(
+        _ frame: OverviewPreviewFrame,
+        through stream: OverviewPreviewTestStream,
+        into capture: OverviewThumbnailCapture
+    ) async {
+        let published = expectation(description: "swipe preview frame published")
+        capture.onPreview = { _, preview in if preview === frame { published.fulfill() } }
+        stream.output.offer(frame)
+        await fulfillment(of: [published], timeout: 1)
     }
 }

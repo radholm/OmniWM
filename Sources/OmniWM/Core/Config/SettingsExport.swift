@@ -189,7 +189,7 @@ struct SettingsExport: Equatable {
         var workspaceSwipeFingerCount: GestureFingerCount
         var workspaceSwipeAxis: WorkspaceSwipeAxis
         var overviewGestureEnabled: Bool? = false
-        var overviewGestureFingerCount: OverviewGestureFingerCount? = .four
+        var overviewGestureFingerCount: ThreeOrFourFingerCount? = .four
         var windowMoveEnabled: Bool? = false
         var windowMoveFingerCount: GestureFingerCount? = .four
         var windowResizeEnabled: Bool? = false
@@ -206,6 +206,7 @@ struct SettingsExport: Equatable {
         var showWorkspaceName: Bool
         var showAppNames: Bool
         var useWorkspaceId: Bool
+        var showIcon: Bool? = true
     }
 
     struct HiddenBar: Codable, Equatable {
