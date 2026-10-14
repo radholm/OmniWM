@@ -68,6 +68,7 @@ struct SettingsExport: Equatable {
     var hyperKeyModifiers: HyperKeyModifiers
 
     var workspaceBar: WorkspaceBar
+    var island: Island
     var scratchpads: Scratchpads
     var monitorBarSettings: [MonitorBarSettings]
 
@@ -95,6 +96,14 @@ struct SettingsExport: Equatable {
 
     var appearanceMode: AppearanceMode
     var tabRailAppIcons: Bool
+
+    struct Island: Codable, Equatable {
+        var enabled: Bool
+
+        static func defaults() -> Self {
+            Self(enabled: false)
+        }
+    }
 
     struct Focus: Codable, Equatable {
         var followsMouse: Bool
@@ -278,6 +287,7 @@ extension SettingsExport {
             systemHyperTrigger: .default,
             hyperKeyModifiers: .default,
             workspaceBar: WorkspaceBar.defaults(),
+            island: Island.defaults(),
             scratchpads: Scratchpads(labels: [:]),
             monitorBarSettings: [],
             appRules: BuiltInSettingsDefaults.appRules,

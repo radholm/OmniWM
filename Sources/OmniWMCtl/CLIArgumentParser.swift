@@ -12,20 +12,6 @@ enum CLIArgumentParser {
         return direction
     }
 
-    static func parseResizeAxis(_ rawValue: String) throws -> IPCResizeAxis {
-        guard let axis = IPCResizeAxis(rawValue: rawValue) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return axis
-    }
-
-    static func parseScratchpadIndex(_ rawValue: String) throws -> Int {
-        guard let index = Int(rawValue), IPCScratchpadSlots.range.contains(index) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return index
-    }
-
     static func parsePositiveInteger(_ rawValue: String) throws -> Int {
         guard let value = Int(rawValue), value > 0 else {
             throw CLIParseError.usage(CLIParser.usageText)
@@ -45,49 +31,5 @@ enum CLIArgumentParser {
             throw CLIParseError.usage(CLIParser.usageText)
         }
         return value
-    }
-
-    static func parseResizeOperation(_ rawValue: String) throws -> IPCResizeOperation {
-        guard let operation = IPCResizeOperation(rawValue: rawValue) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return operation
-    }
-
-    static func parseWorkspaceLayout(_ rawValue: String) throws -> IPCWorkspaceLayout {
-        guard let layout = IPCWorkspaceLayout(rawValue: rawValue) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return layout
-    }
-
-    static func parsePaletteMode(_ rawValue: String) throws -> IPCCommandPaletteMode {
-        guard let mode = IPCCommandPaletteMode(rawValue: rawValue) else {
-            throw CLIParseError.usage(CLIParser.usageText)
-        }
-        return mode
-    }
-
-    static func parseCommandArgumentValue(
-        _ pair: (IPCCommandArgumentDescriptor, String)
-    ) throws -> IPCCommandArgumentValue {
-        let (descriptor, token) = pair
-
-        switch descriptor.kind {
-        case .direction:
-            return .direction(try parseDirection(token))
-        case .workspaceNumber:
-            return .integer(try parsePositiveInteger(token))
-        case .scratchpadIndex:
-            return .integer(try parseScratchpadIndex(token))
-        case .layout:
-            return .layout(try parseWorkspaceLayout(token))
-        case .paletteMode:
-            return .paletteMode(try parsePaletteMode(token))
-        case .resizeAxis:
-            return .resizeAxis(try parseResizeAxis(token))
-        case .resizeOperation:
-            return .resizeOperation(try parseResizeOperation(token))
-        }
     }
 }

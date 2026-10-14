@@ -146,6 +146,8 @@ extension IPCResult {
             self.init(subscriptions: queryRouter.subscriptionsResult())
         case .capabilities:
             self.init(capabilities: queryRouter.capabilitiesResult())
+        case .shellWidgets:
+            self.init(shellWidgets: queryRouter.shellWidgetsResult())
         }
     }
 
@@ -166,6 +168,8 @@ extension IPCResult {
             self.init(displays: queryRouter.displaysResult(IPCQueryRequest(name: .displays)))
         case .layoutChanged:
             self.init(workspaces: queryRouter.workspacesResult(IPCQueryRequest(name: .workspaces)))
+        case .shellWidgets:
+            self.init(shellWidgets: queryRouter.shellWidgetsResult())
         }
     }
 }

@@ -54,6 +54,8 @@ enum HotkeyCommand: Equatable, Hashable {
     case windowMark(WindowMarkHotkeyAction)
 
     case presentation(IPCPresentationCommand)
+    case media(IPCMediaCommand)
+    case shellToggle(String)
     case focusNavigation(FocusNavigationAction)
     case windowMovement(WindowMovementAction)
     case workspace(WorkspaceAction)

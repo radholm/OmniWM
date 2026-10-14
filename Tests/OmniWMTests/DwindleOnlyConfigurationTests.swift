@@ -41,7 +41,7 @@ final class DwindleOnlyConfigurationTests: XCTestCase {
         )
         XCTAssertEqual(Set(tree.keys), [
             "schemaVersion", "general", "focus", "mouseWarp", "routing", "gaps", "dwindle", "borders",
-            "overview", "workspaceBar", "gestures", "statusBar", "hiddenBar", "clipboard", "quakeTerminal",
+            "overview", "workspaceBar", "island", "gestures", "statusBar", "hiddenBar", "clipboard", "quakeTerminal",
             "scratchpads", "appearance", "hotkeys", "workspaces", "appRules", "monitorBarOverrides",
             "monitorOrientationOverrides", "monitorDwindleOverrides", "monitorGapOverrides"
         ])

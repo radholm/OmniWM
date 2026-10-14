@@ -16,6 +16,7 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
     case workspaceLayout(IPCWorkspaceLayoutCommandName)
     case fullscreen(IPCFullscreenCommand)
     case presentation(IPCPresentationCommand)
+    case media(IPCMediaCommand)
     case windowState(IPCWindowStateCommand)
     case scratchpad(IPCScratchpadCommandName)
     case openMenuAnywhere
@@ -49,6 +50,8 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
         case let .fullscreen(name):
             name.rawValue
         case let .presentation(name):
+            name.rawValue
+        case let .media(name):
             name.rawValue
         case let .windowState(name):
             name.rawValue
@@ -84,6 +87,7 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
             name = name ?? IPCWorkspaceLayoutCommandName(rawValue: rawValue).map(Self.workspaceLayout)
             name = name ?? IPCFullscreenCommand(rawValue: rawValue).map(Self.fullscreen)
             name = name ?? IPCPresentationCommand(rawValue: rawValue).map(Self.presentation)
+            name = name ?? IPCMediaCommand(rawValue: rawValue).map(Self.media)
             name = name ?? IPCWindowStateCommand(rawValue: rawValue).map(Self.windowState)
             name = name ?? IPCScratchpadCommandName(rawValue: rawValue).map(Self.scratchpad)
             guard let name else { return nil }
@@ -107,6 +111,7 @@ public enum IPCCommandName: RawRepresentable, Codable, CaseIterable, Hashable, S
         names.append(contentsOf: IPCWorkspaceLayoutCommandName.allCases.map(Self.workspaceLayout))
         names.append(contentsOf: IPCFullscreenCommand.allCases.map(Self.fullscreen))
         names.append(contentsOf: IPCPresentationCommand.allCases.map(Self.presentation))
+        names.append(contentsOf: IPCMediaCommand.allCases.map(Self.media))
         names.append(contentsOf: IPCWindowStateCommand.allCases.map(Self.windowState))
         names.append(contentsOf: IPCScratchpadCommandName.allCases.map(Self.scratchpad))
         names.append(.openMenuAnywhere)

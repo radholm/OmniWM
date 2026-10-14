@@ -64,6 +64,6 @@ extension WorkspaceManager {
             }
         }
         reconcileConfiguredVisibleWorkspaces()
-        settings.reconcileWorkspaceNumberHotkeys()
+        settings.reconcileDynamicHotkeys()
     }
 }

@@ -66,8 +66,9 @@ Workspace and scratchpad hiding retain their reasons. Inactive Dwindle group mem
 
 The three workspace flags answer different questions. `is-focused` marks the workspace that holds the natively focused managed window, `is-current` marks the active workspace on the interaction monitor (the one `--current` selects), and `is-visible` marks every workspace that is active on some monitor. With two monitors, two workspaces are visible, one is current, and at most one is focused.
 
-**Display fields:** `id`, `name`, `is-main`, `is-current`, `frame`, `visible-frame`, `has-notch`, `orientation`, `inner-gap`, `outer-gap-left`, `outer-gap-right`, `outer-gap-top`, `outer-gap-bottom`, `fullscreen-uses-outer-gaps`, `active-workspace`
+**Display fields:** `id`, `name`, `is-main`, `is-current`, `frame`, `visible-frame`, `has-notch`, `orientation`, `inner-gap`, `outer-gap-left`, `outer-gap-right`, `outer-gap-top`, `outer-gap-bottom`, `fullscreen-uses-outer-gaps`, `active-workspace`, `uuid`, `notch`, `menu-bar-height`, `bar-frames`, `reserved-insets`
 
+`uuid` is the display's stable UUID, `notch` the notch's horizontal `start` and `end`, `menu-bar-height` the space above the visible frame, `bar-frames` the frames of the workspace bar panels shown on the display, and `reserved-insets` the space the workspace bar reserves for windows on each edge. Unreleased: available when building from `main`.
 
 `frame` and `visible-frame` use AppKit global screen coordinates as reported by `NSScreen`: the origin is the bottom-left corner of the main display and `y` grows upward, so a display above the main one has a larger `y` than the main display. Window `frame` values use the same coordinate space.
 
@@ -87,9 +88,10 @@ The three workspace flags answer different questions. `is-focused` marks the wor
 | `rules` | — | — | Persisted user window rules |
 | `rule-actions` | — | — | Rule action registry |
 | `queries` | — | — | Query registry |
-| `commands` | — | — | Automation action registry for `command`, `workspace`, `window`, and `window mark` surfaces |
+| `commands` | — | — | Automation action registry for `command`, `workspace`, `window`, `window mark`, and `shell` surfaces |
 | `subscriptions` | — | — | Subscription registry |
-| `capabilities` | — | — | Full protocol capabilities, including `windowMarkActions` |
+| `capabilities` | — | — | Full protocol capabilities, including `windowMarkActions` and `shellActions` |
+| `shell-widgets` | — | — | Luau shell widgets with their `state` (`loading`, `loaded`, `failed` or `fallback`), `placements`, `source` file and any `error`, plus `problems` found in `shell.toml` and theme files. Unreleased: available when building from `main` |
 
 `window mark` descriptors in `commands` and `capabilities` are available. List live marks with [`omniwmctl window mark list`](/reference/cli/actions/#window-marks).
 

@@ -88,6 +88,8 @@ enum EventIntakeTrace {
         case let .closed(windowId): Identity(kind: "cgs.closed", windowId: Int(windowId))
         case let .frameChanged(windowId): Identity(kind: "cgs.frame", windowId: Int(windowId))
         case let .orderChanged(windowId): Identity(kind: "cgs.order", windowId: Int(windowId))
+        case let .visibilityChanged(windowId, orderedIn):
+            Identity(kind: orderedIn ? "cgs.ordered-in" : "cgs.ordered-out", windowId: Int(windowId))
         case let .titleChanged(windowId): Identity(kind: "cgs.title", windowId: Int(windowId))
         case let .frontAppChanged(pid): Identity(kind: "cgs.front-app", pid: pid)
         }
@@ -99,6 +101,7 @@ enum EventIntakeTrace {
         case let .windowDestroyed(pid, ref, _): Identity(kind: "ax.destroyed", pid: pid, windowId: ref.windowId)
         case let .windowMiniaturized(pid, ref, _): Identity(kind: "ax.minimized", pid: pid, windowId: ref.windowId)
         case let .windowDeminiaturized(pid, ref, _): Identity(kind: "ax.restored", pid: pid, windowId: ref.windowId)
+        case let .titleChanged(pid, windowId, _): Identity(kind: "ax.title", pid: pid, windowId: Int(windowId))
         }
     }
 

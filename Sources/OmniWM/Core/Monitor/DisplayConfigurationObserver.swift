@@ -27,16 +27,25 @@ final class DisplayConfigurationObserver: NSObject {
         super.init()
         updatePreviousMonitors(monitorSampler())
 
-        NotificationCenter.default.addObserver(
+        for name in [NSApplication.didChangeScreenParametersNotification, .screenSafeApertureDidChange] {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(screensDidChange),
+                name: name,
+                object: nil
+            )
+        }
+        DistributedNotificationCenter.default().addObserver(
             self,
             selector: #selector(screensDidChange),
-            name: NSApplication.didChangeScreenParametersNotification,
+            name: .menuBarHidingDidChange,
             object: nil
         )
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        DistributedNotificationCenter.default().removeObserver(self)
     }
 
     func setEventHandler(_ handler: @escaping EventHandler) {
@@ -98,4 +107,8 @@ final class DisplayConfigurationObserver: NSObject {
     private func updatePreviousMonitors(_ monitors: [Monitor]) {
         previousMonitors = Dictionary(uniqueKeysWithValues: monitors.map { ($0.id, $0) })
     }
+}
+
+extension Notification.Name {
+    static let screenSafeApertureDidChange = Notification.Name("_NSScreenDidChangeSafeApertureNotification")
 }
