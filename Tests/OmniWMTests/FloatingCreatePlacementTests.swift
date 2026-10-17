@@ -1335,6 +1335,29 @@ final class FloatingCreatePlacementTests: XCTestCase {
         XCTAssertEqual(occupied.ruleSkipReason, .appAlreadyHasEntries)
     }
 
+    func testAlwaysAssignWorkspaceRuleAppliesWhenAppHasWindows() throws {
+        let fixture = try makeTwoMonitorFixture()
+        let pid: pid_t = 30_532
+        _ = fixture.controller.workspaceManager.addWindow(
+            axRef(pid, 901), pid: pid, windowId: 901, to: fixture.primaryWorkspace
+        )
+
+        let placement = resolvePlacement(
+            fixture,
+            workspaceName: "6",
+            pid: pid,
+            placementMode: .tiling,
+            alwaysAssignWorkspace: true,
+            origin: .liveCreate,
+            createPlacementContext: nil,
+            windowFrame: nil,
+            fallbackWorkspaceId: fixture.primaryWorkspace
+        )
+
+        XCTAssertEqual(placement.rung, WorkspacePlacementRung.workspaceRule)
+        XCTAssertEqual(placement.workspaceId, fixture.secondaryWorkspace)
+    }
+
     func testHonoredWorkspaceRuleRecordsNoSkipReason() throws {
         let fixture = try makeTwoMonitorFixture()
 
@@ -1363,6 +1386,7 @@ final class FloatingCreatePlacementTests: XCTestCase {
         structuralReplacementWorkspaceId: WorkspaceDescriptor.ID? = nil,
         placementMode: TrackedWindowMode,
         allowsFloatingSpawnPlacement: Bool = false,
+        alwaysAssignWorkspace: Bool = false,
         origin: WorkspacePlacementOrigin,
         createPlacementContext: WindowCreatePlacementContext?,
         windowFrame: CGRect?,
@@ -1383,7 +1407,8 @@ final class FloatingCreatePlacementTests: XCTestCase {
                 workspaceName: workspaceName,
                 inheritTrackedParentWorkspace: inheritTrackedParentWorkspace,
                 structuralReplacementWorkspaceId: structuralReplacementWorkspaceId,
-                allowsFloatingSpawnPlacement: allowsFloatingSpawnPlacement
+                allowsFloatingSpawnPlacement: allowsFloatingSpawnPlacement,
+                alwaysAssignWorkspace: alwaysAssignWorkspace
             ),
             context: WorkspacePlacementContext(
                 origin: origin,

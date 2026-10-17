@@ -15,6 +15,7 @@ extension WMController {
         structuralReplacementWorkspaceId: WorkspaceDescriptor.ID? = nil,
         placementMode: TrackedWindowMode,
         allowsFloatingSpawnPlacement: Bool = false,
+        alwaysAssignWorkspace: Bool = false,
         placementOrigin: WorkspacePlacementOrigin = .liveCreate,
         createPlacementContext: WindowCreatePlacementContext? = nil,
         windowFrame: CGRect? = nil,
@@ -33,7 +34,8 @@ extension WMController {
                 workspaceName: workspaceName,
                 inheritTrackedParentWorkspace: inheritTrackedParentWorkspace,
                 structuralReplacementWorkspaceId: structuralReplacementWorkspaceId,
-                allowsFloatingSpawnPlacement: allowsFloatingSpawnPlacement
+                allowsFloatingSpawnPlacement: allowsFloatingSpawnPlacement,
+                alwaysAssignWorkspace: alwaysAssignWorkspace
             ),
             context: WorkspacePlacementContext(
                 origin: placementOrigin,
@@ -70,7 +72,8 @@ extension WMController {
                 allowsFloatingSpawnPlacement: allowsFloatingSpawnPlacement(
                     for: evaluation,
                     mode: placementMode
-                )
+                ),
+                alwaysAssignWorkspace: evaluation.decision.ruleEffects.alwaysAssignWorkspace
             ),
             context: placementContext
         ).workspaceId

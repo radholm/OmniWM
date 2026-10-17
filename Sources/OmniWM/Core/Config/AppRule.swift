@@ -32,6 +32,7 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
         case axSubrole
         case layout
         case assignToWorkspace
+        case alwaysAssign
         case minWidth
         case minHeight
     }
@@ -45,6 +46,8 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
     var axSubrole: String?
     var layout: WindowRuleLayoutAction?
     var assignToWorkspace: String?
+    /// Assigns every new window, not only the app's first one.
+    var alwaysAssign: Bool?
     var minWidth: Double?
     var minHeight: Double?
 
@@ -58,6 +61,7 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
         axSubrole: String? = nil,
         layout: WindowRuleLayoutAction? = nil,
         assignToWorkspace: String? = nil,
+        alwaysAssign: Bool? = nil,
         minWidth: Double? = nil,
         minHeight: Double? = nil
     ) {
@@ -70,6 +74,7 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
         self.axSubrole = axSubrole
         self.layout = layout
         self.assignToWorkspace = assignToWorkspace
+        self.alwaysAssign = alwaysAssign
         self.minWidth = minWidth
         self.minHeight = minHeight
         normalizeSingleTitle()
@@ -141,6 +146,7 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
         axSubrole = try container.decodeIfPresent(String.self, forKey: .axSubrole)
         layout = try container.decodeIfPresent(WindowRuleLayoutAction.self, forKey: .layout)
         assignToWorkspace = try container.decodeIfPresent(String.self, forKey: .assignToWorkspace)
+        alwaysAssign = try container.decodeIfPresent(Bool.self, forKey: .alwaysAssign)
         minWidth = try container.decodeIfPresent(Double.self, forKey: .minWidth)
         minHeight = try container.decodeIfPresent(Double.self, forKey: .minHeight)
         normalizeSingleTitle()
@@ -157,6 +163,7 @@ struct AppRule: Codable, Identifiable, Equatable, Sendable {
         try container.encodeIfPresent(axSubrole, forKey: .axSubrole)
         try container.encodeIfPresent(layout, forKey: .layout)
         try container.encodeIfPresent(assignToWorkspace, forKey: .assignToWorkspace)
+        try container.encodeIfPresent(alwaysAssign, forKey: .alwaysAssign)
         try container.encodeIfPresent(minWidth, forKey: .minWidth)
         try container.encodeIfPresent(minHeight, forKey: .minHeight)
     }

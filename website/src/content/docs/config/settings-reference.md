@@ -430,6 +430,7 @@ Array of per-app window rules, editable in the **App Rules** window. Matchers se
 | `axSubrole` *(optional)* | string | Matches the accessibility subrole. |
 | `layout` *(optional)* | string | `auto` (default), `tile`, or `float`. |
 | `assignToWorkspace` *(optional)* | string | Workspace name the window is routed to. |
+| `alwaysAssign` *(optional)* | bool | Route every new window to `assignToWorkspace`, not only the app's first window. |
 | `minWidth` *(optional)* | float | Minimum layout width in points. |
 | `minHeight` *(optional)* | float | Minimum layout height in points. |
 

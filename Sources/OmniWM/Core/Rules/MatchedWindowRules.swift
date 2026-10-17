@@ -90,7 +90,8 @@ struct MatchedWindowRules {
             ruleEffects: ManagedWindowRuleEffects(
                 minWidth: userRule?.rule.minWidth,
                 minHeight: userRule?.rule.minHeight,
-                matchedRuleId: userRule?.rule.id
+                matchedRuleId: userRule?.rule.id,
+                alwaysAssignWorkspace: userRule?.rule.alwaysAssign == true
             ),
             heuristicReasons: heuristicReasons,
             deferredReason: deferredReason

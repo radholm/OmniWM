@@ -69,7 +69,9 @@ final class PlacementResolver {
                 for: workspaceName,
                 createIfMissing: false
             )
-            if !shouldApplyWorkspaceRule(pid: window.pid, context: context.reevaluation) {
+            if !rules.alwaysAssignWorkspace,
+               !shouldApplyWorkspaceRule(pid: window.pid, context: context.reevaluation)
+            {
                 ruleSkipReason = .appAlreadyHasEntries
             } else if let resolvedRuleWorkspaceId {
                 return WorkspacePlacementResolution(

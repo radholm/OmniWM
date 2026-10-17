@@ -302,6 +302,7 @@ extension AXEventHandler {
                 for: evaluation,
                 mode: trackedMode
             ),
+            alwaysAssignWorkspace: evaluation.decision.ruleEffects.alwaysAssignWorkspace,
             placementOrigin: placement.origin,
             createPlacementContext: placement.capturedContext,
             windowFrame: placementFrame,

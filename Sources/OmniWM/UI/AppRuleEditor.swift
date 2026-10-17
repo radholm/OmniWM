@@ -216,6 +216,8 @@ struct RuleWindowBehaviorSection: View {
                 }
                 .disabled(workspaceNames.isEmpty)
 
+                Toggle("Assign Every New Window", isOn: $draft.alwaysAssign)
+
                 if workspaceNames.isEmpty {
                     SettingsCaption(localized: "No workspaces configured. Add workspaces in Settings.")
                 } else if isWorkspaceMissing {

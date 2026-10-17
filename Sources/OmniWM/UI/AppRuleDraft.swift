@@ -28,6 +28,7 @@ struct AppRuleDraft: Identifiable, Equatable {
     var layoutAction: WindowRuleLayoutAction
     var assignToWorkspaceEnabled: Bool
     var assignToWorkspace: String
+    var alwaysAssign: Bool
     var minWidthEnabled: Bool
     var minWidth: Double
     var minHeightEnabled: Bool
@@ -48,6 +49,7 @@ struct AppRuleDraft: Identifiable, Equatable {
         layoutAction = .auto
         assignToWorkspaceEnabled = false
         assignToWorkspace = ""
+        alwaysAssign = false
         minWidthEnabled = false
         minWidth = 400
         minHeightEnabled = false
@@ -69,6 +71,7 @@ struct AppRuleDraft: Identifiable, Equatable {
         layoutAction = rule.effectiveLayoutAction
         assignToWorkspaceEnabled = rule.assignToWorkspace != nil
         assignToWorkspace = rule.assignToWorkspace ?? ""
+        alwaysAssign = rule.alwaysAssign ?? false
         minWidthEnabled = rule.minWidth != nil
         minWidth = rule.minWidth ?? 400
         minHeightEnabled = rule.minHeight != nil
@@ -96,6 +99,7 @@ struct AppRuleDraft: Identifiable, Equatable {
             lhs.layoutAction == rhs.layoutAction &&
             lhs.assignToWorkspaceEnabled == rhs.assignToWorkspaceEnabled &&
             lhs.assignToWorkspace == rhs.assignToWorkspace &&
+            lhs.alwaysAssign == rhs.alwaysAssign &&
             lhs.minWidthEnabled == rhs.minWidthEnabled &&
             nanStableEqual(lhs.minWidth, rhs.minWidth) &&
             lhs.minHeightEnabled == rhs.minHeightEnabled &&
@@ -210,6 +214,7 @@ struct AppRuleDraft: Identifiable, Equatable {
             axSubrole: axSubroleEnabled ? trimmedRuleValue(axSubrole) : nil,
             layout: layoutAction == .auto ? nil : layoutAction,
             assignToWorkspace: assignToWorkspaceEnabled ? trimmedRuleValue(assignToWorkspace) : nil,
+            alwaysAssign: assignToWorkspaceEnabled && alwaysAssign ? true : nil,
             minWidth: minWidthEnabled ? minWidth : nil,
             minHeight: minHeightEnabled ? minHeight : nil
         )

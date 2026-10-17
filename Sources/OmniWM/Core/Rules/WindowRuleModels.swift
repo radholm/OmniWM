@@ -46,6 +46,7 @@ struct ManagedWindowRuleEffects: Equatable, Sendable {
     var minWidth: Double?
     var minHeight: Double?
     var matchedRuleId: UUID?
+    var alwaysAssignWorkspace = false
 
     static let none = ManagedWindowRuleEffects()
 }
