@@ -48,6 +48,10 @@ extension OverviewPreviewFrame {
             kCFAllocatorDefault, size.width, size.height, kCVPixelFormatType_32BGRA,
             attributes as CFDictionary, &buffer
         ) == kCVReturnSuccess, let buffer else { return nil }
+        // Keeping the snapshot's own color space turns the draw into a copy instead of a per-pixel conversion;
+        // the surface is tagged so Core Animation still color-matches it.
+        let space = image.colorSpace.flatMap { $0.model == .rgb && $0.supportsOutput ? $0 : nil }
+            ?? CGColorSpaceCreateDeviceRGB()
         CVPixelBufferLockBaseAddress(buffer, [])
         defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
         guard let context = CGContext(
@@ -56,13 +60,17 @@ extension OverviewPreviewFrame {
             height: size.height,
             bitsPerComponent: 8,
             bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
-            space: CGColorSpaceCreateDeviceRGB(),
+            space: space,
             bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
         ) else { return nil }
         context.interpolationQuality = .high
-        let bounds = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-        context.clear(bounds)
-        context.draw(image, in: bounds)
+        context.setBlendMode(.copy)
+        context.draw(image, in: CGRect(x: 0, y: 0, width: size.width, height: size.height))
+        if let surface = CVPixelBufferGetIOSurface(buffer)?.takeUnretainedValue(),
+           let properties = space.copyPropertyList()
+        {
+            IOSurfaceSetValue(surface, kIOSurfaceColorSpace, properties)
+        }
         self.init(pixelBuffer: buffer)
     }
 

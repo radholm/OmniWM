@@ -76,6 +76,21 @@ final class OverviewSnapshotFrameTests: XCTestCase {
         capture.releaseCache()
     }
 
+    func testSnapshotKeepsImageColorSpaceWithoutConvertingPixels() throws {
+        let p3 = try XCTUnwrap(CGColorSpace(name: CGColorSpace.displayP3))
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 0, space: p3,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        ))
+        context.setFillColor(CGColor(colorSpace: p3, components: [200 / 255, 40 / 255, 90 / 255, 1])!)
+        context.fill(CGRect(x: 0, y: 0, width: 4, height: 4))
+        let frame = try XCTUnwrap(OverviewPreviewFrame(image: try XCTUnwrap(context.makeImage())))
+
+        XCTAssertEqual(try redComponent(frame.surface), 200)
+        let tagged = try XCTUnwrap(IOSurfaceCopyValue(frame.surface, kIOSurfaceColorSpace))
+        XCTAssertEqual(CGColorSpace(propertyListPlist: tagged)?.name, CGColorSpace.displayP3)
+    }
+
     private func image(width: Int, height: Int, color: NSColor) throws -> CGImage {
         let context = try XCTUnwrap(CGContext(
             data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,

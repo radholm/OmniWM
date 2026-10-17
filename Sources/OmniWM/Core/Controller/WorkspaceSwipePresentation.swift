@@ -484,6 +484,9 @@ extension WorkspaceSwipePresentation {
 
     private func present(_ flight: Flight, at timestamp: TimeInterval) {
         flight.progress = flight.motion.progress(at: timestamp)
+        // One transaction per tick: wallpaper and previews reach the render server together.
+        CATransaction.begin()
+        defer { CATransaction.commit() }
         let wallpaperFrame = panWallpaper(for: flight)
         preview?.update(
             sourceOffset: flight.offset(destination: false),
