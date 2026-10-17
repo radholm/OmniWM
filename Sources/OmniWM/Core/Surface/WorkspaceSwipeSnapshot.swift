@@ -24,6 +24,8 @@ final class WorkspaceSwipeSnapshot: Sendable {
         let cancellation = Cancellation()
         self.cancellation = cancellation
         task = Task.detached(priority: .userInitiated) {
+            // Window captures are large mallocs; return their freed pages instead of keeping them cached.
+            defer { malloc_zone_pressure_relief(nil, 0) }
             var frames: [OverviewPreviewFrame?] = []
             for request in requests {
                 guard !Task.isCancelled else { return [] }
