@@ -124,6 +124,12 @@ extension ShellWidgetHost {
         case let .wifi(command): resources.devices.wifi.perform(command)
         case let .bluetooth(command): resources.devices.bluetooth.perform(command)
         case let .session(command): ShellSession.perform(command)
+        case let .exec(path):
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: path)
+            do { try process.run() } catch {
+                report(state, ShellScriptFailure(kind: .runtime, message: "exec: \(error.localizedDescription)"))
+            }
         case let .openApp(bundleId):
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
                 NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())

@@ -285,6 +285,8 @@ final class ShellDevicesTests: XCTestCase {
             .openApp(bundleId: "net.pulsesecure.Pulse-Secure")
         )
         XCTAssertNil(ShellAction("app open"))
+        XCTAssertEqual(ShellAction("exec /usr/bin/true"), .exec(path: "/usr/bin/true"))
+        XCTAssertNil(ShellAction("exec relative.sh"))
         XCTAssertNil(ShellSessionCommand.lock.loginWindowEvent)
         XCTAssertNil(ShellSessionCommand.sleep.loginWindowEvent)
         XCTAssertEqual(ShellSessionCommand.logout.loginWindowEvent, AEEventID(kAELogOut))
