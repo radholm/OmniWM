@@ -138,8 +138,9 @@ struct WorkspaceBarGeometry: Equatable {
         }
         let overMenuBar = effectivePosition == .overlappingMenuBar
         let span = overMenuBar ? monitor.frame : visible
+        let margin = min(max(0, CGFloat(resolved.margin)), max(0, (span.width - Self.minimumIslandWidth) / 2))
         return CGRect(
-            x: span.minX,
+            x: span.minX + margin,
             y: overMenuBar
                 ? Self.overMenuBarOriginY(monitor: monitor, resolved: resolved, barHeight: barHeight)
                 : Self.constrainedOriginY(
@@ -147,7 +148,7 @@ struct WorkspaceBarGeometry: Equatable {
                     height: barHeight,
                     screenFrame: monitor.frame
                 ),
-            width: span.width,
+            width: span.width - margin * 2,
             height: barHeight
         )
     }

@@ -91,6 +91,8 @@ Besides the base roles, the palette has Material 3 style `highestSurface`, `acce
 
 `shell.toml`'s `[workspaceBar]` wins over the theme's. There, `barFill = "surface"` paints the bar with a palette role instead of its Settings background, and `barBorder = "border"` adds a 1 pt edge to that fill; add `/0.8` to a role for 80% opacity.
 
+`cornerRadius` (0–100) sets the bar's corner radius in points, including full-width and solid-black bars, which are otherwise square. `margin` (0–5000) insets a `fullWidth` bar from both screen edges, so `fullWidth = true`, `fullWidthNotchMode = "splitAroundNotch"` and a margin give a centered bar with the leading lane left of the notch and the trailing lane right of it. Over a notched menu bar its top corners stay square so it joins the notch.
+
 **Custom Accent Color** and **Custom Text Color** work with every palette. Resetting a color restores the palette value. The native material and motion appear on the live desktop; Settings previews use the actual widget sources with sample data.
 
 Matrix Rain and Sakura Petals expose named effect controls under **Workspace Bar > Appearance**. Choosing an effect preset does not rewrite source or change menus and commands. To make your own effects, see [Effects and shaders](/omnishell/reference/effects-shaders/).

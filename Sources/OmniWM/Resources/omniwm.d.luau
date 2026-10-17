@@ -59,6 +59,7 @@ export type BarWorkspace = {
     id: string,
     name: string,
     focused: boolean,
+    fullscreen: boolean,
     windows: { BarItem },
 }
 

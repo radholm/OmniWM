@@ -32,6 +32,8 @@ struct MonitorBarSettings: MonitorSettingsType {
     var showAccentHighlights: Bool?
     var xOffset: Double?
     var yOffset: Double?
+    var cornerRadius: Double?
+    var margin: Double?
 
     init(
         id: UUID = UUID(),
@@ -59,7 +61,9 @@ struct MonitorBarSettings: MonitorSettingsType {
         showItemBackgrounds: Bool? = nil,
         showAccentHighlights: Bool? = nil,
         xOffset: Double? = nil,
-        yOffset: Double? = nil
+        yOffset: Double? = nil,
+        cornerRadius: Double? = nil,
+        margin: Double? = nil
     ) {
         self.id = id
         self.monitorName = monitorName
@@ -87,6 +91,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         self.showAccentHighlights = showAccentHighlights
         self.xOffset = xOffset
         self.yOffset = yOffset
+        self.cornerRadius = cornerRadius
+        self.margin = margin
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -96,7 +102,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         case hideEmptyWorkspaces, reserveLayoutSpace, notchMode, notchActiveZoneWidth, position, windowLevel
         case fullWidth, fullWidthNotchMode
         case height, backgroundOpacity, inactiveIconOpacity, transparentBackground, solidBlackBackground,
-             showItemBackgrounds, showAccentHighlights, xOffset, yOffset
+             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, cornerRadius, margin
     }
 
     init(from decoder: Decoder) throws {
@@ -130,6 +136,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         showAccentHighlights = try container.decodeIfPresent(Bool.self, forKey: .showAccentHighlights)
         xOffset = try container.decodeIfPresent(Double.self, forKey: .xOffset)
         yOffset = try container.decodeIfPresent(Double.self, forKey: .yOffset)
+        cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius)
+        margin = try container.decodeIfPresent(Double.self, forKey: .margin)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -165,6 +173,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         try container.encodeIfPresent(showAccentHighlights, forKey: .showAccentHighlights)
         try container.encodeIfPresent(xOffset, forKey: .xOffset)
         try container.encodeIfPresent(yOffset, forKey: .yOffset)
+        try container.encodeIfPresent(cornerRadius, forKey: .cornerRadius)
+        try container.encodeIfPresent(margin, forKey: .margin)
     }
 }
 
@@ -197,6 +207,8 @@ struct ResolvedBarSettings {
     let textColor: SettingsColor?
     var barFill: ShellThemeColor?
     var barBorder: ShellThemeColor?
+    var cornerRadius: Double?
+    var margin = 0.0
 }
 
 struct WorkspaceBarProfileOverride: Equatable {
@@ -281,7 +293,9 @@ extension MonitorBarSettings {
         BarNumberKey("backgroundOpacity", \.backgroundOpacity, 0 ... 1),
         BarNumberKey("inactiveIconOpacity", \.inactiveIconOpacity, 0 ... 1),
         BarNumberKey("xOffset", \.xOffset, -10000 ... 10000),
-        BarNumberKey("yOffset", \.yOffset, -10000 ... 10000)
+        BarNumberKey("yOffset", \.yOffset, -10000 ... 10000),
+        BarNumberKey("cornerRadius", \.cornerRadius, 0 ... 100),
+        BarNumberKey("margin", \.margin, 0 ... 5000)
     ]
 
     var overriddenKeys: [String] {

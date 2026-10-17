@@ -64,6 +64,27 @@ final class WorkspaceBarFillLeftGeometryTests: XCTestCase {
         )
     }
 
+    func testFullWidthMarginInsetsFrameAndKeepsNotchZoneOnScreen() throws {
+        let monitor = makeMonitor()
+        var resolved = makeResolved(notchMode: .off)
+        resolved.fullWidth = true
+        resolved.fullWidthNotchMode = .splitAroundNotch
+        resolved.margin = 400
+        let geometry = WorkspaceBarGeometry.resolve(monitor: monitor, resolved: resolved, isVisible: true)
+
+        let frame = geometry.frame(fittingLength: 200, monitor: monitor, resolved: resolved)
+        let zones = try XCTUnwrap(geometry.zones(frame: frame, monitor: monitor, resolved: resolved))
+
+        XCTAssertEqual(frame.minX, 400)
+        XCTAssertEqual(frame.width, 712)
+        XCTAssertEqual(zones.notch, 256 ... 456)
+
+        resolved.margin = 5000
+        let clamped = geometry.frame(fittingLength: 200, monitor: monitor, resolved: resolved)
+        XCTAssertEqual(clamped.width, WorkspaceBarGeometry.minimumIslandWidth)
+        XCTAssertEqual(clamped.midX, monitor.frame.midX)
+    }
+
     func testFillLeftOfNotchFrameCoversMenuBarToNotch() throws {
         let monitor = makeMonitor()
         let resolved = makeResolved(notchMode: .fillLeftOfNotch)

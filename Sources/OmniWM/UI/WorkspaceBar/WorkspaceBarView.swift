@@ -82,8 +82,9 @@ private struct WorkspaceBarContentView: View {
 
     private var barShape: UnevenRoundedRectangle {
         WorkspaceBarView.barShape(
-            joinedAt: hiddenBarJoinEdge,
-            radius: zones != nil || snapshot.backgroundStyle == .solidBlack ? 0 : WorkspaceBarGeometry.cornerRadius
+            joinedAt: hiddenBarJoinEdge ?? (zones?.notch != nil && snapshot.cornerRadius != nil ? .above : nil),
+            radius: snapshot.cornerRadius
+                ?? (zones != nil || snapshot.backgroundStyle == .solidBlack ? 0 : WorkspaceBarGeometry.cornerRadius)
         )
     }
 

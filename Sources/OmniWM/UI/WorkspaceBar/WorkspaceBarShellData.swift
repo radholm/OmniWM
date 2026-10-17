@@ -98,6 +98,7 @@ extension ShellBarData {
                 id: item.rawName,
                 name: item.name,
                 focused: item.isFocused,
+                fullscreen: item.hasFullscreen,
                 windows: items(item.tiledWindows, false) + items(item.floatingWindows, true)
             )
         }

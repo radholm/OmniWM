@@ -119,7 +119,8 @@ struct WorldView {
                         orientation: resolved.position.isVertical ? .vertical : .horizontal,
                         secureInputActive: controller.isSecureInputIndicated,
                         barFill: resolved.barFill,
-                        barBorder: resolved.barBorder
+                        barBorder: resolved.barBorder,
+                        cornerRadius: resolved.cornerRadius.map { CGFloat($0) }
                     ),
                     retainWhileHidden: controller.canAutoHideWorkspaceBar(on: monitor, resolved: resolved)
                 )

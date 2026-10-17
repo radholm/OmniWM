@@ -390,7 +390,9 @@ extension WorkspaceBarSettings {
             accentColor: profileOverride?.accentColor ?? (profileOverride?.usesThemeColors == true ? nil : accentColor),
             textColor: profileOverride?.textColor ?? (profileOverride?.usesThemeColors == true ? nil : textColor),
             barFill: profileOverride?.barFill,
-            barBorder: profileOverride?.barBorder
+            barBorder: profileOverride?.barBorder,
+            cornerRadius: override?.cornerRadius,
+            margin: override?.margin ?? 0
         )
     }
 

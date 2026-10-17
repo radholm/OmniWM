@@ -114,7 +114,9 @@ struct WorkspaceBarDataSource {
             rawName: snapshot.workspace.name,
             isFocused: snapshot.workspace.id == activeWorkspaceId,
             tiledWindows: tiledWindows,
-            floatingWindows: floatingWindows
+            floatingWindows: floatingWindows,
+            hasFullscreen: snapshot.tiledEntries.count > 1
+                && !workspaceManager.layoutTopology(for: snapshot.workspace.id).dwindleFullscreenTokens.isEmpty
         )
     }
 

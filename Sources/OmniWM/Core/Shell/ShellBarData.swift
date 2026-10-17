@@ -24,6 +24,7 @@ struct ShellBarWorkspace: Equatable, Sendable {
     let id: String
     let name: String
     let focused: Bool
+    var fullscreen = false
     let windows: [ShellBarItem]
 }
 
@@ -160,13 +161,15 @@ struct ShellBarData: Equatable, Sendable {
         writer.key("workspaces")
         writer.array(workspaces.count)
         for workspace in workspaces {
-            writer.map(4)
+            writer.map(5)
             writer.key("id")
             writer.string(workspace.id)
             writer.key("name")
             writer.string(workspace.name)
             writer.key("focused")
             writer.bool(workspace.focused)
+            writer.key("fullscreen")
+            writer.bool(workspace.fullscreen)
             writer.key("windows")
             Self.write(workspace.windows, to: &writer)
         }

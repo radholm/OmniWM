@@ -11,6 +11,7 @@ struct WorkspaceBarItem: Identifiable, Equatable {
     let isFocused: Bool
     let tiledWindows: [WorkspaceBarWindowItem]
     let floatingWindows: [WorkspaceBarWindowItem]
+    var hasFullscreen = false
 
     var windows: [WorkspaceBarWindowItem] {
         tiledWindows + floatingWindows
@@ -144,6 +145,7 @@ struct WorkspaceBarSnapshot: Equatable {
     let barBorder: ShellThemeColor?
     var barShader: ShellBarShader?
     let shellWidgets: [WorkspaceBarShellWidget]
+    var cornerRadius: CGFloat?
 
     init(
         projection: WorkspaceBarProjection,
@@ -157,7 +159,8 @@ struct WorkspaceBarSnapshot: Equatable {
         barFill: ShellThemeColor? = nil,
         barBorder: ShellThemeColor? = nil,
         barShader: ShellBarShader? = nil,
-        shellWidgets: [WorkspaceBarShellWidget] = []
+        shellWidgets: [WorkspaceBarShellWidget] = [],
+        cornerRadius: CGFloat? = nil
     ) {
         self.projection = projection
         self.showLabels = showLabels
@@ -171,6 +174,7 @@ struct WorkspaceBarSnapshot: Equatable {
         self.barBorder = barBorder
         self.barShader = barShader
         self.shellWidgets = shellWidgets
+        self.cornerRadius = cornerRadius
     }
 
     var items: [WorkspaceBarItem] {
@@ -208,7 +212,8 @@ struct WorkspaceBarSnapshot: Equatable {
             barFill: barFill,
             barBorder: barBorder,
             barShader: barShader,
-            shellWidgets: shellWidgets
+            shellWidgets: shellWidgets,
+            cornerRadius: cornerRadius
         )
     }
 }
