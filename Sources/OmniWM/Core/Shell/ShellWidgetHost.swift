@@ -87,6 +87,8 @@ enum ShellAction: Equatable, Sendable {
     case wifi(ShellWiFiCommand)
     case bluetooth(ShellBluetoothCommand)
     case session(ShellSessionCommand)
+    /// Launches or activates the app with a bundle id, e.g. `app open com.apple.Safari`.
+    case openApp(bundleId: String)
     case settings(ShellSettingsPane)
     case toggle(widget: String)
 
@@ -105,6 +107,8 @@ enum ShellAction: Equatable, Sendable {
         let words = text.split(whereSeparator: \.isWhitespace).map(String.init)
         if words.count == 3, words[0] == "shell", words[1] == "toggle" {
             self = .toggle(widget: words[2])
+        } else if words.count == 3, words[0] == "app", words[1] == "open" {
+            self = .openApp(bundleId: words[2])
         } else if words.count == 2, words[1] == "settings", let pane = ShellSettingsPane(rawValue: words[0]) {
             self = .settings(pane)
         } else if let parse = words.first.flatMap({ Self.domains[$0] }) {

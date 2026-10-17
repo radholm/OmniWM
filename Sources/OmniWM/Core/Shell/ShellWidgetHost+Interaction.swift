@@ -124,6 +124,12 @@ extension ShellWidgetHost {
         case let .wifi(command): resources.devices.wifi.perform(command)
         case let .bluetooth(command): resources.devices.bluetooth.perform(command)
         case let .session(command): ShellSession.perform(command)
+        case let .openApp(bundleId):
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+            } else {
+                report(state, ShellScriptFailure(kind: .runtime, message: "app open: no app with id \"\(bundleId)\""))
+            }
         case let .settings(pane):
             if let url = pane.url {
                 NSWorkspace.shared.open(url)

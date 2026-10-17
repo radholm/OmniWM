@@ -280,6 +280,11 @@ final class ShellDevicesTests: XCTestCase {
         XCTAssertNil(ShellAction("session"))
         XCTAssertNil(ShellAction("session reboot"))
         XCTAssertNil(ShellAction("session restart now"))
+        XCTAssertEqual(
+            ShellAction("app open net.pulsesecure.Pulse-Secure"),
+            .openApp(bundleId: "net.pulsesecure.Pulse-Secure")
+        )
+        XCTAssertNil(ShellAction("app open"))
         XCTAssertNil(ShellSessionCommand.lock.loginWindowEvent)
         XCTAssertNil(ShellSessionCommand.sleep.loginWindowEvent)
         XCTAssertEqual(ShellSessionCommand.logout.loginWindowEvent, AEEventID(kAELogOut))
