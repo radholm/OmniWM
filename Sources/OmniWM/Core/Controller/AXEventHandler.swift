@@ -14,6 +14,7 @@ final class AXEventHandler {
     static let sameAppCloseProbeDelay: Duration = .milliseconds(80)
     static let appTerminationFocusRecoveryTimeout: Duration = .milliseconds(600)
     static let mouseFocusIntentDuration: TimeInterval = 0.35
+    static let emptiedWorkspaceHoldDuration: TimeInterval = 1.0
 
     weak var controller: WMController?
     var deferredCreatedWindowIds: Set<UInt32> = []
@@ -36,6 +37,7 @@ final class AXEventHandler {
     var previouslyFocusedManagedToken: WindowToken?
     private var windowCloseFocusRecoveryContext: WindowCloseFocusRecoveryContext?
     private var recentMouseFocusIntent: RecentMouseFocusIntent?
+    var emptiedWorkspaceHold: EmptiedWorkspaceHold?
     var recentUnmanagedPointerClickExpiresAt: Date?
     private var diagnostics = AXEventDiagnostics()
     private var nextManagedReplacementEventSequence: UInt64 = 0

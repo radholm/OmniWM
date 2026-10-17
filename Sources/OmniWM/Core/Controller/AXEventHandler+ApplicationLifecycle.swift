@@ -32,6 +32,7 @@ extension AXEventHandler {
         let removedEntries = allEntries.filter { $0.pid == pid }
         let scratchpadTokens = scratchpadTokens(in: removedEntries, manager: controller.workspaceManager)
         let affectedWorkspaces = controller.workspaceManager.removeWindowsForApp(pid: pid)
+        affectedWorkspaces.forEach { controller.axEventHandler.holdWorkspaceIfEmptied($0, departingPID: pid) }
         if !removedEntries.isEmpty {
             controller.axEventHandler.noteManagedWindowSubscriptionIdentityChanged()
         }

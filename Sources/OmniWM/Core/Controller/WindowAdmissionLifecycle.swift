@@ -385,6 +385,12 @@ extension AXEventHandler {
         let expiresAt: Date
     }
 
+    struct EmptiedWorkspaceHold {
+        let workspaceId: WorkspaceDescriptor.ID
+        let departingPIDs: Set<pid_t>
+        let expiresAt: Date
+    }
+
     struct RecentMouseFocusIntent {
         let token: WindowToken
         let expiresAt: Date

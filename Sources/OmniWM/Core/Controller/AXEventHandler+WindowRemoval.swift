@@ -146,6 +146,7 @@ extension AXEventHandler {
                 allowsPreferredRecoveryToken: recovery.closeRecoveryArmed
             )
         )
+        holdWorkspaceIfEmptied(entry.workspaceId, departingPID: entry.pid)
         scheduleWindowRuleReevaluationIfNeeded(targets: [.pid(token.pid)])
     }
 

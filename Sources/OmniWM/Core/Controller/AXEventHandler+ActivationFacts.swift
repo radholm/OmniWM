@@ -285,6 +285,12 @@ extension AXEventHandler {
                 origin: origin,
                 isWorkspaceActive: isWorkspaceActive
             ) else { return false }
+            if !isWorkspaceActive,
+               let wsId = controller?.workspaceManager.entry(for: token)?.workspaceId,
+               shouldHoldEmptiedWorkspace(againstActivationOf: facts.pid, targetWorkspaceId: wsId, origin: origin)
+            {
+                return false
+            }
         }
 
         return true

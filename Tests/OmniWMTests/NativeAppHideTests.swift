@@ -281,6 +281,8 @@ final class NativeAppHideTests: XCTestCase {
                 return FocusedWindowFact(axRef: entry.axRef, isFullscreen: false, isSystemModalSurface: false)
             }
             controller.hasStartedServices = true
+            controller.axEventHandler.applicationIsTerminatedProvider = { _ in false }
+            controller.axEventHandler.windowInfoProvider = { WindowServerInfo(id: $0, pid: 0, level: 0, frame: .zero) }
             controller.eventIntake.open(sink: controller.eventInterpreter)
         }
 
