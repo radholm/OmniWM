@@ -167,8 +167,8 @@ final class DwindleFullscreenCycleTests: XCTestCase {
 
         let front = SnapshotStackEffect.deckPose(slot: 0, count: 3, size: size)
         let back = SnapshotStackEffect.deckPose(slot: 2, count: 3, size: size)
-        XCTAssertEqual(back.m41 - front.m41, 80, accuracy: 0.0001)
-        XCTAssertEqual(back.m42 - front.m42, -56, accuracy: 0.0001)
+        XCTAssertEqual(back.m41 - front.m41, 30, accuracy: 0.0001)
+        XCTAssertEqual(back.m42 - front.m42, -20, accuracy: 0.0001)
     }
 
     private func makeEngine() -> (DwindleLayoutEngine, WorkspaceDescriptor.ID) {

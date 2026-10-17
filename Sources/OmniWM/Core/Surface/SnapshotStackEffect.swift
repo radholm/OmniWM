@@ -22,8 +22,8 @@ struct SnapshotStackEffect: Equatable {
     /// Size of the cards while the deck is shown, as a fraction of their full size.
     static let deckScale: CGFloat = 0.94
     /// Offset from each card to the one behind it, as a fraction of the card's full size (right and down).
-    static let deckStepX: CGFloat = 0.04
-    static let deckStepY: CGFloat = 0.035
+    static let deckStepX: CGFloat = 0.015
+    static let deckStepY: CGFloat = 0.0125
     /// Cards beyond this many are not drawn in the deck.
     static let maximumDeckSize = 7
     /// Black overlay opacity added per depth behind the front card, up to `maximumDim`.
