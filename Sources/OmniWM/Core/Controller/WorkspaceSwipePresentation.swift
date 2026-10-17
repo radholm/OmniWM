@@ -283,6 +283,14 @@ final class WorkspaceSwipePresentation {
         }
     }
 
+    /// The workspace a settling slide on `monitorId` is heading to, so the bar can show it before the commit.
+    func settlingWorkspace(on monitorId: Monitor.ID) -> WorkspaceDescriptor.ID? {
+        guard let flight, flight.preparation.monitor.id == monitorId, let target = flight.motion.target else {
+            return nil
+        }
+        return target == 1 ? flight.destination.id : flight.preparation.source.id
+    }
+
     func checkSettlement() {
         guard let flight, flight.committing, let settlement = flight.settlement, settlement.isSettled else { return }
         if settlement.tokens.contains(where: {
@@ -336,6 +344,7 @@ final class WorkspaceSwipePresentation {
 extension WorkspaceSwipePresentation {
     @discardableResult
     private func startSettling(_ flight: Flight) -> Bool {
+        controller?.surfaceReconciler.noteWorldChanged()
         if refreshController?
             .displayLinkActivationForTests?(flight.preparation.monitor.displayId) == true { return true }
         guard let link = refreshController?.getOrCreateDisplayLink(for: flight.preparation.monitor.displayId) else {
@@ -416,6 +425,7 @@ extension WorkspaceSwipePresentation {
             motion: controller?.motionPolicy.snapshot() ?? .enabled
         ) else { return false }
         trace("keyboard-redirected", progress: flight.progress)
+        controller?.surfaceReconciler.noteWorldChanged()
         return true
     }
 

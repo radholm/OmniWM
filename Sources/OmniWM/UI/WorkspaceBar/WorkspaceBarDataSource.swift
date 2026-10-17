@@ -35,13 +35,15 @@ struct WorkspaceBarDataSource {
     func workspaceBarProjection(
         for monitor: Monitor,
         options: WorkspaceBarProjectionOptions,
-        focusedToken: WindowToken?
+        focusedToken: WindowToken?,
+        activeWorkspaceOverride: WorkspaceDescriptor.ID? = nil
     ) -> WorkspaceBarProjection {
         WorkspaceBarProjection(
             items: workspaceItems(
                 for: monitor,
                 options: options,
-                focusedToken: focusedToken
+                focusedToken: focusedToken,
+                activeWorkspaceOverride: activeWorkspaceOverride
             ),
             scratchpads: scratchpadItems(
                 options: options,
@@ -53,7 +55,8 @@ struct WorkspaceBarDataSource {
     private func workspaceItems(
         for monitor: Monitor,
         options: WorkspaceBarProjectionOptions,
-        focusedToken: WindowToken?
+        focusedToken: WindowToken?,
+        activeWorkspaceOverride: WorkspaceDescriptor.ID?
     ) -> [WorkspaceBarItem] {
         var workspaces = workspaceManager.workspaces(on: monitor.id).map { workspace in
             workspaceSnapshot(
@@ -62,7 +65,7 @@ struct WorkspaceBarDataSource {
             )
         }
 
-        let activeWorkspaceId = workspaceManager.activeWorkspace(on: monitor.id)?.id
+        let activeWorkspaceId = activeWorkspaceOverride ?? workspaceManager.activeWorkspace(on: monitor.id)?.id
         let hiddenAppPIDs = workspaceManager.hiddenAppPIDs
 
         if options.hideEmptyWorkspaces {

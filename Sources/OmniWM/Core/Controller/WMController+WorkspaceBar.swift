@@ -132,7 +132,8 @@ extension WMController {
         ).workspaceBarProjection(
             for: monitor,
             options: options,
-            focusedToken: workspaceManager.selectedManagedToken
+            focusedToken: workspaceManager.selectedManagedToken,
+            activeWorkspaceOverride: layoutRefreshController.workspaceSwipe.settlingWorkspace(on: monitor.id)
         )
     }
 
