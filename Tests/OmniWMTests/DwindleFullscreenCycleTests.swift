@@ -139,26 +139,31 @@ final class DwindleFullscreenCycleTests: XCTestCase {
         XCTAssertGreaterThan(SnapshotStackEffect.tuckZPosition, SnapshotStackEffect.zPosition(depth: 0))
 
         let leaving = SnapshotStackEffect(fromDepth: 0, toDepth: 2, deckSize: 3, tucksUnder: true)
-        let (values, times) = leaving.keyframes(size: size)
+        let keyframes = leaving.keyframes(size: size)
+        let (values, dims, times) = (keyframes.values, keyframes.dims, keyframes.times)
         XCTAssertTrue(CATransform3DIsIdentity(values[0]), "starts at full size")
         XCTAssertTrue(CATransform3DIsIdentity(values[values.count - 1]), "and ends at full size")
         XCTAssertEqual(times.first, 0)
         XCTAssertEqual(times.last, 1)
         XCTAssertEqual(times, times.sorted())
+        XCTAssertEqual(dims.first, 0, "starts undimmed")
+        XCTAssertGreaterThan(dims.max() ?? 0, 0, "dims while behind the deck")
+        XCTAssertEqual(dims.last, 0, "and ends undimmed")
         let lowest = values.min { $0.m42 < $1.m42 }
         XCTAssertLessThan(lowest?.m42 ?? 0, back.m42, "it dips below the deck on its way to the back")
 
         let next = SnapshotStackEffect(fromDepth: 1, toDepth: 0, deckSize: 3).keyframes(size: size)
-        XCTAssertEqual(next.values.count, 4, "zoom out, move up one place, zoom in")
-        XCTAssertTrue(CATransform3DIsIdentity(next.values[3]))
+        XCTAssertEqual(next.values.count, SnapshotStackEffect.samples + 1, "densely sampled continuous motion")
+        XCTAssertTrue(CATransform3DIsIdentity(next.values[next.values.count - 1]))
     }
 
-    func testDeckStaysNearFullSizeWithShallowTiltAndCompactSpacing() {
+    func testDeckStaysNearFullSizeFlatAndCompact() {
         let size = CGSize(width: 1000, height: 800)
         let middle = SnapshotStackEffect.deckPose(slot: 1, count: 3, size: size)
         XCTAssertEqual(middle.m22, 0.94, accuracy: 0.0001)
-        XCTAssertEqual(middle.m11, 0.94 * cos(.pi / 144), accuracy: 0.0001)
-        XCTAssertEqual(abs(middle.m13), 0.94 * sin(.pi / 144), accuracy: 0.0001)
+        XCTAssertEqual(middle.m11, 0.94, accuracy: 0.0001)
+        XCTAssertEqual(middle.m13, 0, "no angle")
+        XCTAssertEqual(middle.m34, 0, "no perspective")
 
         let front = SnapshotStackEffect.deckPose(slot: 0, count: 3, size: size)
         let back = SnapshotStackEffect.deckPose(slot: 2, count: 3, size: size)

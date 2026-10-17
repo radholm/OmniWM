@@ -39,18 +39,26 @@ final class FullscreenStackGestureTests: XCTestCase {
             assertEqual(effect.pose(at: 0, size: size).transform, CATransform3DIdentity)
             assertEqual(effect.pose(at: 1, size: size).transform, CATransform3DIdentity)
             assertEqual(
-                effect.pose(at: SnapshotStackEffect.deckShownTime, size: size).transform,
-                SnapshotStackEffect.deckPose(slot: CGFloat(effect.fromDepth), count: 3, size: size)
-            )
-            assertEqual(
-                effect.pose(at: SnapshotStackEffect.tuckedTime, size: size).transform,
-                SnapshotStackEffect.deckPose(slot: CGFloat(effect.toDepth), count: 3, size: size)
+                effect.pose(at: 0.5, size: size).transform,
+                SnapshotStackEffect.deckPose(
+                    slot: CGFloat(effect.fromDepth + effect.toDepth) / 2,
+                    count: 3,
+                    dip: effect.tucksUnder ? 1 : 0,
+                    size: size
+                )
             )
             XCTAssertEqual(
                 effect.pose(at: 1, size: size).zPosition,
                 SnapshotStackEffect.zPosition(depth: effect.toDepth)
             )
         }
+        XCTAssertEqual(
+            effects[1].pose(at: 0.5, size: size).dim,
+            SnapshotStackEffect.dim(slot: 1.5, zoom: 1),
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(effects[0].pose(at: 0, size: size).dim, 0)
+        XCTAssertEqual(effects[0].pose(at: 1, size: size).dim, 0)
         XCTAssertEqual(effects[0].pose(at: 0.2, size: size).zPosition, SnapshotStackEffect.tuckZPosition)
         XCTAssertEqual(effects[1].pose(at: 0.2, size: size).zPosition, SnapshotStackEffect.zPosition(depth: 2))
     }

@@ -270,7 +270,7 @@ final class WindowSnapshotTransition {
         CATransaction.setDisableActions(true)
         for (windowId, layer) in layers {
             guard let motion = motions[windowId], let image = images[windowId] else { continue }
-            layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+            SnapshotStackEffect.contentSublayers(of: layer).forEach { $0.removeFromSuperlayer() }
             let fresh = CALayer()
             fresh.contents = image
             fresh.contentsGravity = .resize
@@ -315,7 +315,7 @@ final class WindowSnapshotTransition {
     }
 
     private func promoteFreshContent(of layer: CALayer) {
-        guard let fresh = layer.sublayers?.last else { return }
+        guard let fresh = SnapshotStackEffect.contentSublayers(of: layer).last else { return }
         layer.contents = fresh.contents
         layer.sublayers?.forEach { $0.removeFromSuperlayer() }
     }
