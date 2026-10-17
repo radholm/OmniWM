@@ -547,6 +547,7 @@ final class ShellScriptHostTests: XCTestCase {
                 ui.text{ text = "12", font = "rubik", weight = "semibold" },
                 ui.text{ text = "Hi", font = "sans" },
                 ui.text{ text = "Hi", font = "nowhere" },
+                ui.text{ text = "Hi", font = "hack" },
             }
         end
         """)
@@ -554,6 +555,8 @@ final class ShellScriptHostTests: XCTestCase {
         let nodes = decode(script.output)
         let filled = nodes[1].content.style
         let outline = nodes[2].content.style
+        XCTAssertEqual(nodes[6].content.style, UInt32(4 << OMNI_STYLE_FONT_SHIFT))
+        XCTAssertEqual(ShellFontFamily(style: nodes[6].content.style), .hack)
         XCTAssertEqual(
             filled,
             UInt32(3 << OMNI_STYLE_FONT_SHIFT) | OMNI_STYLE_FILLED | UInt32(1800 << OMNI_STYLE_SIZE_SHIFT)

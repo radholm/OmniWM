@@ -100,6 +100,7 @@ enum ShellFontFamily: UInt32 {
     case sans = 1
     case rubik
     case symbols
+    case hack
 
     private static let registered: Void = {
         for url in Bundle.module.urls(forResourcesWithExtension: nil, subdirectory: "Fonts") ?? [] {
@@ -116,11 +117,19 @@ enum ShellFontFamily: UInt32 {
 
     func font(size: CGFloat, weight: CGFloat, filled: Bool) -> CTFont {
         _ = Self.registered
+        if self == .hack {
+            let descriptor = CTFontDescriptorCreateWithAttributes([
+                kCTFontFamilyNameAttribute: familyName,
+                kCTFontStyleNameAttribute: weight >= 600 ? "Bold" : "Regular"
+            ] as CFDictionary)
+            return CTFontCreateWithFontDescriptor(descriptor, size, nil)
+        }
         var axes = [Self.tag("wght"): weight, Self.tag("opsz"): size]
         switch self {
         case .sans: axes[Self.tag("ROND")] = 25
         case .rubik: break
         case .symbols: axes[Self.tag("FILL")] = filled ? 1 : 0
+        case .hack: break
         }
         let descriptor = CTFontDescriptorCreateWithAttributes([
             kCTFontFamilyNameAttribute: familyName,
@@ -134,6 +143,7 @@ enum ShellFontFamily: UInt32 {
         case .sans: "Google Sans Flex"
         case .rubik: "Rubik"
         case .symbols: "Material Symbols Rounded"
+        case .hack: "Hack Nerd Font"
         }
     }
 

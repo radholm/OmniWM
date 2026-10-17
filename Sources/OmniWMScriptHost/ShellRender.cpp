@@ -178,7 +178,7 @@ const Name roleNames[] = {
 constexpr size_t roleCount = sizeof roleNames / sizeof roleNames[0];
 const Name styleNames[] = {{"body", 4}, {"bold", 4}, {"mono", 4}, {"small", 5}, {"caption", 7}, {"rounded", 7}};
 constexpr size_t styleCount = sizeof styleNames / sizeof styleNames[0];
-const Name fontNames[] = {{"system", 6}, {"sans", 4}, {"rubik", 5}, {"symbols", 7}};
+const Name fontNames[] = {{"system", 6}, {"sans", 4}, {"rubik", 5}, {"symbols", 7}, {"hack", 4}};
 constexpr size_t fontCount = sizeof fontNames / sizeof fontNames[0];
 const Name weightNames[] = {
     {"ultraLight", 10}, {"thin", 4}, {"light", 5}, {"regular", 7}, {"medium", 6},
