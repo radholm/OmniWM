@@ -79,8 +79,8 @@ final class FullscreenStackGesturePresentation {
                 : 0
         }
 
-        static let minimumDuration: TimeInterval = 0.4
-        static let pageDuration: TimeInterval = 0.85
+        static let minimumDuration: TimeInterval = 0.2
+        static let pageDuration: TimeInterval = 0.425
 
         func progress(at time: TimeInterval) -> Double {
             let left = 1 - fraction(at: time)
