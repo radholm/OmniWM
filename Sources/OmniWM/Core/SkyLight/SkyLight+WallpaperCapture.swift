@@ -36,8 +36,11 @@ extension SkyLight {
 
     static func wallpaperWindow(in windows: [[String: Any]], frame: CGRect) -> (id: UInt32, frame: CGRect)? {
         let levels = (CGWindowLevelForKey(.desktopWindow) - 1) ..< CGWindowLevelForKey(.desktopIconWindow)
+        let ownPID = ProcessInfo.processInfo.processIdentifier
         for window in windows {
-            guard let level = window[kCGWindowLayer as String] as? Int32,
+            // Skip our own desktop-level panels (wallpaper parallax) so they never capture themselves.
+            guard window[kCGWindowOwnerPID as String] as? pid_t != ownPID,
+                  let level = window[kCGWindowLayer as String] as? Int32,
                   levels.contains(level),
                   let bounds = window[kCGWindowBounds as String] as? [String: Any],
                   let windowFrame = CGRect(dictionaryRepresentation: bounds as CFDictionary),

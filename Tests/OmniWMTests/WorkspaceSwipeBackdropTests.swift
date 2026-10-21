@@ -68,6 +68,21 @@ final class WorkspaceSwipeBackdropTests: XCTestCase {
         XCTAssertNil(SkyLight.wallpaperWindow(in: Array(windows.prefix(3)), frame: frame))
     }
 
+    func testWallpaperSelectionSkipsOwnParallaxPanel() {
+        let frame = CGRect(x: 0, y: 0, width: 4, height: 3)
+        let desktop = CGWindowLevelForKey(.desktopWindow)
+        let windows = [
+            window(
+                1,
+                level: desktop,
+                frame: frame.insetBy(dx: -1, dy: -1),
+                pid: ProcessInfo.processInfo.processIdentifier
+            ),
+            window(2, level: desktop - 1, frame: frame)
+        ]
+        XCTAssertEqual(SkyLight.wallpaperWindow(in: windows, frame: frame)?.id, 2)
+    }
+
     func testLiveWallpaperAboveTheDesktopIsPreferredAndCropped() throws {
         let frame = CGRect(x: 0, y: 0, width: 4, height: 3)
         let live = frame.insetBy(dx: -1, dy: -1)
@@ -116,11 +131,12 @@ final class WorkspaceSwipeBackdropTests: XCTestCase {
         )
     }
 
-    private func window(_ id: UInt32, level: Int32, frame: CGRect) -> [String: Any] {
+    private func window(_ id: UInt32, level: Int32, frame: CGRect, pid: pid_t = 1) -> [String: Any] {
         [
             kCGWindowNumber as String: id,
             kCGWindowLayer as String: level,
-            kCGWindowBounds as String: frame.dictionaryRepresentation
+            kCGWindowBounds as String: frame.dictionaryRepresentation,
+            kCGWindowOwnerPID as String: pid
         ]
     }
 
