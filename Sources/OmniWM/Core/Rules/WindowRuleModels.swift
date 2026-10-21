@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -45,10 +45,18 @@ enum ManualWindowOverride: String, Codable, Equatable {
 struct ManagedWindowRuleEffects: Equatable, Sendable {
     var minWidth: Double?
     var minHeight: Double?
-    var matchedRuleId: UUID?
     var alwaysAssignWorkspace = false
 
     static let none = ManagedWindowRuleEffects()
+}
+
+struct WindowRuleProvenance: Equatable, Sendable {
+    var layout: UUID?
+    var workspace: UUID?
+    var minWidth: UUID?
+    var minHeight: UUID?
+
+    static let none = WindowRuleProvenance()
 }
 
 struct WindowDecision: Equatable, Sendable {
@@ -57,6 +65,7 @@ struct WindowDecision: Equatable, Sendable {
     let layoutDecisionKind: WindowDecisionLayoutKind
     let workspaceName: String?
     let ruleEffects: ManagedWindowRuleEffects
+    let ruleProvenance: WindowRuleProvenance
     let heuristicReasons: [AXWindowHeuristicReason]
     let deferredReason: WindowDecisionDeferredReason?
 

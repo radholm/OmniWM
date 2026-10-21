@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import ApplicationServices
 import CoreGraphics
@@ -65,23 +65,45 @@ final class WorkspaceBarActionsTests: XCTestCase {
         XCTAssertEqual(fixture.controller.workspaceManager.workspace(for: moved.id), fixture.ws3)
     }
 
-    func testMoveAllMovesEveryGroupedWindow() async throws {
-        let fixture = try makeFixture(followsFocus: false)
-        let first = try addWindow(pid: 700_031, windowId: 1, to: fixture.ws1, fixture: fixture)
-        let second = try addWindow(pid: 700_031, windowId: 2, to: fixture.ws1, fixture: fixture)
-        let anchor = try addWindow(pid: 700_032, windowId: 3, to: fixture.ws1, fixture: fixture)
-        try select(anchor, in: fixture.ws1, fixture: fixture)
-
-        fixture.controller.performWorkspaceBarMenuAction(
-            .moveWindowsToWorkspace([first.id, second.id], fixture.ws2),
-            barMonitorId: fixture.mainMonitor.id
-        )
-        await WindowAdmissionTestSupport.drainLayoutRefreshes(fixture.controller)
-
-        let manager = fixture.controller.workspaceManager
-        XCTAssertEqual(manager.workspace(for: first.id), fixture.ws2)
-        XCTAssertEqual(manager.workspace(for: second.id), fixture.ws2)
-        XCTAssertEqual(manager.workspace(for: anchor.id), fixture.ws1)
+    func testMenuAndDropMoveEveryGroupedWindow() async throws {
+        for drop in [false, true] {
+            let fixture = try makeFixture(followsFocus: false)
+            let first = try addWindow(
+                pid: drop ? 700_078 : 700_031,
+                windowId: drop ? 8 : 1,
+                to: fixture.ws1,
+                fixture: fixture
+            )
+            let second = try addWindow(
+                pid: drop ? 700_078 : 700_031,
+                windowId: drop ? 9 : 2,
+                to: fixture.ws1,
+                fixture: fixture
+            )
+            let anchor = try addWindow(pid: 700_032, windowId: 3, to: fixture.ws1, fixture: fixture)
+            try select(anchor, in: fixture.ws1, fixture: fixture)
+            let destination = drop ? fixture.ws3 : fixture.ws2
+            if drop {
+                XCTAssertTrue(fixture.controller.commitWorkspaceBarDrop(
+                    .moveToWorkspace(fixture.ws3),
+                    source: .init(
+                        tokens: [first.id, second.id],
+                        workspaceId: fixture.ws1,
+                        isFloating: false
+                    )
+                ))
+            } else {
+                fixture.controller.performWorkspaceBarMenuAction(
+                    .moveWindowsToWorkspace([first.id, second.id], fixture.ws2),
+                    barMonitorId: fixture.mainMonitor.id
+                )
+            }
+            await WindowAdmissionTestSupport.drainLayoutRefreshes(fixture.controller)
+            let manager = fixture.controller.workspaceManager
+            XCTAssertEqual(manager.workspace(for: first.id), destination)
+            XCTAssertEqual(manager.workspace(for: second.id), destination)
+            XCTAssertEqual(manager.workspace(for: anchor.id), fixture.ws1)
+        }
     }
 
     func testMoveWorkspaceToMonitorByIdentifier() async throws {
@@ -133,7 +155,10 @@ final class WorkspaceBarActionsTests: XCTestCase {
             frame: CGRect(x: 100, y: 100, width: 600, height: 400)
         )
 
-        XCTAssertEqual(fixture.controller.toggleWindowFloating(floated.id), .executed)
+        fixture.controller.performWorkspaceBarMenuAction(
+            .toggleFloating(floated.id),
+            barMonitorId: fixture.mainMonitor.id
+        )
         XCTAssertEqual(manager.manualLayoutOverride(for: floated.id), .forceFloat)
         XCTAssertNil(manager.manualLayoutOverride(for: focused.id))
 

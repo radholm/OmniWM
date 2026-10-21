@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import IOSurface
@@ -315,19 +315,16 @@ final class WorkspaceSwipePreview {
         let fade = Self.revealFade / AnimationSpeed.normalized(animationSpeed())
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: Self.revealHold)
-            NSAnimationContext.runAnimationGroup { context in
+            await NSAnimationContext.runAnimationGroup { context in
                 context.duration = fade
                 panel.animator().alphaValue = 0
-            } completionHandler: {
-                MainActor.assumeIsolated {
-                    withExtendedLifetime(previews) {}
-                    if let self {
-                        self.close(panel)
-                    } else {
-                        panel.orderOut(nil)
-                        panel.close()
-                    }
-                }
+            }
+            withExtendedLifetime(previews) {}
+            if let self {
+                self.close(panel)
+            } else {
+                panel.orderOut(nil)
+                panel.close()
             }
         }
     }

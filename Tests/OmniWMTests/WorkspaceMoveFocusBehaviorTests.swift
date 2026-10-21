@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import ApplicationServices
 import CoreGraphics
@@ -110,8 +110,15 @@ final class WorkspaceMoveFocusBehaviorTests: XCTestCase {
                     controller.workspaceNavigationHandler.moveFocusedWindow(toWorkspaceIndex: 1)
 
                     let pending = try XCTUnwrap(refreshController.layoutState.pendingRefresh)
+                    XCTAssertEqual(pending.reason, .workspaceTransition)
                     XCTAssertEqual(pending.postLayoutActions.count, 1)
+                    XCTAssertEqual(
+                        manager.activeWorkspace(on: fixture.monitor.id)?.id,
+                        followsFocus ? destinationWorkspaceId : sourceWorkspaceId
+                    )
+                    XCTAssertEqual(manager.interactionMonitorId, fixture.monitor.id)
                     XCTAssertTrue(fixture.focusRecorder.focusedTokens.isEmpty)
+                    XCTAssertNil(controller.intentLedger.activeManagedRequest)
                     var plan = refreshController.buildRelayoutEffectPlan(
                         recoverFocus: false,
                         affectedWorkspaceIds: pending.affectedWorkspaceIds
@@ -764,7 +771,7 @@ extension WorkspaceMoveFocusBehaviorTests {
     private func withBlockedLayoutRefreshes<T>(
         _ fixture: Fixture,
         _ body: () throws -> T
-    ) rethrows -> T {
+    ) throws -> T {
         try withBlockedLayoutRefreshes(
             controller: fixture.controller,
             affectedWorkspaceId: fixture.workspaceIds[0],
@@ -776,25 +783,9 @@ extension WorkspaceMoveFocusBehaviorTests {
         controller: WMController,
         affectedWorkspaceId: WorkspaceDescriptor.ID,
         _ body: () throws -> T
-    ) rethrows -> T {
-        let blocker = Task { @MainActor in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-            }
-        }
-        let refreshController = controller.layoutRefreshController
-        refreshController.layoutState.activeRefreshTask = blocker
-        refreshController.layoutState.activeRefresh = .init(
-            kind: .immediateRelayout,
-            reason: .workspaceTransition,
-            affectedWorkspaceIds: [affectedWorkspaceId]
+    ) throws -> T {
+        try LayoutRefreshTestSupport.withBlocked(
+            controller, in: affectedWorkspaceId, reason: .workspaceTransition, body
         )
-        defer {
-            blocker.cancel()
-            refreshController.layoutState.activeRefreshTask = nil
-            refreshController.layoutState.activeRefresh = nil
-            refreshController.layoutState.pendingRefresh = nil
-        }
-        return try body()
     }
 }

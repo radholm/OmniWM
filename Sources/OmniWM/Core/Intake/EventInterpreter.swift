@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -80,6 +80,12 @@ final class EventInterpreter: EventIntakeSink {
 
         case .systemWake:
             controller.serviceLifecycleManager.handleSystemWake()
+
+        case let .pointerEdgeCrossed(target):
+            controller.mouseWarpHandler.notePointerEdgeCrossing(to: target)
+
+        case .pointerEdgeOwnershipChanged:
+            controller.mouseEventHandler.reconcileMouseMoveSubscription()
 
         case let .windowConstraintsResolved(fact):
             controller.layoutRefreshController.applyResolvedConstraints(fact)
@@ -194,7 +200,7 @@ final class EventInterpreter: EventIntakeSink {
 
         case let .titleChanged(pid, windowId, callbackGeneration):
             guard acceptsCallbackGeneration(callbackGeneration, pid: pid) else { return }
-            controller.axEventHandler.handleWindowTitleChanged(windowId: windowId)
+            controller.axEventHandler.handleWindowTitleChanged(windowId: windowId, pid: pid)
         }
     }
 }

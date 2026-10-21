@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import CoreGraphics
@@ -41,6 +41,11 @@ final class BorderSurfaceTests: XCTestCase {
         var shows = 0
         var hides = 0
         var closes = 0
+        private var orderedInByAppKit = false
+
+        override var isVisible: Bool {
+            orderedInByAppKit
+        }
 
         override func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
             orders.append((place, otherWin, level.rawValue))
@@ -48,11 +53,13 @@ final class BorderSurfaceTests: XCTestCase {
 
         override func orderFront(_ sender: Any?) {
             shows += 1
+            orderedInByAppKit = true
             presentationEvents.append("show")
         }
 
         override func orderOut(_ sender: Any?) {
             hides += 1
+            orderedInByAppKit = false
             super.orderOut(sender)
         }
 
@@ -369,12 +376,19 @@ final class BorderSurfaceTests: XCTestCase {
         XCTAssertEqual(recorder.orderCalls[0].targetWindowId, UInt32(token().windowId))
 
         _ = applier.apply(nil, forceOrdering: false)
-        XCTAssertGreaterThanOrEqual(panel.hides, 1)
+        XCTAssertEqual(panel.hides, 0)
+        XCTAssertEqual(recorder.orderCalls.count, 2)
+        XCTAssertEqual(recorder.orderCalls[1].order, .out)
+        XCTAssertEqual(recorder.orderCalls[1].targetWindowId, 0)
         XCTAssertFalse(SurfaceCoordinator.shared.contains(windowNumber: id))
         _ = applier.apply(desired(configBlue), forceOrdering: false)
         XCTAssertEqual(recorder.layerPanels.count, 1)
-        XCTAssertEqual(panel.shows, 2)
-        XCTAssertEqual(panel.presentationEvents, ["show", "order", "show", "order"])
+        XCTAssertEqual(panel.shows, 1)
+        XCTAssertEqual(panel.hides, 0)
+        XCTAssertEqual(panel.presentationEvents, ["show", "order", "order", "order"])
+        XCTAssertEqual(recorder.orderCalls.count, 3)
+        XCTAssertEqual(recorder.orderCalls[2].order, .below)
+        XCTAssertEqual(recorder.orderCalls[2].targetWindowId, UInt32(token().windowId))
         XCTAssertTrue(SurfaceCoordinator.shared.contains(windowNumber: id))
         applier.cleanup()
         XCTAssertEqual(panel.closes, 1)
@@ -451,8 +465,14 @@ final class BorderSurfaceTests: XCTestCase {
 
         window.hide()
         window.reorder(relativeTo: next)
-        XCTAssertEqual(panel.shows, 2)
-        XCTAssertEqual(Array(panel.presentationEvents.suffix(2)), ["show", "order"])
+        XCTAssertEqual(panel.shows, 1)
+        XCTAssertEqual(panel.hides, 0)
+        XCTAssertEqual(Array(panel.presentationEvents.suffix(2)), ["order", "order"])
+        XCTAssertEqual(Array(recorder.orderCalls.suffix(2).map(\.order)), [.out, .below])
+        XCTAssertEqual(Array(recorder.orderCalls.suffix(2).map(\.targetWindowId)), [0, 78])
+        XCTAssertTrue(recorder.orderCalls.suffix(2).allSatisfy {
+            $0.windowId == UInt32(panel.windowNumber)
+        })
         window.destroy()
         XCTAssertEqual(panel.closes, 1)
         XCTAssertTrue(window.update(frame: frame, targetToken: token()))
@@ -677,7 +697,7 @@ final class BorderSurfaceTests: XCTestCase {
         XCTAssertEqual(window.frameOnScreen, CGRect(x: 6, y: 16, width: 108, height: 88))
         XCTAssertEqual(panel.borderLayer.bounds, CGRect(x: 0, y: 0, width: 100, height: 80))
         XCTAssertEqual(panel.borderLayer.rimWidth, 4)
-        XCTAssertEqual(panel.renderedCornerRadii, WindowCornerRadii(uniform: 9))
+        XCTAssertEqual(panel.renderedCornerRadii, WindowCornerRadii.systemDefault)
         XCTAssertNil(panel.borderLayer.backgroundColor)
         XCTAssertNil(panel.borderLayer.contents)
         XCTAssertNil(panel.borderLayer.mask)
@@ -705,7 +725,7 @@ final class BorderSurfaceTests: XCTestCase {
         XCTAssertEqual(window.frameOnScreen, CGRect(x: 5, y: 15, width: 110, height: 90))
         XCTAssertEqual(panel.borderLayer.bounds, CGRect(x: 0, y: 0, width: 100, height: 80))
         XCTAssertEqual(panel.borderLayer.rimWidth, 5)
-        XCTAssertEqual(panel.renderedCornerRadii, WindowCornerRadii(uniform: 9))
+        XCTAssertEqual(panel.renderedCornerRadii, WindowCornerRadii.systemDefault)
     }
 
     @MainActor
@@ -891,6 +911,10 @@ final class BorderSurfaceTests: XCTestCase {
             cornerRadii: WindowCornerRadii(topLeft: 11.5, topRight: 9, bottomLeft: 8.5, bottomRight: 7)
         )
         XCTAssertNotEqual(recorder.layerPanels.first?.renderedCornerRadii, cornersAfterFirst)
+        XCTAssertEqual(
+            recorder.layerPanels.first?.renderedCornerRadii,
+            WindowCornerRadii(topLeft: 11.5, topRight: 9, bottomLeft: 8.5, bottomRight: 7)
+        )
     }
 
     @MainActor
@@ -1398,6 +1422,20 @@ final class BorderSurfaceTests: XCTestCase {
         ))
         let panel = try XCTUnwrap(recorder.layerPanels.first)
         XCTAssertEqual(panel.renderedCornerRadii, WindowCornerRadii(uniform: 25))
+    }
+
+    @MainActor
+    func testFallbackCornerRadiiUsesSystemDefaultOnMacOS26PlusWhenCornersUnavailable() async {
+        let recorder = BorderOperationsRecorder()
+        let applier = makeApplier(recorder) { _ in nil }
+        defer { applier.cleanup() }
+
+        _ = applier.apply(desired(configRed), forceOrdering: false)
+        let panel = recorder.layerPanels.first
+        XCTAssertEqual(panel?.renderedCornerRadii, WindowCornerRadii.systemDefault)
+        if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+            XCTAssertEqual(panel?.renderedCornerRadii, WindowCornerRadii(uniform: 16))
+        }
     }
 }
 

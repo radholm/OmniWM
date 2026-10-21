@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -59,10 +59,22 @@ extension IPCWindowRequest {
         else {
             return nil
         }
-        self.init(
-            name: action,
-            windowId: words[1],
-            workspaceTarget: action == .moveToWorkspace ? WorkspaceTarget(resolvingInput: words[2]) : nil
-        )
+        guard let argument = words.dropFirst(2).first else {
+            self.init(name: action, windowId: words[1])
+            return
+        }
+        switch action {
+        case .moveToWorkspace:
+            self.init(name: action, windowId: words[1], workspaceTarget: WorkspaceTarget(resolvingInput: argument))
+        case .assignToScratchpad:
+            guard let index = Int(argument), IPCScratchpadSlots.range.contains(index) else { return nil }
+            self.init(name: action, windowId: words[1], scratchpadIndex: index)
+        case .focus,
+             .navigate,
+             .summonRight,
+             .close,
+             .toggleFloating:
+            return nil
+        }
     }
 }

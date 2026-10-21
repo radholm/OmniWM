@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -148,6 +148,8 @@ extension IPCJSONWriter {
         var first = true
         self.key("app", &first)
         try self.value(value.app)
+        self.key("id", &first)
+        try self.value(value.id)
         self.key("name", &first)
         try self.value(value.name)
         if let fieldValue = value.title {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -235,6 +235,10 @@ extension IPCJSONWriter {
         var first = true
         self.key("name", &first)
         try self.value(value.name)
+        if let fieldValue = value.scratchpadIndex {
+            self.key("scratchpadIndex", &first)
+            try self.value(fieldValue)
+        }
         self.key("windowId", &first)
         try self.value(value.windowId)
         if let fieldValue = value.workspaceTarget {

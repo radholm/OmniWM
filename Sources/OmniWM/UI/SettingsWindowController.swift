@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import SwiftUI
@@ -38,16 +38,17 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             contentSize: NSSize(width: 1040, height: 760),
             minSize: NSSize(width: 760, height: 560),
             configure: { [weak self] window in window.delegate = self },
-            onWillClose: { [weak self] in self?.navigation.ruleEditorState.isDirty = false }
-        ) {
-            SettingsView(
-                settings: settings,
-                controller: controller,
-                windowCornerPreferences: windowCornerPreferences,
-                updateCoordinator: updateCoordinator,
-                navigation: navigation
-            )
-        }
+            onWillClose: { [weak self] in self?.navigation.ruleEditorState.isDirty = false },
+            content: {
+                SettingsView(
+                    settings: settings,
+                    controller: controller,
+                    windowCornerPreferences: windowCornerPreferences,
+                    updateCoordinator: updateCoordinator,
+                    navigation: navigation
+                )
+            }
+        )
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {

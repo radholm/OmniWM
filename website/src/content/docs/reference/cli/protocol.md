@@ -11,7 +11,7 @@ sidebar:
 
 ```json
 {
-  "version": 20,
+  "version": 21,
   "id": "<uuid>",
   "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|shell|subscribe>",
   "authorizationToken": "<token>",
@@ -149,7 +149,14 @@ Workspace requests use this flat wire shape. For `move-to-monitor`, `force` is o
 }
 ```
 
-`workspaceTarget` is required by `move-to-workspace` and rejected by every other window action.
+Each window action accepts at most one argument field, and requires exactly the one it uses; every other argument field is rejected:
+
+| Field | Type | Required by |
+|-------|------|-------------|
+| `workspaceTarget` | workspace target object | `move-to-workspace` |
+| `scratchpadIndex` | integer, 1-10 | `assign-to-scratchpad` |
+
+All other window actions take no argument field.
 
 **Window marks:**
 
@@ -178,7 +185,7 @@ Workspace requests use this flat wire shape. For `move-to-monitor`, `force` is o
 
 ```json
 {
-  "version": 20,
+  "version": 21,
   "id": "<request-id>",
   "ok": true,
   "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|shell|subscribe>",
@@ -192,13 +199,13 @@ Workspace requests use this flat wire shape. For `move-to-monitor`, `force` is o
 
 Optional response fields are omitted when unavailable. For example, a successful response has no `code` key; it does not send `"code": null`.
 
-A `window mark list` response has `kind: "window-mark"` and `result.kind: "window-marks"`. Its `result.payload.marks` array contains each mark's `name`, `workspace` (`id`, `rawName`, `displayName`, optional `number`), `app` (`name`, optional `bundleId`), and optional window `title`. Other mark actions return `status: "executed"` without a result payload.
+A `window mark list` response has `kind: "window-mark"` and `result.kind: "window-marks"`. Its `result.payload.marks` array contains each mark's `name`, `id` (session-scoped opaque window id), `workspace` (`id`, `rawName`, `displayName`, optional `number`), `app` (`name`, optional `bundleId`), and optional window `title`. Other mark actions return `status: "executed"` without a result payload.
 
 Authorization, protocol, validation, and routing failures keep the originating response `kind`. For example:
 
 ```json
 {
-  "version": 20,
+  "version": 21,
   "id": "<request-id>",
   "ok": false,
   "kind": "query",
@@ -215,7 +222,7 @@ Events are sent on subscription connections after the initial response.
 
 ```json
 {
-  "version": 20,
+  "version": 21,
   "id": "<event-id>",
   "kind": "event",
   "channel": "focus",

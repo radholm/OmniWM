@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 import OmniWMIPC
@@ -157,10 +157,12 @@ enum CLIRenderer {
     private static func formattedResponseText(_ response: IPCResponse, format: CLIOutputFormat) -> String {
         guard response.ok else {
             let status = humanReadableStatus(for: response)
-            guard let result = response.result,
-                  case let .capture(capture) = result.payload
-            else { return status }
-            return "\(status)\n\(CLIDiagnosticsRenderer.formattedCapture(capture, format: format))"
+            switch response.result?.payload {
+            case let .capture(capture)?:
+                return "\(status)\n\(CLIDiagnosticsRenderer.formattedCapture(capture, format: format))"
+            default:
+                return status
+            }
         }
         guard let result = response.result else { return humanReadableStatus(for: response) }
         return formattedPayload(result.payload, format: format)
@@ -348,13 +350,14 @@ extension CLIRenderer {
         let rows = payload.marks.map { mark in
             [
                 mark.name,
+                dashIfEmpty(mark.id),
                 mark.workspace.displayName,
                 mark.app.name,
                 dashIfEmpty(mark.title ?? "")
             ]
         }
         return CLITableRenderer.formatRows(
-            headers: ["MARK", "WORKSPACE", "APP", "TITLE"],
+            headers: ["MARK", "ID", "WORKSPACE", "APP", "TITLE"],
             rows: rows,
             format: format
         )

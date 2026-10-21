@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -19,7 +19,11 @@ extension WMController {
     }
 
     @discardableResult
-    func toggleWindowFloating(_ token: WindowToken, preferredMonitor: Monitor? = nil) -> ExternalCommandResult {
+    func toggleWindowFloating(
+        _ token: WindowToken,
+        preferredMonitor: Monitor? = nil,
+        arrivesQuietly: Bool = false
+    ) -> ExternalCommandResult {
         guard let entry = workspaceManager.entry(for: token) else { return .notFound }
 
         let nextOverride: ManualWindowOverride?
@@ -29,7 +33,13 @@ extension WMController {
             nextOverride = entry.mode == .tiling ? .forceFloat : .forceTile
         }
 
-        applyManagedWindowOverride(nextOverride, for: token, entry: entry, preferredMonitor: preferredMonitor)
+        applyManagedWindowOverride(
+            nextOverride,
+            for: token,
+            entry: entry,
+            preferredMonitor: preferredMonitor,
+            arrivesQuietly: arrivesQuietly
+        )
         return .executed
     }
 
@@ -37,7 +47,8 @@ extension WMController {
         _ override: ManualWindowOverride?,
         for token: WindowToken,
         entry: WindowState,
-        preferredMonitor: Monitor? = nil
+        preferredMonitor: Monitor? = nil,
+        arrivesQuietly: Bool = false
     ) {
         workspaceManager.setManualLayoutOverride(override, for: token)
         let entry = workspaceManager.entry(for: token) ?? entry
@@ -78,7 +89,8 @@ extension WMController {
         }
         layoutRefreshController.requestRelayout(
             reason: .windowRuleReevaluation,
-            affectedWorkspaceIds: [entry.workspaceId]
+            affectedWorkspaceIds: [entry.workspaceId],
+            suppressWindowActivation: arrivesQuietly
         )
     }
 

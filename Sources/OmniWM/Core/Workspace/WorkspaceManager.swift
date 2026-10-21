@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -163,7 +163,8 @@ extension WorkspaceManager {
         world.commit(
             event,
             monitors: monitors,
-            snapshot: { self.reconcileSnapshot() },
+            snapshot: { self.reconcileReductionSnapshot() },
+            completeSnapshot: { self.populateReconcileLayouts(&$0) },
             preMutate: preMutate,
             resolvePlan: resolvePlan
         )
@@ -303,9 +304,7 @@ extension WorkspaceManager {
     func schedulePersistedWindowRestoreCatalogSave() {
         persistedRestoreCatalogStore.scheduleSave()
     }
-}
 
-extension WorkspaceManager {
     func monitor(byId id: Monitor.ID) -> Monitor? {
         _monitorsById[id]
     }
@@ -404,9 +403,7 @@ extension WorkspaceManager {
     var spaceTopology: SpaceTopology {
         world.spaceTopology
     }
-}
 
-extension WorkspaceManager {
     func noteInvalidation(
         workspaceId: WorkspaceDescriptor.ID?,
         domains: InvalidationDomain,

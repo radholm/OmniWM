@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import Foundation
@@ -67,15 +67,18 @@ struct WorldView {
     }
 
     func isWindowFullscreenInLayout(_ token: WindowToken) -> Bool {
-        guard let entry = controller.workspaceManager.entry(for: token) else { return false }
+        entry(for: token).map { isWindowFullscreenInLayout($0) } ?? false
+    }
+
+    func isWindowFullscreenInLayout(_ entry: borrowing WindowState) -> Bool {
         switch controller.workspaceManager.activeLayoutKind(for: entry.workspaceId) {
         case .dwindle:
-            return controller.dwindleEngine?.isWindowFullscreen(token, in: entry.workspaceId) == true
+            return controller.dwindleEngine?.isWindowFullscreen(entry.token, in: entry.workspaceId) == true
         }
     }
 
-    func isManagedWindowDisplayable(_ token: WindowToken) -> Bool {
-        controller.isManagedWindowDisplayable(token)
+    func isManagedWindowDisplayable(_ entry: borrowing WindowState) -> Bool {
+        controller.isManagedWindowDisplayable(entry)
     }
 
     func hasPendingWindowClose(for entry: WindowState) -> Bool {
@@ -118,6 +121,7 @@ struct WorldView {
                         barHeight: geometry.barHeight,
                         orientation: resolved.position.isVertical ? .vertical : .horizontal,
                         secureInputActive: controller.isSecureInputIndicated,
+                        keyboardMode: controller.keyboardModeKind,
                         barFill: resolved.barFill,
                         barBorder: resolved.barBorder,
                         cornerRadius: resolved.cornerRadius.map { CGFloat($0) }

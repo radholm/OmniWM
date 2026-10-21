@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Observation
@@ -275,7 +275,9 @@ final class StatusMenuModel {
             Log.config.error("settings file action failed: \(error.localizedDescription)")
         }
     }
+}
 
+extension StatusMenuModel {
     func installCLI() {
         guard let cliManager else { return }
         let status = cliManager.exposureStatus()

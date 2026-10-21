@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -75,17 +75,20 @@ extension MouseEventHandler {
     ) -> Bool {
         guard let controller, let engine = controller.dwindleEngine else { return false }
         if button == .left {
-            guard Self.mouseMoveMode(
-                modifiers: modifiers,
+            guard Self.mouseMoveModifiersMatch(
+                modifiers,
                 required: controller.settings.gestures.mouseMoveModifierKey.cgEventFlags
-            ) == .swap,
+            ),
                 let token = engine.hitTestFocusableWindow(
                     point: location,
                     in: wsId,
                     at: controller.animationClock.now()
                 )
             else { return false }
-            _ = beginDwindleMove(token: token, engine: engine, wsId: wsId, at: location, source: .mouse(button))
+            _ = beginDwindleMove(
+                token: token, engine: engine, wsId: wsId, at: location,
+                source: .mouse(button)
+            )
             return false
         }
         guard button == .right,

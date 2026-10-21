@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -9,23 +9,46 @@ public enum IPCWindowActionName: String, Codable, Equatable, Sendable {
     case summonRight = "summon-right"
     case moveToWorkspace = "move-to-workspace"
     case close
+    case toggleFloating = "toggle-floating"
+    case assignToScratchpad = "assign-to-scratchpad"
 }
 
 public struct IPCWindowRequest: Codable, Equatable, Sendable {
     public let name: IPCWindowActionName
     public let windowId: String
     public let workspaceTarget: WorkspaceTarget?
+    public let scratchpadIndex: Int?
 
-    public init(name: IPCWindowActionName, windowId: String, workspaceTarget: WorkspaceTarget? = nil) {
+    public init(
+        name: IPCWindowActionName,
+        windowId: String,
+        workspaceTarget: WorkspaceTarget? = nil,
+        scratchpadIndex: Int? = nil
+    ) {
         self.name = name
         self.windowId = windowId
         self.workspaceTarget = workspaceTarget
+        self.scratchpadIndex = scratchpadIndex
     }
 
     private enum CodingKeys: String, CodingKey {
         case name
         case windowId
         case workspaceTarget
+        case scratchpadIndex
+    }
+
+    private static func requiredArgumentKey(for name: IPCWindowActionName) -> CodingKeys? {
+        switch name {
+        case .moveToWorkspace: .workspaceTarget
+        case .assignToScratchpad: .scratchpadIndex
+        case .focus,
+             .navigate,
+             .summonRight,
+             .close,
+             .toggleFloating:
+            nil
+        }
     }
 
     public init(from decoder: Decoder) throws {
@@ -33,11 +56,26 @@ public struct IPCWindowRequest: Codable, Equatable, Sendable {
         name = try container.decode(IPCWindowActionName.self, forKey: .name)
         windowId = try container.decode(String.self, forKey: .windowId)
         workspaceTarget = try container.decodeIfPresent(WorkspaceTarget.self, forKey: .workspaceTarget)
-        guard (name == .moveToWorkspace) == (workspaceTarget != nil) else {
+        scratchpadIndex = try container.decodeIfPresent(Int.self, forKey: .scratchpadIndex)
+
+        let required = Self.requiredArgumentKey(for: name)
+        let present: [CodingKeys: Bool] = [
+            .workspaceTarget: workspaceTarget != nil,
+            .scratchpadIndex: scratchpadIndex != nil
+        ]
+        for (key, isPresent) in present where isPresent != (key == required) {
             throw DecodingError.dataCorruptedError(
-                forKey: .workspaceTarget,
+                forKey: key,
                 in: container,
-                debugDescription: "workspaceTarget is required by move-to-workspace and rejected by other actions"
+                debugDescription: "\(key.stringValue) is \(isPresent ? "rejected" : "required") by \(name.rawValue)"
+            )
+        }
+
+        if let scratchpadIndex, !IPCScratchpadSlots.range.contains(scratchpadIndex) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .scratchpadIndex,
+                in: container,
+                debugDescription: "scratchpadIndex must be in \(IPCScratchpadSlots.range)"
             )
         }
     }
@@ -47,6 +85,7 @@ public struct IPCWindowRequest: Codable, Equatable, Sendable {
         try container.encode(name, forKey: .name)
         try container.encode(windowId, forKey: .windowId)
         try container.encodeIfPresent(workspaceTarget, forKey: .workspaceTarget)
+        try container.encodeIfPresent(scratchpadIndex, forKey: .scratchpadIndex)
     }
 }
 

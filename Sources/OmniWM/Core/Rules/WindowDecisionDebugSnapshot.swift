@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -21,7 +21,7 @@ struct WindowDecisionDebugSnapshot: Equatable, Sendable {
     let workspaceName: String?
     let minWidth: Double?
     let minHeight: Double?
-    let matchedRuleId: UUID?
+    let ruleProvenance: WindowRuleProvenance
     let heuristicReasons: [AXWindowHeuristicReason]
     let attributeFetchSucceeded: Bool
 
@@ -36,6 +36,10 @@ struct WindowDecisionDebugSnapshot: Equatable, Sendable {
         case .heuristic:
             "heuristic"
         }
+    }
+
+    private func ruleIdDescription(_ ruleId: UUID?) -> String {
+        ruleId?.uuidString ?? "nil"
     }
 
     private func stringValue<T>(_ value: T?) -> String {
@@ -55,12 +59,15 @@ struct WindowDecisionDebugSnapshot: Equatable, Sendable {
             "disposition=\(String(describing: disposition))",
             "source=\(sourceDescription)",
             "layoutDecisionKind=\(layoutDecisionKind.rawValue)",
+            "layoutRuleId=\(ruleIdDescription(ruleProvenance.layout))",
             "deferredReason=\(deferredReason?.rawValue ?? "nil")",
             "admissionOutcome=\(admissionOutcome.rawValue)",
             "workspaceName=\(workspaceName ?? "nil")",
+            "workspaceRuleId=\(ruleIdDescription(ruleProvenance.workspace))",
             "minWidth=\(stringValue(minWidth))",
+            "minWidthRuleId=\(ruleIdDescription(ruleProvenance.minWidth))",
             "minHeight=\(stringValue(minHeight))",
-            "matchedRuleId=\(matchedRuleId?.uuidString ?? "nil")",
+            "minHeightRuleId=\(ruleIdDescription(ruleProvenance.minHeight))",
             "heuristicReasons=\(heuristicReasons.map(\.rawValue).joined(separator: ","))",
             "attributeFetchSucceeded=\(attributeFetchSucceeded)"
         ]

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -11,6 +11,7 @@ extension MouseEventHandler {
 
     var isInteractiveGestureActive: Bool {
         state.isMoving || state.isResizing
+            || state.nativeTitleBarDrag?.dwindleResizeWorkspaceId != nil
     }
 
     func handleInputSuppressionBegan() {
@@ -67,13 +68,10 @@ extension MouseEventHandler {
     }
 
     private func finishActiveResize() {
-        if state.resizeLayout == .dwindle {
-            finishDwindleResize()
-        } else {
-        }
+        finishDwindleResize()
     }
 
-    private func finishDwindleResize() {
+    func finishDwindleResize() {
         guard let controller, let engine = controller.dwindleEngine else { return }
         let workspaceId = engine.interactiveResize?.workspaceId
         guard engine.interactiveResizeEnd(), let workspaceId else {
@@ -119,6 +117,7 @@ extension MouseEventHandler {
     }
 
     func clearResizeInteractionState() {
+        controller?.resizeOverlay.settleOnLayout()
         state.isResizing = false
         state.activeInteractionSource = nil
         state.resizeLayout = nil
@@ -126,9 +125,14 @@ extension MouseEventHandler {
     }
 
     func completeActiveMove(at location: CGPoint) {
-        if state.moveLayout == .dwindle {
-            finishDwindleMove()
-        } else {
+        switch classifyMoveLocation(location) {
+        case .sourceDisplay:
+            finishDwindleMove(at: location)
+        case let .crossDisplay(drop):
+            cancelActiveEngineMove()
+            controller?.performCrossDisplayDrop(drop)
+        case .cancel:
+            cancelActiveEngineMove()
         }
         clearMoveInteractionState()
         NSCursor.arrow.set()

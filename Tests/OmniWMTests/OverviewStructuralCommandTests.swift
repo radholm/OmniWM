@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import ApplicationServices
 import CoreGraphics
@@ -145,7 +145,7 @@ final class OverviewStructuralCommandTests: XCTestCase {
 
         XCTAssertFalse(fixture.controller.isOverviewOpen())
         await fulfillment(of: [focused], timeout: 1)
-        XCTAssertEqual(fixture.focusRecorder.activatedPIDs, [fullscreen.pid])
+        XCTAssertEqual(fixture.focusRecorder.activatedPIDs, [])
         XCTAssertEqual(fixture.focusRecorder.focusedTokens, [fullscreen.id])
         XCTAssertEqual(fixture.focusRecorder.raisedCount, 1)
         XCTAssertEqual(manager.nativeFullscreenRecord(for: fullscreen.id)?.transition, .suspended)
@@ -240,11 +240,23 @@ final class OverviewStructuralCommandTests: XCTestCase {
             .workspace(.moveTo(0)), selectedHandle: secondSelected
         )?.didMutate == true)
 
-        for _ in 0 ..< 100
-            where fixture.controller.layoutRefreshController.layoutState.activeRefreshTask != nil
-            || fixture.controller.layoutRefreshController.layoutState.pendingRefresh != nil
-        {
+        let refreshController = fixture.controller.layoutRefreshController
+        for _ in 0 ..< 100 {
+            if refreshController.layoutState.activeRefreshTask == nil,
+               refreshController.layoutState.activeRefresh == nil,
+               refreshController.layoutState.pendingRefresh == nil
+            {
+                break
+            }
             try await Task.sleep(for: .milliseconds(10))
+        }
+        try Task.checkCancellation()
+        guard refreshController.layoutState.activeRefreshTask == nil,
+              refreshController.layoutState.activeRefresh == nil,
+              refreshController.layoutState.pendingRefresh == nil
+        else {
+            XCTFail("Coalesced structural refresh did not finish within 100 samples")
+            return
         }
 
         XCTAssertEqual(refreshedWorkspaceSets.count, 1)

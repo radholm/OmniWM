@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 import OmniWMIPC
@@ -36,16 +36,12 @@ struct ParsedCLICommand: Equatable {
 }
 
 enum CLIParser {
-    static func parse(
-        arguments: [String],
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) throws -> ParsedCLICommand {
+    static func parse(arguments: [String]) throws -> ParsedCLICommand {
         let normalized = CLINormalizedArguments(arguments: arguments)
         guard let command = normalized.arguments.first else {
             throw CLIParseError.usage(usageText)
         }
 
-        _ = environment
         let requestId = UUID().uuidString
         let commandArguments = Array(normalized.arguments.dropFirst())
         var outputFormat = normalized.outputFormat ?? CLIOutputFormat.defaultFormat(for: command)

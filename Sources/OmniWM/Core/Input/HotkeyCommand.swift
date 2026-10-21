@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 import OmniWMIPC
@@ -44,6 +44,7 @@ enum HotkeyCommand: Equatable, Hashable {
     case fullscreen(IPCFullscreenCommand)
 
     case openCommandPalette
+    case openCommandPaletteMode(IPCCommandPaletteMode)
 
     case raiseAllFloatingWindows
     case toggleFloatingFocus
@@ -55,6 +56,7 @@ enum HotkeyCommand: Equatable, Hashable {
 
     case presentation(IPCPresentationCommand)
     case media(IPCMediaCommand)
+    case keyboardMode(IPCKeyboardModeCommand)
     case shellToggle(String)
     case focusNavigation(FocusNavigationAction)
     case windowMovement(WindowMovementAction)
@@ -76,5 +78,18 @@ enum HotkeyCommand: Equatable, Hashable {
             return action.compatibility
         }
         return ActionCatalog.layoutCompatibility(for: self) ?? .shared
+    }
+
+    var repeatsInPrefix: Bool {
+        switch self {
+        case .move,
+             .windowMovement(.down),
+             .windowMovement(.up),
+             .dwindle(.resizeAlongAxis),
+             .dwindle(.resizeFocusedWindow):
+            true
+        default:
+            false
+        }
     }
 }

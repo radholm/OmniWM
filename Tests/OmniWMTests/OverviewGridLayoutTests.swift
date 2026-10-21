@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 @testable import OmniWM
@@ -17,7 +17,7 @@ final class OverviewGridLayoutTests: XCTestCase {
                 isActive: index == 0
             )
         }
-        return OverviewLayoutCalculator(screenFrame: screen, scale: 1, topInset: topInset, grid: grid)
+        return OverviewLayoutCalculator(screenFrame: screen, scale: 1, topSafeAreaInset: topInset, grid: grid)
             .calculateLayout(
                 workspaces: workspaces,
                 windows: [:],

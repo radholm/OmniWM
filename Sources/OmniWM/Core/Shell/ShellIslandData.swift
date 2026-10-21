@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import OmniWMIPC
@@ -79,6 +79,10 @@ struct ShellIslandData: Equatable, Sendable {
         writer.key("drag")
         drag.write(to: &writer)
         writer.key("navigation")
+        writeNavigation(to: &writer)
+    }
+
+    private func writeNavigation(to writer: inout ShellValueWriter) {
         guard let navigation else {
             writer.null()
             return

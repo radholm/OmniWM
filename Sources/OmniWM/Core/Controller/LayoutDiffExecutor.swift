@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -24,10 +24,8 @@ final class LayoutDiffExecutor {
         return frameChange
     }
 
-    func execute(_ plan: WorkspaceLayoutPlan) {
-        guard let controller = refreshController.controller,
-              let monitor = resolveMonitor(from: plan.monitor, controller: controller)
-        else { return }
+    func execute(_ plan: WorkspaceLayoutPlan, controller: WMController) {
+        guard let monitor = resolveMonitor(from: plan.monitor, controller: controller) else { return }
         if Self.isFrameOnly(plan.diff) {
             executeFrameOnly(plan.diff, plan: plan, monitor: monitor, controller: controller)
             return
@@ -95,6 +93,7 @@ final class LayoutDiffExecutor {
         Self.applyFrameUpdates(
             preparation.frameUpdates,
             isAnimationTick: plan.isAnimationTick,
+            isInteractiveResize: plan.isInteractiveResize,
             controller: controller
         )
         refreshController.applyWorkspaceMonitorRelocationFrameUpdates(
@@ -108,6 +107,7 @@ final class LayoutDiffExecutor {
     static func applyFrameUpdates(
         _ frameUpdates: [AXFrameApplicationTarget],
         isAnimationTick: Bool,
+        isInteractiveResize: Bool = false,
         controller: WMController
     ) {
         guard !frameUpdates.isEmpty else { return }
@@ -117,7 +117,13 @@ final class LayoutDiffExecutor {
                 axManager.forceApplyNextFrame(for: update.windowId)
             }
         }
-        axManager.applyFramesParallel(frameUpdates, verify: !isAnimationTick)
+        guard isInteractiveResize else {
+            axManager.applyFramesParallel(frameUpdates, verify: !isAnimationTick)
+            return
+        }
+        let moves = frameUpdates.filter { $0.components == .position }
+        axManager.applyFramesParallel(moves, verify: false)
+        axManager.applyFramesParallel(frameUpdates.filter { $0.components != .position })
     }
 
     private func resolveMonitor(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import CoreText
@@ -124,30 +124,7 @@ extension ShellLayerScene {
             to: fill ?? Self.clear,
             changed: !Self.same(layer.backgroundColor, fill)
         )
-        add(
-            animation,
-            to: layer,
-            "borderColor",
-            from: from.borderColor ?? Self.clear,
-            to: paint.border ?? Self.clear,
-            changed: !Self.same(layer.borderColor, paint.border)
-        )
-        add(
-            animation,
-            to: layer,
-            "borderWidth",
-            from: from.borderWidth,
-            to: paint.borderWidth,
-            changed: layer.borderWidth != paint.borderWidth
-        )
-        add(
-            animation,
-            to: layer,
-            "cornerRadius",
-            from: from.cornerRadius,
-            to: paint.radius,
-            changed: layer.cornerRadius != paint.radius
-        )
+        animateOutline(animation, of: layer, from: from, to: paint)
         add(
             animation,
             to: layer,
@@ -183,11 +160,41 @@ extension ShellLayerScene {
         )
     }
 
+    private func animateOutline(
+        _ animation: ShellAnimation, of layer: CALayer, from: CALayer, to paint: ShellLayerPaint
+    ) {
+        add(
+            animation,
+            to: layer,
+            "borderColor",
+            from: from.borderColor ?? Self.clear,
+            to: paint.border ?? Self.clear,
+            changed: !Self.same(layer.borderColor, paint.border)
+        )
+        add(
+            animation,
+            to: layer,
+            "borderWidth",
+            from: from.borderWidth,
+            to: paint.borderWidth,
+            changed: layer.borderWidth != paint.borderWidth
+        )
+        add(
+            animation,
+            to: layer,
+            "cornerRadius",
+            from: from.cornerRadius,
+            to: paint.radius,
+            changed: layer.cornerRadius != paint.radius
+        )
+    }
+
     private static let backdropClass = NSClassFromString("CABackdropLayer") as? CALayer.Type
 
     private static let filterClass = NSClassFromString("CAFilter") as? NSObject.Type
 
     private static let blurRadii: [CGFloat] = [0, 8, 14, 20, 28, 36, 20]
+    private static let filterInputsKey = "omniwmFilterInputs"
 
     private func applyMaterial(_ slot: Int32, _ paint: ShellLayerPaint, to layer: CALayer) {
         guard paint.material > 0 else {
@@ -201,10 +208,14 @@ extension ShellLayerScene {
         backdrops[slot] = entry
         let radius = paint.blurRadius >= 0
             ? paint.blurRadius : Self.blurRadii[min(Int(paint.material), Self.blurRadii.count - 1)]
-        entry.backdrop.filters = [
-            Self.filter("gaussianBlur", "inputRadius", radius),
-            Self.filter("colorSaturate", "inputAmount", paint.saturation)
-        ].compactMap(\.self)
+        let inputs = [radius, paint.saturation]
+        if entry.backdrop.value(forKey: Self.filterInputsKey) as? [CGFloat] != inputs {
+            entry.backdrop.setValue(inputs, forKey: Self.filterInputsKey)
+            entry.backdrop.filters = [
+                Self.filter("gaussianBlur", "inputRadius", radius),
+                Self.filter("colorSaturate", "inputAmount", paint.saturation)
+            ].compactMap(\.self)
+        }
         entry.tint.backgroundColor = paint.fill
     }
 

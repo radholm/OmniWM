@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Carbon
@@ -107,6 +107,21 @@ final class GestureSettings {
         }
     }
 
+    var resizePreviewStyle = GestureSettings.defaults.resizePreviewStyle ?? .live {
+        didSet { notifyChange() }
+    }
+
+    var dwindleGroupDragAcrossDisplays = GestureSettings.defaults.dwindleGroupDragAcrossDisplays ?? .group {
+        didSet { notifyChange() }
+    }
+
+    var adoptNativeResize = GestureSettings.defaults.adoptNativeResize ?? false {
+        didSet {
+            guard oldValue != adoptNativeResize else { return }
+            notifyChange()
+        }
+    }
+
     var workspaceWallpaperParallax = GestureSettings.defaults.workspaceWallpaperParallax ?? true {
         didSet {
             guard oldValue != workspaceWallpaperParallax else { return }
@@ -162,7 +177,10 @@ final class GestureSettings {
             workspaceWallpaperParallax: workspaceWallpaperParallax,
             workspaceWallpaperParallaxAmount: workspaceWallpaperParallaxAmount,
             mouseEdgeDragResize: mouseEdgeDragResize,
-            mouseTitleBarDragSwap: mouseTitleBarDragSwap
+            mouseTitleBarDragSwap: mouseTitleBarDragSwap,
+            resizePreviewStyle: resizePreviewStyle,
+            dwindleGroupDragAcrossDisplays: dwindleGroupDragAcrossDisplays,
+            adoptNativeResize: adoptNativeResize
         )
     }
 
@@ -192,6 +210,9 @@ final class GestureSettings {
         workspaceWallpaperParallaxAmount = gestures.workspaceWallpaperParallaxAmount ?? 0.1
         mouseEdgeDragResize = gestures.mouseEdgeDragResize ?? true
         mouseTitleBarDragSwap = gestures.mouseTitleBarDragSwap ?? true
+        resizePreviewStyle = gestures.resizePreviewStyle ?? .live
+        dwindleGroupDragAcrossDisplays = gestures.dwindleGroupDragAcrossDisplays ?? .group
+        adoptNativeResize = gestures.adoptNativeResize ?? false
         isApplying = false
         if export() != previous {
             notifyChange()

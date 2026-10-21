@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import OmniWMScriptHost
@@ -72,6 +72,17 @@ final class ShellHiddenBarMenu {
             retireResourceImages: { [images = resources.resourceImages] owner in await images?.retire(owner) }
         )
         self.package = package
+        let mailbox = startWorker(package, source: source)
+        update(page: page)
+        mailbox.yield(.bars([parent.key: ShellBarData()]))
+        mailbox.yield(.popout(parent.key, true))
+        parent.setCompanion(popout)
+        installKeyboardForwarding()
+    }
+
+    private func startWorker(
+        _ package: ShellWidgetPackage, source: ShellWidgetSource
+    ) -> AsyncStream<ShellWidgetMessage>.Continuation {
         let retiring = Array(ShellWidgetHost.retiringTasks.values)
         let (messages, mailbox) = AsyncStream.makeStream(of: ShellWidgetMessage.self)
         package.capture.attach(mailbox)
@@ -94,11 +105,7 @@ final class ShellHiddenBarMenu {
             }
             await package.close()
         }
-        update(page: page)
-        mailbox.yield(.bars([parent.key: ShellBarData()]))
-        mailbox.yield(.popout(parent.key, true))
-        parent.setCompanion(popout)
-        installKeyboardForwarding()
+        return mailbox
     }
 
     isolated deinit {

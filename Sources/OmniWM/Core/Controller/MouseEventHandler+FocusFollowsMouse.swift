@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -86,6 +86,10 @@ extension MouseEventHandler {
         return controller.isPointInOwnWindow(location)
     }
 
+    func shouldBlockOwnWindowGestureInput(at location: CGPoint) -> Bool {
+        controller?.ownedWindowRegistry.contains(point: location, excluding: .parkingEdgeMask) == true
+    }
+
     private func handleFocusFollowsMouse(at location: CGPoint, windowIdUnderPointer: Int?) {
         guard let controller else { return }
         guard !externalFocusBlocksFocusFollowsMouse,
@@ -127,7 +131,7 @@ extension MouseEventHandler {
         return true
     }
 
-    private func hasPendingNativeFullscreenTransition(at location: CGPoint) -> Bool {
+    func hasPendingNativeFullscreenTransition(at location: CGPoint) -> Bool {
         guard let workspaceManager = controller?.workspaceManager else { return false }
         guard let monitor = location.monitorApproximation(in: workspaceManager.monitors),
               let workspace = workspaceManager.activeWorkspaceOrFirst(on: monitor.id)
@@ -137,7 +141,7 @@ extension MouseEventHandler {
         return workspaceManager.hasPendingNativeFullscreenTransition(in: workspace.id)
     }
 
-    private func isPointerDisplayShowingFullscreenSpace(at location: CGPoint) -> Bool {
+    func isPointerDisplayShowingFullscreenSpace(at location: CGPoint) -> Bool {
         guard let controller else { return false }
         let workspaceManager = controller.workspaceManager
         guard workspaceManager.hasNativeFullscreenLifecycleContext else { return false }

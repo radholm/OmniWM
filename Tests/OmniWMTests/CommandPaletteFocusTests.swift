@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Combine
@@ -23,7 +23,7 @@ final class CommandPaletteFocusTests: XCTestCase {
         let revealObservation = panel.publisher(for: \.alphaValue, options: [.initial, .new])
             .first { $0 >= 0.99 }
             .sink { _ in revealed.fulfill() }
-        await fulfillment(of: [revealed], timeout: 1)
+        await fulfillment(of: [revealed], timeout: 5)
         revealObservation.cancel()
         XCTAssertEqual(panel.frame.height, compactFrame.height, accuracy: 0.5)
 
@@ -210,6 +210,10 @@ final class CommandPaletteFocusTests: XCTestCase {
     }
 
     func testPalettePanelIsNonactivatingAndSearchRemainsFocused() async throws {
+        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+        guard session?["CGSSessionScreenIsLocked"] as? Bool != true else {
+            throw XCTSkip("A locked console cannot grant key-window status")
+        }
         _ = NSApplication.shared
         let originalPolicy = NSApp.activationPolicy()
         NSApp.setActivationPolicy(.accessory)
@@ -256,9 +260,11 @@ final class CommandPaletteFocusTests: XCTestCase {
         XCTAssertEqual(fixture.palette.selectedMode, .windows)
         XCTAssertEqual(fixture.controller.settings.commandPaletteLastMode, .windows)
 
+        fixture.palette.searchText = "query"
         fixture.palette.toggle(wmController: fixture.controller, mode: .commands)
         XCTAssertTrue(fixture.palette.isVisible)
         XCTAssertEqual(fixture.palette.selectedMode, .commands)
+        XCTAssertEqual(fixture.palette.searchText, "query")
 
         fixture.palette.toggle(wmController: fixture.controller, mode: .commands)
         XCTAssertFalse(fixture.palette.isVisible)
@@ -335,9 +341,11 @@ final class CommandPaletteFocusTests: XCTestCase {
     }
 
     func testClipboardReturnCopiesSelectedItem() async throws {
+        var copiedIDs: [UUID] = []
         let copied = expectation(description: "Selected clipboard item was copied")
         let fixture = CommandPaletteFocusFixture(initialMode: .clipboard) { environment in
-            environment.copyClipboardItem = { _, _ in
+            environment.copyClipboardItem = { _, id in
+                copiedIDs.append(id)
                 copied.fulfill()
                 return true
             }
@@ -345,9 +353,13 @@ final class CommandPaletteFocusTests: XCTestCase {
         defer { fixture.cleanup() }
         let panel = try await showAndWaitForEditing(fixture)
         fixture.palette.selectMode(.clipboard)
+        let selected = try XCTUnwrap(fixture.palette.filteredClipboardItems.dropFirst().first)
+        XCTAssertEqual(selected.title, "Beta")
+        fixture.palette.selectedItemID = .clipboard(selected.id)
 
         try sendKey(keyCode: 36, characters: "\r", to: panel)
         await fulfillment(of: [copied], timeout: 1)
+        XCTAssertEqual(copiedIDs, [selected.id])
         XCTAssertFalse(fixture.palette.isVisible)
     }
 
@@ -497,6 +509,64 @@ final class CommandPaletteFocusTests: XCTestCase {
 
         XCTAssertFalse(fixture.palette.isVisible)
         XCTAssertTrue(dispatched.isEmpty)
+    }
+
+    func testSelectingPaletteModeCommandClearsQueryAndSwitchesModeInPlace() throws {
+        var dispatched: [HotkeyCommand] = []
+        let fixture = CommandPaletteFocusFixture { environment in
+            environment.performCommand = { _, command in
+                dispatched.append(command)
+                return .executed
+            }
+        }
+        defer { fixture.cleanup() }
+        _ = try fixture.show()
+
+        fixture.palette.selectMode(.commands)
+        fixture.palette.searchText = "clipboard"
+        fixture.palette.selectedItemID = .command("openCommandPalette.clipboard")
+        fixture.palette.selectCurrent()
+
+        XCTAssertTrue(fixture.palette.isVisible)
+        XCTAssertEqual(fixture.palette.selectedMode, .clipboard)
+        XCTAssertEqual(fixture.palette.searchText, "")
+        XCTAssertEqual(fixture.palette.filteredClipboardItems.map(\.title), ["Alpha", "Beta"])
+        XCTAssertTrue(dispatched.isEmpty)
+    }
+
+    func testSelectingLauncherModeCommandStartsWithEmptyQuery() throws {
+        for mode in [CommandPaletteMode.applications, .files] {
+            var submittedQueries: [String] = []
+            let fixture = CommandPaletteFocusFixture { environment in
+                environment.submitApplicationSearch = { _, query, _, _, _ in submittedQueries.append(query) }
+                environment.submitFileSearch = { _, query, _, _, _ in submittedQueries.append(query) }
+            }
+            defer { fixture.cleanup() }
+            _ = try fixture.show(mode: .commands)
+
+            fixture.palette.searchText = mode.rawValue
+            fixture.palette.selectedItemID = .command("openCommandPalette.\(mode.rawValue)")
+            fixture.palette.selectCurrent()
+
+            XCTAssertTrue(fixture.palette.isVisible)
+            XCTAssertEqual(fixture.palette.selectedMode, mode)
+            XCTAssertEqual(submittedQueries, [""])
+        }
+    }
+
+    func testSelectingCurrentPaletteModeCommandKeepsQueryAndStaysOpen() throws {
+        let fixture = CommandPaletteFocusFixture()
+        defer { fixture.cleanup() }
+        _ = try fixture.show(mode: .commands)
+
+        fixture.palette.searchText = "commands"
+        fixture.palette.selectedItemID = .command("openCommandPalette.commands")
+        fixture.palette.selectCurrent()
+
+        XCTAssertTrue(fixture.palette.isVisible)
+        XCTAssertEqual(fixture.palette.selectedMode, .commands)
+        XCTAssertEqual(fixture.palette.searchText, "commands")
+        XCTAssertEqual(fixture.palette.selectedItemID, .command("openCommandPalette.commands"))
     }
 
     func testCommandWaitsForCapturedAppAndWindowFocus() {

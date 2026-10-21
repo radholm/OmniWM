@@ -12,6 +12,7 @@ Operate on specific windows by their session-scoped opaque ID.
 ```
 omniwmctl window <action> <opaque-id>
 omniwmctl window move-to-workspace <opaque-id> <workspace>
+omniwmctl window assign-to-scratchpad <opaque-id> <number>
 ```
 
 | Action | Description |
@@ -21,6 +22,9 @@ omniwmctl window move-to-workspace <opaque-id> <workspace>
 | `summon-right` | Summon a window to the right of the currently focused window. Floating targets return `window_action_failed` |
 | `close` | Close a managed window through its close button; returns `window_action_failed` when the window has no close button or refuses the press. The window leaves the managed set only when macOS reports it destroyed |
 | `move-to-workspace` | Move a window to a workspace by raw workspace ID or unambiguous display name. Focus stays where it is; if the window is the focused one, the configured follow-focus behavior applies. A window already on the target returns `no_change`; an ambiguous display name returns `invalid_arguments` |
+| `toggle-floating` | Toggle the window between tiled and floating, without taking focus |
+| `assign-to-scratchpad` | Assign the window to a numbered scratchpad slot (1-10); if it is already in that slot, remove it from the scratchpad and tile it again. A hidden member is released onto the active workspace of the window's monitor |
+
 
 Window IDs are session-scoped. They become stale after OmniWM restarts. Obtain IDs from query results (e.g., `omniwmctl query windows`).
 

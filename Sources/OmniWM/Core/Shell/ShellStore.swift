@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CryptoKit
 import Foundation
@@ -42,13 +42,13 @@ actor ShellStore {
         var completion: (@Sendable (Commit) -> Void)?
     }
 
-    private final class SubmissionInbox: Sendable {
-        private struct State {
-            var pending: [ShellStoreNamespace: Pending] = [:]
-            var waking = false
-        }
+    private struct SubmissionState {
+        var pending: [ShellStoreNamespace: Pending] = [:]
+        var waking = false
+    }
 
-        private let state = Mutex(State())
+    private final class SubmissionInbox: Sendable {
+        private let state = Mutex(SubmissionState())
 
         func post(_ pending: Pending) -> (wake: Bool, superseded: Pending?) {
             state.withLock { state in

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -10,7 +10,10 @@ struct StructuralMutation: Equatable {
     let movedTokens: [WindowToken]
 
     var affectedWorkspaceIds: Set<WorkspaceDescriptor.ID> {
-        [sourceWorkspaceId, destinationWorkspaceId]
+        if sourceWorkspaceId == destinationWorkspaceId {
+            return [sourceWorkspaceId]
+        }
+        return [sourceWorkspaceId, destinationWorkspaceId]
     }
 }
 

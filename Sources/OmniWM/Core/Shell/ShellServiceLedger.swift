@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 import Synchronization
@@ -78,13 +78,13 @@ final class ShellServiceLedger: Sendable {
         var capture = Capture()
     }
 
-    private final class Timer: Sendable {
-        private struct State {
-            var source: (any DispatchSourceTimer)?
-            var cancelled = false
-        }
+    private struct TimerState {
+        var source: (any DispatchSourceTimer)?
+        var cancelled = false
+    }
 
-        private let state = Mutex(State())
+    private final class Timer: Sendable {
+        private let state = Mutex(TimerState())
 
         func start(seconds: Double, queue: DispatchSerialQueue, fire: @escaping @Sendable () -> Void) {
             state.withLock { state in

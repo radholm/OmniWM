@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -182,19 +182,8 @@ extension IPCJSONWriter {
         end(125)
     }
 
-    mutating func value(_ value: borrowing IPCRequest) throws {
-        begin(123)
-        var first = true
-        if let fieldValue = value.authorizationToken {
-            self.key("authorizationToken", &first)
-            try self.value(fieldValue)
-        }
-        self.key("id", &first)
-        try self.value(value.id)
-        self.key("kind", &first)
-        try self.value(value.kind)
-        self.key("payload", &first)
-        switch value.payload {
+    mutating func value(_ value: borrowing IPCRequest.Payload) throws {
+        switch value {
         case let .none(payload):
             try self.value(payload)
         case let .command(payload):
@@ -216,6 +205,21 @@ extension IPCJSONWriter {
         case let .subscribe(payload):
             try self.value(payload)
         }
+    }
+
+    mutating func value(_ value: borrowing IPCRequest) throws {
+        begin(123)
+        var first = true
+        if let fieldValue = value.authorizationToken {
+            self.key("authorizationToken", &first)
+            try self.value(fieldValue)
+        }
+        self.key("id", &first)
+        try self.value(value.id)
+        self.key("kind", &first)
+        try self.value(value.kind)
+        self.key("payload", &first)
+        try self.value(value.payload)
         self.key("version", &first)
         try self.value(value.version)
         end(125)

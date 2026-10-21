@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -39,6 +39,9 @@ extension MouseEventHandler {
               controller.workspaceManager.entry(for: drag.token)?.mode == .tiling
         else { return }
         drag.phase = .dragging
+        drag.adoptionStartFrame = controller.axManager.isAwaitingFrameWrite(drag.token.windowId)
+            ? nil
+            : controller.axManager.lastAppliedFrame(for: drag.token.windowId)
         state.nativeTitleBarDrag = drag
         controller.axManager.beginNativeTitleBarDrag(for: drag.token)
     }
@@ -74,11 +77,11 @@ extension MouseEventHandler {
               let entry = controller.workspaceManager.entry(for: drag.token),
               entry.mode == .tiling
         else {
-            state.nativeTitleBarDrag = nil
+            discardNativeTitleBarDragState()
             return
         }
 
-        let observedFrame = nativeWindowFrameProvider(entry.axRef)
+        let observedFrame = terminalNativeWindowFrame(for: entry)
         let lastAppliedFrame = controller.axManager.lastAppliedFrame(for: entry.windowId)
         let observedDisplacement = Self.nativeTitleBarWasDisplaced(
             observedFrame: observedFrame, lastAppliedFrame: lastAppliedFrame,
@@ -93,14 +96,22 @@ extension MouseEventHandler {
                 lastAppliedFrame: lastAppliedFrame
             )
         }
-        settleReleasedNativeTitleBarDrag(drag, entry: entry, needsCorrection: needsCorrection)
+        settleReleasedNativeTitleBarDrag(
+            drag,
+            entry: entry,
+            observedFrame: observedFrame,
+            needsCorrection: needsCorrection
+        )
     }
 
     private func settleReleasedNativeTitleBarDrag(
-        _ drag: MouseInputState.NativeTitleBarDrag, entry: WindowState, needsCorrection: Bool
+        _ drag: MouseInputState.NativeTitleBarDrag,
+        entry: WindowState,
+        observedFrame: CGRect?,
+        needsCorrection: Bool
     ) {
         var drag = drag
-        guard needsCorrection else {
+        guard needsCorrection || drag.dwindleResizeWorkspaceId != nil else {
             if drag.receivedFrameChange {
                 state.nativeTitleBarDrag = nil
             } else {
@@ -110,6 +121,10 @@ extension MouseEventHandler {
             return
         }
 
+        if adoptNativeResizeIfEligible(&drag, entry: entry, observedFrame: observedFrame) {
+            state.nativeTitleBarDrag = drag
+            return
+        }
         drag.phase = .awaitingCorrection
         state.nativeTitleBarDrag = drag
         requestNativeTitleBarDragCorrection(for: entry)
@@ -181,7 +196,8 @@ extension MouseEventHandler {
         state.awaitsNativeTitleBarDragTarget = false
         state.nativeTitleBarDragFallbackToken = nil
         state.nativeTitleBarDragFallbackReleased = false
-        if let drag = state.nativeTitleBarDrag {
+        if var drag = state.nativeTitleBarDrag {
+            finishNativeDwindleResize(&drag)
             _ = controller?.axManager.endNativeTitleBarDrag(for: drag.token)
         }
         state.nativeTitleBarDrag = nil

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 @testable import OmniWM
 import XCTest
@@ -74,11 +74,11 @@ final class OverviewPreviewCancellationTests: XCTestCase {
         let requestA = OverviewPreviewRequest(handle: first, pixelWidth: 80, pixelHeight: 60)
         let requestB = OverviewPreviewRequest(handle: second, pixelWidth: 80, pixelHeight: 60)
         capture.reconcile(represented: [first], visible: [requestA])
-        await driver.waitForStarts(1)
+        try await driver.waitForStarts(1)
         capture.reconcile(represented: [second], visible: [requestB])
-        await driver.waitForStarts(2)
+        try await driver.waitForStarts(2)
         capture.reconcile(represented: [first], visible: [requestA])
-        await driver.waitForStarts(3)
+        try await driver.waitForStarts(3)
         let old = driver.streams[0]
         let current = driver.streams[2]
         XCTAssertTrue(old.request.handle === current.request.handle)
@@ -87,7 +87,7 @@ final class OverviewPreviewCancellationTests: XCTestCase {
         XCTAssertNil(old.output.take())
         XCTAssertNil(capture.preview(for: first))
         driver.completeAllStarts()
-        await driver.waitForStops(2)
+        try await driver.waitForStops(2)
         let frame = try makeOverviewPreviewFrame()
         let published = expectation(description: "replacement frame")
         capture.onPreview = { _, preview in if preview === frame { published.fulfill() } }
@@ -95,6 +95,6 @@ final class OverviewPreviewCancellationTests: XCTestCase {
         await fulfillment(of: [published], timeout: 1)
         XCTAssertTrue(capture.preview(for: first) === frame)
         capture.clear()
-        await driver.waitForStops(3)
+        try await driver.waitForStops(3)
     }
 }

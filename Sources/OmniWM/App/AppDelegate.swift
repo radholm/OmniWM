@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Observation
@@ -67,6 +67,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var updateCoordinator: (any AppUpdateCoordinating)?
     private var runtimeStateStore: RuntimeStateStore?
     private var launchOverlayController: LaunchOverlayController?
+    private var settingsConfigNoticeController: SettingsConfigNoticeController?
     private var monitorSetupScreenObserver: NSObjectProtocol?
     private var monitorSetupEvaluationTask: Task<Void, Never>?
     private var launchOverlayFinished = false
@@ -81,6 +82,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationWillTerminate(_: Notification) {
+        settingsConfigNoticeController = nil
         statusBarController?.cleanup()
         if let controller = AppDelegate.sharedBootstrap?.controller {
             if !terminationPending { controller.serviceLifecycleManager.stop() }
@@ -157,7 +159,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         controller.workspaceBarManager.menuBarHold = menuBarHold
         controller.applyPersistedSettings(settings)
-        startSystemMotionPreferenceObservation(controller)
+        startSystemPreferenceObservation(controller)
         let cliManager = AppCLIManager()
         let updateCoordinator = UpdateCoordinator(settings: settings, runtimeState: runtimeState)
         self.cliManager = cliManager
@@ -178,8 +180,20 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             updateCoordinator: updateCoordinator
         )
         controller.statusBarController = statusBarController
+        settingsConfigNoticeController = SettingsConfigNoticeController(
+            settings: settings,
+            ownedWindowRegistry: controller.ownedWindowRegistry
+        )
         observeSettings(settings, controller: controller)
         statusBarController?.setup()
+        startIPC(settings: settings, controller: controller)
+        updateCoordinator.startAutomaticChecks()
+
+        startMonitorSetupPresentationObservation()
+        playLaunchOverlay(runtimeState: runtimeState, animationsEnabled: controller.motionPolicy.animationsEnabled)
+    }
+
+    private func startIPC(settings: SettingsStore, controller: WMController) {
         do {
             try setIPCEnabled(settings.ipcEnabled, controller: controller)
         } catch {
@@ -189,10 +203,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             settings.ipcEnabled = false
         }
-        updateCoordinator.startAutomaticChecks()
-
-        startMonitorSetupPresentationObservation()
-        playLaunchOverlay(runtimeState: runtimeState, animationsEnabled: controller.motionPolicy.animationsEnabled)
     }
 
     private func observeSettings(_ settings: SettingsStore, controller: WMController) {
@@ -214,19 +224,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let controller else { return }
             controller.applyPersistedSettings(settings)
         }
-        settings.onConfigNoticeChanged = { [weak controller] in
+        settings.onConfigNoticeChanged = { [weak self, weak controller] in
             controller?.refreshDiagnosticsIssues()
-        }
-    }
-
-    private func playLaunchOverlay(runtimeState: RuntimeStateStore, animationsEnabled: Bool) {
-        let overlay = LaunchOverlayController()
-        launchOverlayController = overlay
-        overlay.play(runtimeState: runtimeState, animationsEnabled: animationsEnabled) { [weak self] in
-            guard let self else { return }
-            launchOverlayController = nil
-            launchOverlayFinished = true
-            scheduleMonitorSetupEvaluation()
+            guard let self, launchOverlayFinished else { return }
+            settingsConfigNoticeController?.refresh()
         }
     }
 
@@ -383,13 +384,39 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 extension AppDelegate {
-    private func startSystemMotionPreferenceObservation(_ controller: WMController) {
+    private func playLaunchOverlay(runtimeState: RuntimeStateStore, animationsEnabled: Bool) {
+        let overlay = LaunchOverlayController()
+        launchOverlayController = overlay
+        overlay.play(runtimeState: runtimeState, animationsEnabled: animationsEnabled) { [weak self] in
+            guard let self else { return }
+            launchOverlayController = nil
+            launchOverlayFinished = true
+            settingsConfigNoticeController?.refresh()
+            scheduleMonitorSetupEvaluation()
+        }
+    }
+
+    private func startSystemPreferenceObservation(_ controller: WMController) {
         controller.motionPolicy.systemReducesMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         _ = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main
         ) { [weak controller] _ in
             Task { @MainActor [weak controller] in
                 controller?.motionPolicy.systemReducesMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            }
+        }
+        for name in [
+            Notification.Name("NSWorkspaceIconAppearanceConfigurationDidChangeNotification"),
+            Notification.Name("NSWorkspaceMenuBarAppearanceDidChangeNotification")
+        ] {
+            _ = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: name, object: nil, queue: .main
+            ) { [weak controller] _ in
+                Task { @MainActor [weak controller] in
+                    guard let controller else { return }
+                    LauncherIconStore.shared.clear()
+                    controller.workspaceBarManager.refreshShellIcons()
+                }
             }
         }
     }

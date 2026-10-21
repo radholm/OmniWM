@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import Foundation
@@ -22,6 +22,33 @@ final class TabRailTests: XCTestCase {
         XCTAssertEqual(dwindleInfo.key.workspaceId, workspaceId)
     }
 
+    func testPartialMetadataStillProducesOneIndicatorPerTab() {
+        let workspaceId = WorkspaceDescriptor.ID()
+        let info = TabRailInfo(
+            workspaceId: workspaceId,
+            owner: .dwindleTile(UUID()),
+            plannedSeq: 1,
+            tileFrame: CGRect(x: 0, y: 0, width: 400, height: 500),
+            tabCount: 2,
+            activeVisualIndex: 1,
+            activeWindowId: 42,
+            tabs: [
+                TabRailTabInfo(
+                    visualIndex: 1,
+                    token: nil,
+                    windowId: 42,
+                    appName: "Example",
+                    title: "Document",
+                    isActive: true
+                )
+            ]
+        )
+
+        XCTAssertEqual(info.tabCount, 2)
+        XCTAssertEqual(info.normalizedTabs.map(\.visualIndex), [0, 1])
+        XCTAssertEqual(info.normalizedTabs[1].title, "Document")
+    }
+
     func testDefaultTabsClampActiveSelection() {
         let info = TabRailInfo(
             workspaceId: WorkspaceDescriptor.ID(),
@@ -30,11 +57,12 @@ final class TabRailTests: XCTestCase {
             tileFrame: .zero,
             tabCount: 3,
             activeVisualIndex: 8,
-            activeWindowId: nil
+            activeWindowId: nil,
+            tabs: []
         )
 
-        XCTAssertEqual(info.tabs.map(\.visualIndex), [0, 1, 2])
-        XCTAssertEqual(info.tabs.map(\.isActive), [false, false, true])
+        XCTAssertEqual(info.normalizedTabs.map(\.visualIndex), [0, 1, 2])
+        XCTAssertEqual(info.normalizedTabs.map(\.isActive), [false, false, true])
     }
 
     func testLayoutMaintainsVisualOrderWithinAvailableHeight() {
@@ -285,56 +313,18 @@ final class TabRailTests: XCTestCase {
     func testSegmentsStayPixelAlignedAndCenteredAtEachBackingScale() throws {
         let trackBounds = CGRect(x: 0, y: 0, width: 10, height: 60)
         let sourceRect = CGRect(x: 0, y: 4, width: 10, height: 24)
-
         for scale: CGFloat in [1, 2] {
-            let rect = TabRailSegmentGeometry.rect(
-                sourceRect: sourceRect,
-                trackBounds: trackBounds,
-                width: 3,
-                selected: true,
-                scale: scale
-            )
-            let centeredRect = try XCTUnwrap(
+            let segmentRect = try XCTUnwrap(
                 TabRailSegmentGeometry.equallyPaddedRects(
-                    sourceRects: [0: sourceRect],
-                    trackBounds: trackBounds,
-                    selectedVisualIndex: 0,
-                    verticalMargin: 2,
-                    scale: scale
+                    sourceRects: [0: sourceRect], trackBounds: trackBounds,
+                    selectedVisualIndex: 0, verticalMargin: 2, scale: scale
                 )[0]
             )
-
-            for segmentRect in [rect, centeredRect] {
-                XCTAssertEqual(segmentRect.width, scale == 1 ? 4 : 3)
-                XCTAssertEqual(segmentRect.midX, trackBounds.midX)
-                XCTAssertEqual(segmentRect.minX * scale, (segmentRect.minX * scale).rounded())
-                XCTAssertEqual(segmentRect.maxX * scale, (segmentRect.maxX * scale).rounded())
-            }
+            XCTAssertEqual(segmentRect.width, scale == 1 ? 4 : 3)
+            XCTAssertEqual(segmentRect.midX, trackBounds.midX)
+            XCTAssertEqual(segmentRect.minX * scale, (segmentRect.minX * scale).rounded())
+            XCTAssertEqual(segmentRect.maxX * scale, (segmentRect.maxX * scale).rounded())
         }
-    }
-
-    func testInactiveSegmentUsesSixtySevenPercentHeightAndStaysCentered() {
-        let sourceRect = CGRect(x: 0, y: 4, width: 8, height: 24)
-        let trackBounds = CGRect(x: 0, y: 0, width: 8, height: 58)
-        let active = TabRailSegmentGeometry.rect(
-            sourceRect: sourceRect,
-            trackBounds: trackBounds,
-            width: 3,
-            selected: true,
-            scale: 2
-        )
-        let inactive = TabRailSegmentGeometry.rect(
-            sourceRect: sourceRect,
-            trackBounds: trackBounds,
-            width: 3,
-            selected: false,
-            scale: 2
-        )
-
-        XCTAssertEqual(active.width, inactive.width)
-        XCTAssertEqual(active.height, 24)
-        XCTAssertEqual(inactive.height, 16)
-        XCTAssertEqual(active.midY, inactive.midY)
     }
 
     func testActiveAndInactiveSegmentsKeepCompactSpacingAndEqualEndCaps() throws {
@@ -361,6 +351,7 @@ final class TabRailTests: XCTestCase {
         let active = try XCTUnwrap(rects[0])
         let inactive = try XCTUnwrap(rects[1])
         XCTAssertEqual(trackHeight, 60)
+        XCTAssertEqual(active.width, inactive.width)
         XCTAssertEqual(active.height, 24)
         XCTAssertEqual(inactive.height, 16)
         XCTAssertEqual(trackBounds.maxY - active.maxY, 6)

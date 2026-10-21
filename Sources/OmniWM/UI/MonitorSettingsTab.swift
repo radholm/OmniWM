@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import SwiftUI
@@ -300,7 +300,9 @@ struct MonitorSettingsTab: View {
             monitors: MonitorSettingsTabModel.sortedMonitors(monitors)
         )
     }
+}
 
+extension MonitorSettingsTab {
     private func routingNeighbor(of monitor: Monitor, _ direction: Direction) -> Monitor? {
         switch MonitorRouting.gridAdjacent(
             from: monitor,

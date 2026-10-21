@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -22,9 +22,7 @@ extension ShellWidgetPackage {
         case let .prepare(key, name, arguments, inputs, operation):
             await resourceStore.prepareProviderAction(
                 key,
-                name: name,
-                arguments: arguments,
-                inputs: inputs,
+                action: ShellProviderActionRequest(name: name, arguments: arguments, inputs: inputs),
                 operation: operation
             ) { [providerInbox] result in
                 _ = providerInbox.actionPrepared(key, result: result)

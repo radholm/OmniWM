@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -182,26 +182,6 @@ import QuartzCore
             workspaceCount: workspaceCount,
             windowCount: windowCount
         )
-    }
-}
-
-extension LayoutRefreshController {
-    func discardScratchpadRevealGroupAndReconcile(_ groupId: UInt64) {
-        guard let index = revealGroups.discard(groupId) else { return }
-        reconcileRevealedScratchpadAfterGroupDiscard(index)
-    }
-
-    func reconcileRevealedScratchpadAfterGroupDiscard(_ index: ScratchpadIndex) {
-        guard let controller,
-              controller.workspaceManager.revealedScratchpadIndex() == index,
-              !controller.workspaceManager.scratchpadMembers(in: index).contains(where: {
-                  controller.isManagedWindowDisplayable($0)
-              })
-        else {
-            return
-        }
-        controller.workspaceManager.setRevealedScratchpad(nil)
-        controller.requestWorkspaceBarRefresh()
     }
 }
 
@@ -489,8 +469,10 @@ extension LayoutRefreshController {
 extension LayoutRefreshController {
     func applyLayoutMutations(_ plan: WorkspaceLayoutPlan, controller: WMController) {
         controller.withRuntimeFrameJobCancellationSuppressed {
-            applySessionPatch(plan.sessionPatch)
-            diffExecutor.execute(plan)
+            if plan.sessionPatch.rememberedFocusToken != nil {
+                controller.workspaceManager.applySessionPatch(plan.sessionPatch)
+            }
+            diffExecutor.execute(plan, controller: controller)
             controller.workspaceManager.setDwindleRestorePlacements(plan.dwindleRestorePlacements)
         }
     }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -58,6 +58,25 @@ extension SingleWindowFit.Mode {
         switch self {
         case .fill: String(localized: "Full Screen")
         case .custom: String(localized: "Custom (W:H)")
+        }
+    }
+}
+
+extension ResizePreviewStyle {
+    var localizedDisplayName: String {
+        switch self {
+        case .live: String(localized: "Live Resize")
+        case .glass: String(localized: "Glass Placeholder")
+        case .snapshot: String(localized: "Window Snapshot")
+        }
+    }
+}
+
+extension DwindleGroupDrag {
+    var localizedDisplayName: String {
+        switch self {
+        case .group: String(localized: "Move Whole Group")
+        case .window: String(localized: "Move Dragged Window")
         }
     }
 }

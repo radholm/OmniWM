@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -14,12 +14,16 @@ extension WMController {
         statusBarController != nil && settings.statusBar.showWorkspaceName
     }
 
+    var hasWindowOrLayoutEventSubscribers: Bool {
+        ipcApplicationBridge?.hasSubscribers(for: .windowsChanged) == true
+            || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
+    }
+
     var hasWorkspaceBarDataConsumers: Bool {
         workspaceBarRefreshIsEnabled
             || statusBarRefreshIsEnabled
             || ipcApplicationBridge?.hasSubscribers(for: .workspaceBar) == true
-            || ipcApplicationBridge?.hasSubscribers(for: .windowsChanged) == true
-            || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
+            || hasWindowOrLayoutEventSubscribers
     }
 
     func setWorkspaceBarEnabled(_ enabled: Bool) {
@@ -170,16 +174,16 @@ extension WMController {
         return toggleScratchpad(index, on: monitorId, focusOrigin: .pointerSelection)
     }
 
-    func publishWorkspaceDataChanged() {
+    func publishWorkspaceDataChanges(from previous: DesiredSurfaceScene, to desired: DesiredSurfaceScene) {
+        guard desired.bars != previous.bars else { return }
         if statusBarRefreshIsEnabled {
             refreshStatusBar()
         }
-        if let ipcApplicationBridge {
-            Task {
-                await ipcApplicationBridge.publishEvent(.workspaceBar)
-                await ipcApplicationBridge.publishEvent(.windowsChanged)
-                await ipcApplicationBridge.publishEvent(.layoutChanged)
-            }
+        guard let ipcApplicationBridge else { return }
+        Task {
+            await ipcApplicationBridge.publishEvent(.workspaceBar)
+            await ipcApplicationBridge.publishEvent(.windowsChanged)
+            await ipcApplicationBridge.publishEvent(.layoutChanged)
         }
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import ApplicationServices
@@ -525,7 +525,7 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
                 represented: [handle],
                 visible: [OverviewPreviewRequest(handle: handle, pixelWidth: 80, pixelHeight: 60)]
             )
-            await driver.waitForStarts(1)
+            try await driver.waitForStarts(1)
             driver.completeAllStarts()
             let frame = try makeOverviewPreviewFrame()
             let published = expectation(description: "swipe frame published")
@@ -533,7 +533,7 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
             driver.streams[0].output.offer(frame)
             await fulfillment(of: [published], timeout: 1)
             capture.clear()
-            await driver.waitForStops(1)
+            try await driver.waitForStops(1)
             XCTAssertGreaterThan(capture.cachedByteCount, 0)
 
             disable(controller)
@@ -688,7 +688,7 @@ final class WorkspaceSwipePresentationTests: XCTestCase {
             source: [WorkspaceSwipePreview.Item(handle: fixture.handle, frame: Self.sourceFrame)],
             destination: [], monitor: fixture.monitor
         )
-        await fixture.driver.waitForStarts(1)
+        try await fixture.driver.waitForStarts(1)
         fixture.driver.completeAllStarts()
         await publish(try makeOverviewPreviewFrame(), through: fixture.driver.streams[0], into: fixture.capture)
         XCTAssertNotNil(fixture.capture.preview(for: fixture.handle))

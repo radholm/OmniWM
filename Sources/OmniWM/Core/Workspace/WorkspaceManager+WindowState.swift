@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -10,7 +10,7 @@ extension WorkspaceManager {
         var changedPlacements: [WindowToken: PersistedDwindlePlacement] = [:]
         for (token, captured) in placements {
             guard let entry = windowQueries.entry(for: token), entry.mode == .tiling else { continue }
-            let stored = StateReducer.restoreIntent(for: entry, monitors: monitors).dwindlePlacement
+            let stored = StateReducer.dwindleRestorePlacement(for: entry)
             let placement = captured.preservingPrunedSteps(of: stored)
             if placement != stored {
                 changedPlacements[token] = placement

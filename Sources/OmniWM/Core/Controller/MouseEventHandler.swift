@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -9,7 +9,20 @@ final class MouseEventHandler {
     nonisolated(unsafe) weak static var _instance: MouseEventHandler?
 
     weak var controller: WMController?
-    var state = MouseInputState()
+    let inputTapThread = InputTapThread()
+    var state = MouseInputState() {
+        didSet {
+            if oldValue.capturedInteractionButton != state.capturedInteractionButton
+                || oldValue.capturedOtherMouseButton != state.capturedOtherMouseButton
+                || oldValue.gesturePhase != state.gesturePhase
+                || oldValue.consumeTrackpadScrollUntilAllTouchesLift != state.consumeTrackpadScrollUntilAllTouchesLift
+                || oldValue.suppressTrackpadMomentumScroll != state.suppressTrackpadMomentumScroll
+            {
+                syncTapFilterSnapshot()
+            }
+        }
+    }
+
     var isCapturingPerformance: Bool {
         performanceCounters != nil
     }
@@ -24,6 +37,10 @@ final class MouseEventHandler {
 
     var edgeDragUnobstructedProvider: @MainActor (CGPoint, Set<Int>) -> Bool = {
         MouseEventHandler.edgeDragPointIsUnobstructed($0, tiledWindowIds: $1)
+    }
+
+    var nativeWindowFrameFallbackProvider: @MainActor (AXWindowRef) -> CGRect? = {
+        try? AXWindowService.frame($0)
     }
 
     init(controller: WMController) {
@@ -49,6 +66,9 @@ final class MouseEventHandler {
             self?.resetForMultitouchSourceReplacement()
         }
         multitouchSource = source
+        inputTapThread.touchCountProvider = { [weak mailbox = source.rawFrameMailbox] in
+            mailbox?.activePhysicalFingerCount ?? 0
+        }
         if performanceCounters != nil, current !== source {
             source.beginPerformanceCapture()
         }
@@ -67,6 +87,8 @@ final class MouseEventHandler {
         state.capturedInteractionButton = nil
         state.capturedOtherMouseButton = nil
         tearDownEventTaps()
+        inputTapThread.touchCountProvider = nil
+        inputTapThread.stop()
         let retiringMultitouchSource = multitouchSource
         if retiringMultitouchSource?.shutdown() != false {
             if let retiringMultitouchSource {
@@ -96,6 +118,7 @@ final class MouseEventHandler {
             }
         } else {
             let retiringMultitouchSource = multitouchSource
+            inputTapThread.touchCountProvider = nil
             if retiringMultitouchSource?.shutdown() != false {
                 if let retiringMultitouchSource {
                     accumulateRetiredMultitouchPerformance(from: retiringMultitouchSource)
@@ -159,6 +182,7 @@ final class MouseEventHandler {
         state.suppressTrackpadMomentumScroll = false
         state.contactSessions = MultitouchContactSessions()
         clearConsumedTrackpadSessions()
+        inputTapThread.touchCountProvider = nil
     }
 
     func drainTrackpadFrames(for senderId: UInt64, at location: CGPoint) {
@@ -244,5 +268,57 @@ final class MouseEventHandler {
         default:
             break
         }
+    }
+
+    func syncTapFilterSnapshot() {
+        let capturedButton = state.capturedInteractionButton
+        var resolvedOtherButtonMask = claimedOtherMouseButtonMask()
+        if let capturedOther = state.capturedOtherMouseButton,
+           MouseButtonBinding.supportedButtons.contains(capturedOther)
+        {
+            resolvedOtherButtonMask |= UInt32(1) << capturedOther
+        }
+        let otherButtonMask = resolvedOtherButtonMask
+        let moveFlags = controller?.settings.gestures.mouseMoveModifierKey.cgEventFlags
+        let resizeFlags = controller?.settings.gestures.mouseResizeModifierKey.cgEventFlag ?? []
+        let minFingers: Int
+        if let controller, controller.settings.effectiveTrackpadGesturesEnabled {
+            let minCount = trackpadGestureConfig?.minimumFingerCount ?? 3
+            minFingers = minCount == 0 ? .max : minCount
+        } else {
+            minFingers = .max
+        }
+        let latched = state.gesturePhase != .idle
+            || state.consumeTrackpadScrollUntilAllTouchesLift
+            || state.suppressTrackpadMomentumScroll
+        let inputSuppressed = isInputSuppressed
+
+        inputTapThread.updateFilterSnapshot { snapshot in
+            snapshot.activeCapture = capturedButton
+            snapshot.claimedOtherButtonMask = otherButtonMask
+            snapshot.moveModifier = moveFlags
+            snapshot.resizeModifier = resizeFlags
+            snapshot.minGestureFingers = minFingers
+            snapshot.gestureActiveOrLatched = latched
+            snapshot.isInputSuppressed = inputSuppressed
+        }
+    }
+
+    private func claimedOtherMouseButtonMask() -> UInt32 {
+        guard let controller else { return 0 }
+        var buttonMask: UInt32 = 0
+        if controller.settings.overview.enabled,
+           let overviewButton = controller.settings.overview.mouseButton,
+           controller.settings.systemHyperTrigger.mouseButtonNumber != overviewButton,
+           MouseButtonBinding.supportedButtons.contains(overviewButton)
+        {
+            buttonMask |= UInt32(1) << overviewButton
+        }
+        for binding in controller.settings.hotkeyBindings {
+            if let button = binding.binding.mouseButtonBinding?.button {
+                buttonMask |= UInt32(1) << button
+            }
+        }
+        return buttonMask
     }
 }

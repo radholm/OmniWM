@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Carbon
 import Foundation
@@ -175,6 +175,7 @@ enum ActionCatalog {
         appendFocusedResizeBindings(&specs)
         appendPreselectionBindings(&specs)
         specs.append(contentsOf: IPCMediaCommand.allCases.map { $0.actionSpec() })
+        specs.append(contentsOf: IPCKeyboardModeCommand.allCases.map { $0.actionSpec() })
         appendPresentationBindings(&specs)
 
         return specs
@@ -212,6 +213,7 @@ enum ActionCatalog {
              .monitorFocus,
              .fullscreen,
              .openCommandPalette,
+             .openCommandPaletteMode,
              .raiseAllFloatingWindows,
              .toggleFloatingFocus,
              .rescueOffscreenWindows,
@@ -220,6 +222,7 @@ enum ActionCatalog {
              .windowMark,
              .presentation,
              .media,
+             .keyboardMode,
              .shellToggle:
             .shared
         case let .focusNavigation(action):
@@ -246,6 +249,7 @@ enum ActionCatalog {
         case .openCommandPalette: LocalizedStringResource(
                 "command.palette.toggle", defaultValue: "Toggle Command Palette", table: "Commands", bundle: .omniWM
             )
+        case let .openCommandPaletteMode(mode): mode.actionDisplayName()
         case .raiseAllFloatingWindows: LocalizedStringResource(
                 "command.floating.raiseAll", defaultValue: "Raise All Floating Windows", table: "Commands",
                 bundle: .omniWM
@@ -272,6 +276,7 @@ enum ActionCatalog {
             )
         case let .presentation(command): command.actionDisplayName()
         case let .media(command): command.actionDisplayName()
+        case let .keyboardMode(command): command.actionDisplayName()
         case let .shellToggle(name): LocalizedStringResource(
                 "command.shell.toggle", defaultValue: "Toggle \(name)", table: "Commands", bundle: .omniWM
             )
@@ -294,6 +299,8 @@ enum ActionCatalog {
             .monitorFocus(command)
         case .openCommandPalette:
             .openCommandPalette
+        case .openCommandPaletteMode:
+            .openCommandPaletteMode
         case .raiseAllFloatingWindows:
             .raiseAllFloatingWindows
         case .toggleFloatingFocus:
@@ -306,6 +313,8 @@ enum ActionCatalog {
             .presentation(command)
         case let .media(command):
             .media(command)
+        case let .keyboardMode(command):
+            .keyboardMode(command)
         case .shellToggle:
             nil
         case let .windowState(command):
@@ -327,6 +336,52 @@ enum ActionCatalog {
         case let .scratchpad(action):
             action.ipcCommandName()
         }
+    }
+}
+
+struct ActionSearchKeys {
+    let localizedTitle: String
+    let category: HotkeyCategory
+    let layoutCompatibility: LayoutCompatibility
+    let title: String
+    let terms: [String]
+    let categoryTerms: [String]
+    let layoutTerms: [String]
+
+    init(spec: ActionSpec, normalizedTerms: [String]) {
+        localizedTitle = spec.localizedTitle
+        category = spec.category
+        layoutCompatibility = spec.layoutCompatibility
+        title = ActionCatalog.normalizedSearchTerm(spec.localizedTitle)
+        categoryTerms = [spec.category.rawValue, spec.category.localizedDisplayName]
+            .map(ActionCatalog.normalizedSearchTerm)
+        layoutTerms = [spec.layoutCompatibility.rawValue, spec.layoutCompatibility.localizedDisplayName]
+            .map(ActionCatalog.normalizedSearchTerm)
+        let excludedTerms = [title] + categoryTerms + layoutTerms
+        terms = normalizedTerms.filter { !excludedTerms.contains($0) }
+    }
+
+    func matches(_ spec: ActionSpec) -> Bool {
+        spec.localizedTitle == localizedTitle && spec.category == category
+            && spec.layoutCompatibility == layoutCompatibility
+    }
+}
+
+extension ActionCatalog {
+    private static let searchKeysByID = Dictionary(
+        uniqueKeysWithValues: specs.map { spec in
+            (spec.id, ActionSearchKeys(spec: spec, normalizedTerms: normalizedSearchTermsByID[spec.id] ?? []))
+        }
+    )
+
+    static func searchKeys(for spec: ActionSpec) -> ActionSearchKeys {
+        if let keys = searchKeysByID[spec.id], keys.matches(spec) {
+            return keys
+        }
+        return ActionSearchKeys(
+            spec: spec,
+            normalizedTerms: normalizedSearchTerms(for: spec.id) ?? spec.searchTerms.map(normalizedSearchTerm)
+        )
     }
 }
 

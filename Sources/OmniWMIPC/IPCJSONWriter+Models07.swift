@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
@@ -123,13 +123,8 @@ extension IPCJSONWriter {
         end(125)
     }
 
-    mutating func value(_ value: borrowing IPCResult) throws {
-        begin(123)
-        var first = true
-        self.key("kind", &first)
-        try self.value(value.kind)
-        self.key("payload", &first)
-        switch value.payload {
+    mutating func value(_ value: borrowing IPCResult.Payload) throws {
+        switch value {
         case let .pong(payload):
             try self.value(payload)
         case let .version(payload):
@@ -173,6 +168,15 @@ extension IPCJSONWriter {
         case let .shellWidgets(payload):
             try self.value(payload)
         }
+    }
+
+    mutating func value(_ value: borrowing IPCResult) throws {
+        begin(123)
+        var first = true
+        self.key("kind", &first)
+        try self.value(value.kind)
+        self.key("payload", &first)
+        try self.value(value.payload)
         end(125)
     }
 

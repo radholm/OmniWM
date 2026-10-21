@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import QuartzCore
@@ -63,20 +63,14 @@ final class WorkspaceSwipePresentation {
         }
 
         var stride: CGFloat {
-            switch axis {
-            case .horizontal: preparation.frame.width * 1.1
-            case .vertical: preparation.frame.height * 1.1
-            }
+            (axis == .horizontal ? preparation.frame.width : preparation.frame.height) * 1.1
         }
 
         /// Slides along the swipe axis: the next workspace enters from the right (horizontal)
         /// or from below (vertical).
         func offset(destination: Bool) -> CGVector {
             let translation = (CGFloat(progress) - (destination ? 1 : 0)) * stride * visualSign
-            switch axis {
-            case .horizontal: return CGVector(dx: -translation, dy: 0)
-            case .vertical: return CGVector(dx: 0, dy: translation)
-            }
+            return axis == .horizontal ? CGVector(dx: -translation, dy: 0) : CGVector(dx: 0, dy: translation)
         }
     }
 

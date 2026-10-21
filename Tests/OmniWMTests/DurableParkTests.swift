@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import ApplicationServices
 import CoreGraphics
@@ -431,66 +431,49 @@ final class DurableParkTests: XCTestCase {
         XCTAssertNotEqual(laterRequest.requestId, retryRequest.requestId)
     }
 
-    func testAnimationSupersessionStillRequiresVisibleAXSettlementOnReveal() throws {
-        let manager = AXManager()
-        defer { manager.cleanup() }
-        let pid: pid_t = 965_001
-        let windowId = 965_101
-        let token = WindowToken(pid: pid, windowId: windowId)
-        let target = AXFrameApplicationTarget(
-            pid: pid,
-            window: AXWindowRef(
-                element: AXUIElementCreateApplication(pid),
-                windowId: windowId
-            ),
-            frame: CGRect(x: 2559, y: 16, width: 800, height: 600)
-        )
-        let staleRequest = try XCTUnwrap(manager.prepareParkFrameApplications([target]).first)
+    func testParkStatesRequireVisibleAXSettlementOnReveal() throws {
+        let cases: [(verified: Bool, pid: pid_t, windowId: Int)] = [
+            (false, 965_001, 965_101),
+            (true, 966_001, 966_101)
+        ]
+        for row in cases {
+            let manager = AXManager()
+            defer { manager.cleanup() }
+            let token = WindowToken(pid: row.pid, windowId: row.windowId)
+            let target = AXFrameApplicationTarget(
+                pid: row.pid,
+                window: AXWindowRef(
+                    element: AXUIElementCreateApplication(row.pid), windowId: row.windowId
+                ),
+                frame: CGRect(x: 2559, y: 16, width: 800, height: 600)
+            )
+            let request = try XCTUnwrap(manager.prepareParkFrameApplications([target]).first)
+            if row.verified {
+                XCTAssertTrue(
+                    manager.processParkFrameApplyResults([
+                        WindowAdmissionTestSupport.successfulFrameResult(request: request)
+                    ]).isEmpty
+                )
+                XCTAssertEqual(manager.verifiedParkFrame(for: row.windowId), target.frame)
+            } else {
+                manager.markParkPending(target)
+                XCTAssertNil(manager.pendingParkFrameRequest(for: row.windowId))
+                XCTAssertTrue(manager.pendingParkWindowIds.contains(row.windowId))
+            }
 
-        manager.markParkPending(target)
-
-        XCTAssertNil(manager.pendingParkFrameRequest(for: windowId))
-        XCTAssertTrue(manager.pendingParkWindowIds.contains(windowId))
-        XCTAssertEqual(
-            manager.cancelParkFrameJobs([(pid: pid, windowId: windowId)], reason: "revealed"),
-            [token]
-        )
-        XCTAssertFalse(manager.pendingParkWindowIds.contains(windowId))
-        XCTAssertTrue(
-            manager.processParkFrameApplyResults([
-                WindowAdmissionTestSupport.successfulFrameResult(request: staleRequest)
-            ]).isEmpty
-        )
-        XCTAssertNil(manager.verifiedParkFrame(for: windowId))
-    }
-
-    func testVerifiedParkStillRequiresVisibleAXSettlementOnReveal() throws {
-        let manager = AXManager()
-        defer { manager.cleanup() }
-        let pid: pid_t = 966_001
-        let windowId = 966_101
-        let token = WindowToken(pid: pid, windowId: windowId)
-        let target = AXFrameApplicationTarget(
-            pid: pid,
-            window: AXWindowRef(
-                element: AXUIElementCreateApplication(pid),
-                windowId: windowId
-            ),
-            frame: CGRect(x: 2559, y: 16, width: 800, height: 600)
-        )
-        let request = try XCTUnwrap(manager.prepareParkFrameApplications([target]).first)
-        XCTAssertTrue(
-            manager.processParkFrameApplyResults([
-                WindowAdmissionTestSupport.successfulFrameResult(request: request)
-            ]).isEmpty
-        )
-        XCTAssertEqual(manager.verifiedParkFrame(for: windowId), target.frame)
-
-        XCTAssertEqual(
-            manager.cancelParkFrameJobs([(pid: pid, windowId: windowId)], reason: "revealed"),
-            [token]
-        )
-        XCTAssertNil(manager.verifiedParkFrame(for: windowId))
+            XCTAssertEqual(
+                manager.cancelParkFrameJobs([(pid: row.pid, windowId: row.windowId)], reason: "revealed"),
+                [token]
+            )
+            XCTAssertFalse(manager.pendingParkWindowIds.contains(row.windowId))
+            XCTAssertNil(manager.verifiedParkFrame(for: row.windowId))
+            XCTAssertTrue(
+                manager.processParkFrameApplyResults([
+                    WindowAdmissionTestSupport.successfulFrameResult(request: request)
+                ]).isEmpty
+            )
+            XCTAssertNil(manager.verifiedParkFrame(for: row.windowId))
+        }
     }
 
     func testVerifiedParkDeduplicatesOnlyExactIdentityAndTargetWithoutTouchingFrameLedger() throws {
@@ -539,6 +522,46 @@ final class DurableParkTests: XCTestCase {
         )
         XCTAssertNotEqual(targetRequest.requestId, identityRequest.requestId)
         XCTAssertEqual(manager.pendingParkFrameRequest(for: windowId), targetRequest)
+    }
+
+    func testHidingInactiveWorkspacesParksEveryInactiveWindow() throws {
+        let controller = Self.controller()
+        let monitor = Self.monitor()
+        controller.workspaceManager.applyMonitorConfigurationChange([monitor])
+        let workspaceIds = try ["1", "2", "3"].map {
+            try XCTUnwrap(controller.workspaceManager.workspaceId(for: $0, createIfMissing: true))
+        }
+        _ = controller.workspaceManager.focusWorkspace(named: "1")
+
+        var frames: [WindowToken: CGRect] = [:]
+        var tokens: [WindowToken] = []
+        for (index, workspaceId) in workspaceIds.enumerated() {
+            for slot in 0 ..< 2 {
+                let pid = pid_t(959_001 + index)
+                let windowId = 959_101 + index * 10 + slot
+                let token = controller.workspaceManager.addWindow(
+                    AXWindowRef(element: AXUIElementCreateApplication(pid), windowId: windowId),
+                    pid: pid,
+                    windowId: windowId,
+                    to: workspaceId,
+                    mode: .floating
+                )
+                frames[token] = CGRect(x: 100 + CGFloat(slot * 40), y: 16, width: 800, height: 600)
+                tokens.append(token)
+            }
+        }
+        controller.layoutRefreshController.fastFrameProvider = { token, _ in frames[token] }
+
+        controller.layoutRefreshController.hideInactiveWorkspacesSync()
+
+        for token in tokens.prefix(2) {
+            XCTAssertNil(controller.workspaceManager.hiddenState(for: token))
+            XCTAssertFalse(controller.axManager.pendingParkWindowIds.contains(token.windowId))
+        }
+        for token in tokens.dropFirst(2) {
+            XCTAssertEqual(controller.workspaceManager.hiddenState(for: token)?.reason, .workspaceInactive)
+            XCTAssertTrue(controller.axManager.pendingParkWindowIds.contains(token.windowId))
+        }
     }
 
     func testWorkspaceInactiveAndScratchpadFloatingHidesRemainPendingWithoutAXConfirmation() throws {
@@ -764,6 +787,10 @@ final class DurableParkTests: XCTestCase {
         let windowId = UInt32(fixture.token.windowId)
         let otherWindowId: UInt32 = 963_101
         let queries = DeferredWindowInfoQueries()
+        defer {
+            handler.cancelFrameObservations()
+            queries.finish()
+        }
         var synchronousQueries = 0
         handler.windowInfoProvider = { _ in
             synchronousQueries += 1
@@ -776,9 +803,9 @@ final class DurableParkTests: XCTestCase {
         for _ in 0 ..< 6 {
             handler.handleCGSEvent(.frameChanged(windowId: windowId))
         }
-        await waitForQueries(queries, count: 1)
+        try await waitForQueries(queries, count: 1)
         handler.handleCGSEvent(.frameChanged(windowId: otherWindowId))
-        await waitForQueries(queries, count: 2)
+        try await waitForQueries(queries, count: 2)
 
         XCTAssertEqual(queries.requestedWindowIds, [windowId, otherWindowId])
         XCTAssertEqual(handler.frameObservations.byWindowId.count, 2)
@@ -789,7 +816,7 @@ final class DurableParkTests: XCTestCase {
         let first = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
         queries.answer(windowId, with: Self.windowServerInfo(fixture, frame: fixture.visibleFrame))
         await first.value
-        await waitForQueries(queries, count: 3)
+        try await waitForQueries(queries, count: 3)
 
         XCTAssertNil(fixture.controller.axManager.verifiedParkFrame(for: fixture.token.windowId))
         XCTAssertTrue(Self.frameTrace(fixture).contains("outcome=sls-park-intent/settled"))
@@ -809,10 +836,14 @@ final class DurableParkTests: XCTestCase {
             let handler = fixture.controller.axEventHandler
             let windowId = UInt32(fixture.token.windowId)
             let queries = DeferredWindowInfoQueries()
+            defer {
+                handler.cancelFrameObservations()
+                queries.finish()
+            }
             handler.windowInfoProvider = { _ in nil }
             handler.frameObservations.query = { await queries.query($0) }
             handler.handleCGSEvent(.frameChanged(windowId: windowId))
-            await waitForQueries(queries, count: 1)
+            try await waitForQueries(queries, count: 1)
             let task = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
 
             handler.handleCGSEvent(event)
@@ -840,13 +871,17 @@ final class DurableParkTests: XCTestCase {
         let windowId = UInt32(fixture.token.windowId)
         let liveInfo = Self.windowServerInfo(fixture, frame: fixture.visibleFrame)
         let queries = DeferredWindowInfoQueries()
+        defer {
+            handler.cancelFrameObservations()
+            queries.finish()
+        }
         handler.windowInfoProvider = { _ in liveInfo }
         handler.frameObservations.query = { await queries.query($0) }
         FrameApplyTrace.shared.beginCapture()
         defer { FrameApplyTrace.shared.endCapture() }
 
         handler.handleCGSEvent(.frameChanged(windowId: windowId))
-        await waitForQueries(queries, count: 1)
+        try await waitForQueries(queries, count: 1)
         let task = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
         handler.handleCGSEvent(.destroyed(windowId: windowId, spaceId: 1))
         await handler.lifecycleQueries.task?.value
@@ -887,6 +922,10 @@ final class DurableParkTests: XCTestCase {
         let handler = fixture.controller.axEventHandler
         let windowId = UInt32(fixture.token.windowId)
         let queries = DeferredWindowInfoQueries()
+        defer {
+            handler.cancelFrameObservations()
+            queries.finish()
+        }
         handler.frameObservations.query = { await queries.query($0) }
         let grownFrame = ScreenCoordinateSpace.toWindowServer(
             rect: CGRect(origin: fixture.parkedFrame.origin, size: CGSize(width: 1000, height: 600))
@@ -895,7 +934,7 @@ final class DurableParkTests: XCTestCase {
         defer { FrameApplyTrace.shared.endCapture() }
 
         handler.handleCGSEvent(.frameChanged(windowId: windowId))
-        await waitForQueries(queries, count: 1)
+        try await waitForQueries(queries, count: 1)
         let first = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
         fixture.controller.workspaceManager.setHiddenState(nil, for: fixture.token)
         queries.answer(
@@ -903,7 +942,7 @@ final class DurableParkTests: XCTestCase {
             with: WindowServerInfo(id: windowId, pid: fixture.token.pid, level: 0, frame: grownFrame)
         )
         await first.value
-        await waitForQueries(queries, count: 2)
+        try await waitForQueries(queries, count: 2)
         queries.answer(
             windowId,
             with: WindowServerInfo(id: windowId, pid: fixture.token.pid, level: 0, frame: grownFrame)
@@ -921,6 +960,10 @@ final class DurableParkTests: XCTestCase {
         let handler = fixture.controller.axEventHandler
         let windowId = UInt32(fixture.token.windowId)
         let queries = DeferredWindowInfoQueries()
+        defer {
+            handler.cancelFrameObservations()
+            queries.finish()
+        }
         handler.frameObservations.query = { await queries.query($0) }
         let staleFrame = CGRect(origin: fixture.parkedFrame.origin, size: CGSize(width: 1100, height: 600))
         let freshFrame = CGRect(origin: fixture.parkedFrame.origin, size: CGSize(width: 1000, height: 600))
@@ -929,7 +972,7 @@ final class DurableParkTests: XCTestCase {
 
         manager.setHiddenState(nil, for: fixture.token)
         handler.handleCGSEvent(.frameChanged(windowId: windowId))
-        await waitForQueries(queries, count: 1)
+        try await waitForQueries(queries, count: 1)
         let first = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
         manager.setHiddenState(hiddenState, for: fixture.token)
         queries.answer(windowId, with: WindowServerInfo(
@@ -937,7 +980,7 @@ final class DurableParkTests: XCTestCase {
             frame: ScreenCoordinateSpace.toWindowServer(rect: staleFrame)
         ))
         await first.value
-        await waitForQueries(queries, count: 2)
+        try await waitForQueries(queries, count: 2)
         queries.answer(windowId, with: WindowServerInfo(
             id: windowId, pid: fixture.token.pid, level: 0,
             frame: ScreenCoordinateSpace.toWindowServer(rect: freshFrame)
@@ -961,21 +1004,31 @@ final class DurableParkTests: XCTestCase {
         let handler = controller.axEventHandler
         let windowId = UInt32(fixture.token.windowId)
         let queries = DeferredWindowInfoQueries()
+        defer {
+            handler.cancelFrameObservations()
+            queries.finish()
+        }
         var synchronousQueries = 0
-        handler.windowInfoProvider = { _ in
+        var mainConnectionQueries = 0
+        handler.frameObservations.nativeDragQuery = { _ in
             synchronousQueries += 1
+            return nil
+        }
+        handler.windowInfoProvider = { _ in
+            mainConnectionQueries += 1
             return nil
         }
         handler.frameObservations.query = { await queries.query($0) }
         defer { controller.mouseEventHandler.state.nativeTitleBarDragFallbackToken = nil }
 
         handler.handleCGSEvent(.frameChanged(windowId: windowId))
-        await waitForQueries(queries, count: 1)
+        try await waitForQueries(queries, count: 1)
         let deferred = try XCTUnwrap(handler.frameObservations.byWindowId[windowId]?.task)
         controller.mouseEventHandler.state.nativeTitleBarDragFallbackToken = fixture.token
         handler.handleCGSEvent(.frameChanged(windowId: windowId))
 
         XCTAssertEqual(synchronousQueries, 1)
+        XCTAssertEqual(mainConnectionQueries, 0)
         XCTAssertNil(handler.frameObservations.byWindowId[windowId])
         XCTAssertTrue(deferred.isCancelled)
         FrameApplyTrace.shared.beginCapture()
@@ -988,7 +1041,7 @@ final class DurableParkTests: XCTestCase {
         XCTAssertEqual(controller.axManager.verifiedParkFrame(for: fixture.token.windowId), fixture.parkFrame)
     }
 
-    private func waitForQueries(_ queries: DeferredWindowInfoQueries, count: Int) async {
+    private func waitForQueries(_ queries: DeferredWindowInfoQueries, count: Int) async throws {
         guard queries.requestedWindowIds.count < count else { return }
         let requested = expectation(description: "deferred window-info query \(count)")
         queries.onRequest = { requestCount in
@@ -996,8 +1049,13 @@ final class DurableParkTests: XCTestCase {
                 requested.fulfill()
             }
         }
-        await fulfillment(of: [requested], timeout: 1)
-        queries.onRequest = nil
+        defer { queries.onRequest = nil }
+        guard await XCTWaiter.fulfillment(of: [requested], timeout: 1) == .completed,
+              queries.requestedWindowIds.count >= count
+        else {
+            XCTFail("Expected \(count) deferred window-info queries; received \(queries.requestedWindowIds.count)")
+            throw DeferredWindowInfoQueryWaitError.missingRequest(count)
+        }
     }
 
     private static func frameTrace(_ fixture: ParkDriftFixture) -> String {
@@ -1568,8 +1626,13 @@ final class DurableParkTests: XCTestCase {
         )
         let handler = controller.axEventHandler
         handler.lifecycleQueries.query = { [weak handler] in handler?.windowInfoProvider($0) }
+        handler.frameObservations.nativeDragQuery = { [weak handler] in handler?.windowInfoProvider($0) }
         return controller
     }
+}
+
+private enum DeferredWindowInfoQueryWaitError: Error {
+    case missingRequest(Int)
 }
 
 @MainActor
@@ -1577,9 +1640,11 @@ private final class DeferredWindowInfoQueries {
     private(set) var requestedWindowIds: [UInt32] = []
     private var pending: [UInt32: CheckedContinuation<WindowServerInfo?, Never>] = [:]
     var onRequest: ((Int) -> Void)?
+    private var isFinished = false
 
     func query(_ windowId: UInt32) async -> WindowServerInfo? {
-        await withCheckedContinuation { continuation in
+        guard !isFinished else { return nil }
+        return await withCheckedContinuation { continuation in
             pending[windowId] = continuation
             requestedWindowIds.append(windowId)
             onRequest?(requestedWindowIds.count)
@@ -1588,6 +1653,14 @@ private final class DeferredWindowInfoQueries {
 
     func answer(_ windowId: UInt32, with info: WindowServerInfo?) {
         pending.removeValue(forKey: windowId)?.resume(returning: info)
+    }
+
+    func finish() {
+        isFinished = true
+        onRequest = nil
+        let pending = pending
+        self.pending.removeAll()
+        for continuation in pending.values { continuation.resume(returning: nil) }
     }
 }
 

@@ -616,6 +616,7 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
 
 ## Highlights
 
+- Optional [window switcher](website/src/content/docs/features/window-switcher.md) with previews and separate Command-Tab / Option-Tab workspace scopes
 - Ghostty-powered quake/sticky terminal
 - Native macOS window-tab support
 - Local IPC and `omniwmctl` automation
@@ -1088,7 +1089,7 @@ If you need more features for hiding status bar icons, I recommend [Thaw](https:
 
 - **Workspaces** - Create named workspaces in Settings to organize by project or context (You can use emojis 🥳)
 - **App Rules** - Exclude problematic apps from tiling or assign them to specific workspaces
-- **Mouse** - Hold the configured mouse-move modifier and drag to swap whole tiles, including their tab groups. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and moves it to another workspace.
+- **Mouse** - Hold the configured mouse-move modifier and drag tiled windows. **Unreleased:** drop at another tile's center to swap or near one of its edges to insert on that side; Dwindle also inserts between existing splits or at the workspace's outer edges. Whole tiles move, including their tab groups. Drops on another display work the same way. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and targets a workspace or window position.
 - **Mouse Resize** - Hold the configured right-mouse resize modifier (`Option` by default) and right-drag a tiled window to resize it in Dwindle
 - **Window Move & Resize (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: drag without clicking to move or resize the tiled window under the cursor in Dwindle; lift your fingers to drop. Defaults are four fingers to move and three to resize. Choose finger counts unused by other enabled gestures; **Set Up…** previews conflicts and lets you choose which gestures to turn off before applying the assignment. Turn off matching macOS gestures in System Settings → Trackpad → More Gestures to prevent them firing alongside window gestures.
 - **Workspace Swipe (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: swipe with a configurable finger count (2/3/4) and axis (horizontal/vertical) to switch to the next/previous workspace on the monitor under the cursor, one switch per swipe. For vertical swipes with three or four fingers, first turn off Mission Control in  → System Settings → Trackpad → More Gestures so macOS does not intercept the gesture.
@@ -1166,7 +1167,7 @@ rule or Automatic layout does not cross these gates.
 
 ## Building from Source
 
-Follow the [contributor quick start](CONTRIBUTING.md#quick-start) for Xcode requirements, automatic dependency setup, and a separate **OmniWM Dev** app with independent settings. The guide covers rebuilding, switching back to your normal app, and verifying a pull request.
+Follow the [contributor quick start](CONTRIBUTING.md#quick-start) for Xcode requirements, automatic dependency setup with [Lix](https://lix.systems/install/) and the repository's `flake.nix`, and a separate **OmniWM Dev** app with independent settings. The guide covers rebuilding, switching back to your normal app, and verifying a pull request.
 
 ## Community Integrations
 
@@ -1207,6 +1208,6 @@ The similarly named files under `docs/` are compatibility stubs that direct old 
 
 ## License
 
-OmniWM is licensed under the [GNU General Public License v2.0-only](LICENSE). Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM.
+OmniWM is licensed under the [GNU General Public License v2.0-only](LICENSE). Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM.
 
 Every OmniWM source file carries an SPDX license header. The vendored Luau runtime in `Sources/OmniWMLuau` keeps its MIT license (`LICENSE.txt` and `lua_LICENSE.txt`), and app builds ship both texts in `Contents/Resources/Licenses`. The Nocturne and Wayline shell themes use colours from [Noctalia](https://github.com/noctalia-dev/noctalia) and [Wayle](https://github.com/wayle-rs/wayle), both MIT. The Catppuccin, Dracula, Everforest, Gruvbox, Kanagawa, Nord and Rosé Pine shell themes adapt those MIT colour schemes through the same two projects. The bundled fonts Google Sans Flex and Rubik (SIL Open Font License) and Material Symbols Rounded (Apache 2.0) keep their licenses, as does Google's Material Color Utilities (Apache 2.0), vendored in `Sources/OmniWMMaterialColor`. All of these notices are in `Resources/Licenses` and ship there too. Forks and redistributions must retain these notices and the `LICENSE` file, and remain GPL-2.0-only with source available.

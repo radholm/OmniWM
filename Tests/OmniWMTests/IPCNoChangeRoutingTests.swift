@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import ApplicationServices
 import Foundation
@@ -43,6 +43,30 @@ final class IPCNoChangeRoutingTests: XCTestCase {
             .noChange
         )
         XCTAssertEqual(fixture.router.handle(IPCCommandRequest.workspace(.backAndForth)), .executed)
+        XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace1)
+    }
+
+    func testAutoBackAndForthAppliesToShortcutsButNotToIPC() throws {
+        let fixture = try makeFixture()
+        defer { fixture.controller.layoutRefreshController.resetState() }
+        let commands = fixture.controller.commandHandler
+        // Shortcut switches otherwise slide and commit after the animation when screen capture is available.
+        fixture.controller.motionPolicy.animationsEnabled = false
+
+        XCTAssertEqual(fixture.router.handle(IPCCommandRequest.workspace(.switchTo(workspaceNumber: 2))), .executed)
+        XCTAssertEqual(commands.performCommand(.workspace(.switchTo(1))), .executed)
+        XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace2)
+
+        fixture.controller.settings.workspaces.autoBackAndForth = true
+        XCTAssertEqual(fixture.router.handle(IPCCommandRequest.workspace(.switchTo(workspaceNumber: 2))), .noChange)
+        XCTAssertEqual(fixture.router.handle(IPCCommandRequest.workspace(.switchSlot(slotNumber: 2))), .noChange)
+        XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace2)
+
+        XCTAssertEqual(commands.performCommand(.workspace(.switchTo(1))), .executed)
+        XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace1)
+        XCTAssertEqual(commands.performCommand(.workspace(.switchSlot(1))), .executed)
+        XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace2)
+        XCTAssertEqual(commands.performCommand(.workspace(.switchTo(0))), .executed)
         XCTAssertEqual(fixture.controller.activeWorkspace()?.id, fixture.workspace1)
     }
 

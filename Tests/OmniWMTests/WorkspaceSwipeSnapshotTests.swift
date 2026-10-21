@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -157,15 +157,15 @@ final class WorkspaceSwipeSnapshotTests: XCTestCase {
         preview.snapshotCapture = { { gate.capture($0) } }
         preview.prepare(source: [source], destination: [destination], monitor: monitor, snapshotsSource: true)
         await fulfillment(of: [gate.entered], timeout: 1)
-        await driver.waitForStarts(1)
+        try await driver.waitForStarts(1)
         driver.completeAllStarts()
         gate.release()
-        await driver.waitForStarts(2)
+        try await driver.waitForStarts(2)
         XCTAssertEqual(gate.calls.withLock { $0 }, [1], "Parked destinations must never be directly captured")
         XCTAssertEqual(driver.streams.map(\.request.handle), [destination.handle, source.handle])
         driver.completeAllStarts()
         preview.stop()
-        await driver.waitForStops(2)
+        try await driver.waitForStops(2)
     }
 
     private func waitForFresh(_ preview: WorkspaceSwipePreview, items: [WorkspaceSwipePreview.Item]) async {

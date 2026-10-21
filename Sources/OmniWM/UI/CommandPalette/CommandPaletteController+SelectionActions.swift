@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 
@@ -26,7 +26,10 @@ extension CommandPaletteController {
             }
             return
         }
+        performSelected(action)
+    }
 
+    private func performSelected(_ action: CommandPaletteActionExecutor.Action) {
         if case .moveWindowToWorkspace = action {
             let outcome = actionExecutor.perform(action) ?? .moveFailed
             guard outcome == .movedToWorkspace else {
@@ -48,6 +51,13 @@ extension CommandPaletteController {
         }
         if case .command(_, .openCommandPalette, _) = action {
             dismiss(reason: .cancel)
+            return
+        }
+        if case let .command(_, .openCommandPaletteMode(mode), _) = action {
+            let mode = CommandPaletteMode(ipc: mode)
+            guard mode != selectedMode else { return }
+            searchText = ""
+            selectedMode = mode
             return
         }
         dismiss(reason: .selection)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 @testable import OmniWM
@@ -42,8 +42,7 @@ final class DwindleOnlyConfigurationTests: XCTestCase {
         XCTAssertEqual(Set(tree.keys), [
             "schemaVersion", "general", "focus", "mouseWarp", "routing", "gaps", "dwindle", "borders",
             "overview", "workspaceBar", "island", "gestures", "statusBar", "hiddenBar", "clipboard", "quakeTerminal",
-            "scratchpads", "appearance", "hotkeys", "workspaces", "appRules", "monitorBarOverrides",
-            "monitorOrientationOverrides", "monitorDwindleOverrides", "monitorGapOverrides"
+            "scratchpads", "appearance", "hotkeys", "workspaces", "appRules", "windowSwitcher", "keyboardModes"
         ])
         guard case let .table(gestures)? = tree["gestures"] else {
             return XCTFail("Expected canonical gestures table")
@@ -55,7 +54,7 @@ final class DwindleOnlyConfigurationTests: XCTestCase {
             "overviewGestureFingerCount", "windowMoveEnabled", "windowMoveFingerCount", "windowResizeEnabled",
             "windowResizeFingerCount", "windowGestureSensitivity", "workspaceSwipeSensitivity",
             "workspaceWallpaperParallax", "workspaceWallpaperParallaxAmount", "mouseEdgeDragResize",
-            "mouseTitleBarDragSwap"
+            "mouseTitleBarDragSwap", "dwindleGroupDragAcrossDisplays", "resizePreviewStyle", "adoptNativeResize"
         ])
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 import Synchronization
@@ -130,8 +130,8 @@ final class ShellIslandConfigWriter: Sendable {
     }
 }
 
-private extension Result where Success == Bool, Failure == Error {
-    var failureMessage: String? {
+extension Result where Success == Bool, Failure == Error {
+    fileprivate var failureMessage: String? {
         if case let .failure(error) = self { error.localizedDescription } else { nil }
     }
 }

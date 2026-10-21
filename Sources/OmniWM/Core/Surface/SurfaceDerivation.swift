@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import Foundation
@@ -88,8 +88,8 @@ enum SurfaceDerivation {
         guard world.systemModalFocusToken != token else { return nil }
         guard world.suppressedFocusToken != token,
               !world.hasPendingNativeFullscreenTransition(in: entry.workspaceId),
-              !world.isWindowFullscreenInLayout(token),
-              world.isManagedWindowDisplayable(entry.token),
+              !world.isWindowFullscreenInLayout(entry),
+              world.isManagedWindowDisplayable(entry),
               world.isWorkspaceVisible(entry.workspaceId)
         else {
             return nil

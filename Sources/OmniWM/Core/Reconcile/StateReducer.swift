@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import Foundation
@@ -55,7 +55,6 @@ enum StateReducer {
             monitors.first { $0.id == id }
         }
         let floatingState = entry.floatingState
-        let keepsTilingPlacement = entry.mode == .tiling && entry.restoreIntent?.workspaceId == entry.workspaceId
         return RestoreIntent(
             topologyProfile: TopologyProfile(monitors: monitors),
             workspaceId: entry.workspaceId,
@@ -64,8 +63,13 @@ enum StateReducer {
             normalizedFloatingOrigin: floatingState?.normalizedOrigin,
             restoreToFloating: entry.mode == .floating,
             rescueEligible: entry.desiredState.rescueEligible || floatingState?.restoreToFloating == true,
-            dwindlePlacement: keepsTilingPlacement ? entry.restoreIntent?.dwindlePlacement : nil
+            dwindlePlacement: dwindleRestorePlacement(for: entry)
         )
+    }
+
+    static func dwindleRestorePlacement(for entry: WindowState) -> PersistedDwindlePlacement? {
+        let keepsTilingPlacement = entry.mode == .tiling && entry.restoreIntent?.workspaceId == entry.workspaceId
+        return keepsTilingPlacement ? entry.restoreIntent?.dwindlePlacement : nil
     }
 
     static func replay(_ trace: [ReconcileTraceRecord]) -> [ActionPlan] {

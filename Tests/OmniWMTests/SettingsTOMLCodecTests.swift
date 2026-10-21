@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Carbon
 import Foundation
@@ -37,6 +37,25 @@ final class SettingsTOMLCodecTests: XCTestCase {
             }
             XCTAssertEqual(try SettingsTOMLCodec.decode(data).animationSpeed, expected)
         }
+    }
+
+    func testWorkspaceAutoBackAndForthDefaultsOffAndRoundTrips() throws {
+        var export = SettingsExport.defaults()
+        XCTAssertFalse(export.workspaceAutoBackAndForth)
+        for enabled in [false, true] {
+            export.workspaceAutoBackAndForth = enabled
+            let data = try SettingsTOMLCodec.encode(export)
+            XCTAssertEqual(try SettingsTOMLCodec.decode(data), export)
+            XCTAssertFalse(SettingsTOMLCodec.unknownKeyPaths(in: data).contains("general.workspaceAutoBackAndForth"))
+        }
+
+        let omitted = try canonicalDefaultLines { lines in
+            let index = try XCTUnwrap(lines.firstIndex { $0.hasPrefix("workspaceAutoBackAndForth = ") })
+            lines.remove(at: index)
+        }
+        let result = try SettingsTOMLCodec.decodeForLoad(omitted)
+        XCTAssertFalse(result.export.workspaceAutoBackAndForth)
+        XCTAssertNil(result.migration)
     }
 
     func testTabRailAppIconsDefaultsAndRoundTrips() throws {
@@ -94,7 +113,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
             XCTAssertEqual(lines[idIndex - 2], "[[hotkeys]]")
             lines.removeSubrange((idIndex - 2) ... idIndex)
         }
-        XCTAssertTrue(String(decoding: withoutToggle, as: UTF8.self).contains("schemaVersion = 4"))
+        XCTAssertTrue(String(decoding: withoutToggle, as: UTF8.self).contains("schemaVersion = 5"))
 
         let result = try SettingsTOMLCodec.decodeForLoad(withoutToggle)
 
@@ -116,32 +135,22 @@ final class SettingsTOMLCodecTests: XCTestCase {
     }
 
     func testTOMLRejectsMissingRequiredKey() throws {
-        let withoutKey = try canonicalDefaultLines { lines in
-            let index = try XCTUnwrap(lines.firstIndex { $0.hasPrefix("followsMouse = ") })
-            lines.remove(at: index)
-        }
-
-        XCTAssertThrowsError(try SettingsTOMLCodec.decode(withoutKey)) { error in
-            guard case let DecodingError.keyNotFound(key, context) = error else {
-                return XCTFail("expected keyNotFound, got \(error)")
+        for (key, parent, line) in [
+            ("followsMouse", "focus", "followsMouse = "),
+            ("raiseOnMouseFocus", "focus", "raiseOnMouseFocus = "),
+            ("fullscreenUsesOuterGaps", "gaps", "fullscreenUsesOuterGaps = false")
+        ] {
+            let withoutKey = try canonicalDefaultLines { lines in
+                let index = try XCTUnwrap(lines.firstIndex { $0.hasPrefix(line) })
+                lines.remove(at: index)
             }
-            XCTAssertEqual(key.stringValue, "followsMouse")
-            XCTAssertEqual(context.codingPath.map(\.stringValue), ["focus"])
-        }
-    }
-
-    func testTOMLRejectsMissingRaiseOnMouseFocus() throws {
-        let withoutKey = try canonicalDefaultLines { lines in
-            let index = try XCTUnwrap(lines.firstIndex { $0.hasPrefix("raiseOnMouseFocus = ") })
-            lines.remove(at: index)
-        }
-
-        XCTAssertThrowsError(try SettingsTOMLCodec.decode(withoutKey)) { error in
-            guard case let DecodingError.keyNotFound(key, context) = error else {
-                return XCTFail("expected keyNotFound, got \(error)")
+            XCTAssertThrowsError(try SettingsTOMLCodec.decode(withoutKey), key) { error in
+                guard case let DecodingError.keyNotFound(found, context) = error else {
+                    return XCTFail("expected keyNotFound, got \(error)")
+                }
+                XCTAssertEqual(found.stringValue, key)
+                XCTAssertEqual(context.codingPath.map(\.stringValue), [parent])
             }
-            XCTAssertEqual(key.stringValue, "raiseOnMouseFocus")
-            XCTAssertEqual(context.codingPath.map(\.stringValue), ["focus"])
         }
     }
 
@@ -159,21 +168,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
 
         XCTAssertTrue(String(decoding: data, as: UTF8.self).contains("raiseOnMouseFocus = true"))
         XCTAssertTrue(try SettingsTOMLCodec.decode(data).focus.raiseOnMouseFocus)
-    }
-
-    func testTOMLRejectsMissingFullscreenOuterGapPolicy() throws {
-        let withoutKey = try canonicalDefaultLines { lines in
-            let index = try XCTUnwrap(lines.firstIndex(of: "fullscreenUsesOuterGaps = false"))
-            lines.remove(at: index)
-        }
-
-        XCTAssertThrowsError(try SettingsTOMLCodec.decode(withoutKey)) { error in
-            guard case let DecodingError.keyNotFound(key, context) = error else {
-                return XCTFail("expected keyNotFound, got \(error)")
-            }
-            XCTAssertEqual(key.stringValue, "fullscreenUsesOuterGaps")
-            XCTAssertEqual(context.codingPath.map(\.stringValue), ["gaps"])
-        }
     }
 
     func testTOMLRejectsCorruptSystemHyperTrigger() throws {
@@ -473,16 +467,6 @@ final class SettingsTOMLCodecTests: XCTestCase {
         }
     }
 
-    func testUnsupportedMouseMoveModifierRejectsDecode() throws {
-        let data = try defaultsWithReplacements(
-            ("mouseMoveModifierKey = \"option\"\n", "mouseMoveModifierKey = \"shift\"\n")
-        )
-
-        XCTAssertThrowsError(try SettingsTOMLCodec.decode(data)) { error in
-            XCTAssertTrue(SettingsTOMLCodec.diagnosticDescription(for: error).contains("gestures.mouseMoveModifierKey"))
-        }
-    }
-
     @MainActor
     func testMouseMoveModifierStoreMappingRoundTrips() {
         let source = makeSettingsStore()
@@ -631,7 +615,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
     }
 
     @MainActor
-    func testMalformedExternalWorkspaceSwipeReloadDoesNotPartiallyApplyOrNotify() async throws {
+    func testMalformedExternalWorkspaceSwipeReloadDoesNotPartiallyApplyOrNotify() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("OmniWMSettingsCodecTests-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -639,7 +623,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
         }
         let persistence = SettingsFilePersistence(
             directory: root.appendingPathComponent("config", isDirectory: true),
-            startWatching: true,
+            startWatching: false,
             deferSaves: false
         )
         let settings = SettingsStore(
@@ -653,6 +637,10 @@ final class SettingsTOMLCodecTests: XCTestCase {
         settings.gestures.workspaceSwipeEnabled = true
         settings.gestures.workspaceSwipeFingerCount = .four
         settings.gestures.workspaceSwipeAxis = .horizontal
+        var noticeChangeCount = 0
+        settings.onConfigNoticeChanged = {
+            noticeChangeCount += 1
+        }
         var externalReloadCount = 0
         settings.onExternalSettingsReloaded = {
             externalReloadCount += 1
@@ -662,9 +650,16 @@ final class SettingsTOMLCodecTests: XCTestCase {
             ("workspaceSwipeAxis = \"vertical\"\n", "workspaceSwipeAxis = 3\n")
         )
         try malformed.write(to: persistence.fileURL, options: .atomic)
-        XCTAssertNil(persistence.reloadIfChanged())
-        try await Task.sleep(for: .milliseconds(200))
+        persistence.handlePossibleSettingsFileChange()
 
+        guard case let .invalidRejected(reason) = settings.configNotice else {
+            return XCTFail("Malformed external settings must publish a rejection notice")
+        }
+        XCTAssertFalse(reason.isEmpty)
+        XCTAssertEqual(noticeChangeCount, 1)
+        XCTAssertEqual(try Data(contentsOf: persistence.fileURL), malformed)
+        persistence.handlePossibleSettingsFileChange()
+        XCTAssertEqual(noticeChangeCount, 1)
         XCTAssertEqual(externalReloadCount, 0)
         XCTAssertTrue(settings.gestures.workspaceSwipeEnabled)
         XCTAssertEqual(settings.gestures.workspaceSwipeFingerCount, .four)
@@ -672,11 +667,10 @@ final class SettingsTOMLCodecTests: XCTestCase {
 
         let valid = try SettingsTOMLCodec.encode(.defaults())
         try valid.write(to: persistence.fileURL, options: .atomic)
-        for _ in 0 ..< 200 {
-            if externalReloadCount > 0 { break }
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        persistence.handlePossibleSettingsFileChange()
 
+        XCTAssertNil(settings.configNotice)
+        XCTAssertEqual(noticeChangeCount, 2)
         XCTAssertEqual(externalReloadCount, 1)
         XCTAssertFalse(settings.gestures.workspaceSwipeEnabled)
         XCTAssertEqual(settings.gestures.workspaceSwipeFingerCount, .three)
@@ -733,6 +727,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
 
     func testUnknownEnumValueRejectsWholeFile() throws {
         let cases: [(line: String, invalid: String, key: String)] = [
+            ("resizePreviewStyle = \"live\"", "resizePreviewStyle = \"unsupported\"", "gestures.resizePreviewStyle"),
             ("lockModifier = \"\(FocusLockModifier.off.rawValue)\"", "lockModifier = \"hyper\"", "lockModifier"),
             ("mode = \"\(MonitorRoutingMode.macOS.rawValue)\"", "mode = \"sideways\"", "routing.mode"),
             ("singleWindowFit = \"fill\"", "singleWindowFit = \"stretch\"", "singleWindowFit"),
@@ -759,7 +754,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
             (
                 "mouseMoveModifierKey = \"\(MouseMoveModifierKey.option.rawValue)\"",
                 "mouseMoveModifierKey = \"shift\"",
-                "mouseMoveModifierKey"
+                "gestures.mouseMoveModifierKey"
             ),
             (
                 "mouseResizeModifierKey = \"\(MouseResizeModifierKey.option.rawValue)\"",
@@ -774,7 +769,7 @@ final class SettingsTOMLCodecTests: XCTestCase {
             (
                 "workspaceSwipeAxis = \"\(WorkspaceSwipeAxis.vertical.rawValue)\"",
                 "workspaceSwipeAxis = \"diagonal\"",
-                "workspaceSwipeAxis"
+                "gestures.workspaceSwipeAxis"
             ),
             (
                 "position = \"\(QuakeTerminalPosition.center.rawValue)\"",
@@ -791,7 +786,13 @@ final class SettingsTOMLCodecTests: XCTestCase {
                 "monitorMode = \"everywhere\"",
                 "monitorMode"
             ),
-            ("mode = \"\(AppearanceMode.dark.rawValue)\"", "mode = \"sepia\"", "appearance.mode")
+            ("mode = \"\(AppearanceMode.dark.rawValue)\"", "mode = \"sepia\"", "appearance.mode"),
+            (
+                "workspaceSwipeFingerCount = 3\n",
+                "workspaceSwipeFingerCount = 5\n",
+                "gestures.workspaceSwipeFingerCount"
+            ),
+            ("revealModifier = \"off\"", "revealModifier = \"garbage\"", "workspaceBar.revealModifier")
         ]
         let defaults = String(decoding: try SettingsTOMLCodec.encode(.defaults()), as: UTF8.self)
         XCTAssertNoThrow(try SettingsTOMLCodec.decode(Data(defaults.utf8)))

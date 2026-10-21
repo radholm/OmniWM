@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import Foundation
 
 public enum OmniWMIPCProtocol {
-    public static let version = 20
+    public static let version = 21
 }
 
 public struct IPCNoPayload: Codable, Equatable, Sendable {

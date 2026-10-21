@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -81,7 +81,8 @@ extension MouseEventHandler {
         let candidates = Self.edgeDragResizeCandidates(
             point: location,
             frames: tiledFrames,
-            inside: Self.edgeDragInsideBand,
+            // Adopted native edge resizes own the window's own edges; keep only the gap band.
+            inside: controller.settings.gestures.adoptNativeResize ? 0 : Self.edgeDragInsideBand,
             outside: Self.edgeDragOutsideBand(innerGap: innerGap)
         )
         guard !candidates.isEmpty,
@@ -168,12 +169,7 @@ extension MouseEventHandler {
               workspaceIdForPointer(at: location) == entry.workspaceId,
               engine.interactiveMoveBegin(token: entry.token, startLocation: location, in: entry.workspaceId)
         else { return }
-        guard engine.interactiveMoveUpdate(currentLocation: location, at: controller.animationClock.now()) != nil
-        else {
-            engine.interactiveMoveCancel()
-            return
-        }
-        finishDwindleMove()
+        finishDwindleMove(at: location)
     }
 
     nonisolated static func nativeDragKeptSize(observedFrame: CGRect?, lastAppliedFrame: CGRect?) -> Bool {

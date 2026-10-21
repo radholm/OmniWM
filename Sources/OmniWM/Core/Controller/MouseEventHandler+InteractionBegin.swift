@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import AppKit
 import Foundation
@@ -15,7 +15,9 @@ extension MouseEventHandler {
         guard let controller else { return false }
         let now = controller.animationClock.now()
         guard let frame = engine.presentedFrame(for: token, in: wsId, at: now),
-              engine.interactiveMoveBegin(token: token, startLocation: location, in: wsId)
+              engine.interactiveMoveBegin(
+                  token: token, startLocation: location, allowsInsertion: source.mouseButton != nil, in: wsId
+              )
         else { return false }
 
         state.isMoving = true
@@ -69,6 +71,17 @@ extension MouseEventHandler {
         state.resizeLayout = .dwindle
         controller.dwindleLayoutHandler.beginInteractiveSnapshotResize(workspaceId: wsId, monitor: monitor)
         edges.cursor.set()
+
+        beginResizeOverlay(in: wsId)
         return true
+    }
+
+    private func beginResizeOverlay(in workspaceId: WorkspaceDescriptor.ID) {
+        guard let controller else { return }
+        controller.resizeOverlay.begin(
+            workspaceId: workspaceId,
+            style: controller.settings.gestures.resizePreviewStyle,
+            pointerDriven: true
+        )
     }
 }

@@ -10,7 +10,7 @@ This reference follows current `main`; features newer than the latest release ar
 Complete reference for `settings.toml`, in the file's canonical order. The authoritative schema is [`CanonicalTOMLConfig.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/CanonicalTOMLConfig.swift); defaults come from [`SettingsExport.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/SettingsExport.swift) and [`BuiltInSettingsDefaults.swift`](https://github.com/OmniNull/OmniWM/blob/main/Sources/OmniWM/Core/Config/BuiltInSettingsDefaults.swift).
 
 :::caution
-The current schema is strict — a missing required key in a version 4 file invalidates the whole file, `hotkeys` may list each action only once (an action left out is unassigned), and an enumerated string key must use one of its listed values (an unknown value rejects the whole file, exactly like a missing key). Conflicting trackpad gesture finger counts under [`gestures`](#gestures), or one mouse button shared by a hotkey, `systemHyperTrigger`, or Overview, reject the whole file too. Edit values in place; see [Configuration](/config/configuration/).
+The current schema is strict — a missing required key in a version 5 file invalidates the whole file, `hotkeys` may list each action only once (an action left out is unassigned), and an enumerated string key must use one of its listed values (an unknown value rejects the whole file, exactly like a missing key). Conflicting trackpad gesture finger counts under [`gestures`](#gestures), or one mouse button shared by a hotkey, `systemHyperTrigger`, or Overview, reject the whole file too. Edit values in place; see [Configuration](/config/configuration/).
 :::
 
 **Conventions**
@@ -23,19 +23,19 @@ The current schema is strict — a missing required key in a version 4 file inva
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| `schemaVersion` | integer | `4` | Version of the complete `settings.toml` schema. This top-level key appears before the first table. |
+| `schemaVersion` | integer | `5` | Version of the complete `settings.toml` schema. This top-level key appears before the first table. |
 
 The canonical file declares:
 
 ```toml
-schemaVersion = 4
+schemaVersion = 5
 ```
 
-An absent version identifies a legacy version 0 file, while OmniWM v0.6.4 emitted version 1. OmniWM upgrades version 0, 1, 2, and 3 files sequentially in memory before strict version 4 validation, retaining the compatibility guarantee for settings emitted by v0.6.2 through v0.6.4. The version 2 to version 3 step moves the old flat routing rows into one saved arrangement; version 3 to version 4 adds the unassigned set/remove window-mark hotkey actions. A successful upgrade creates an exact write-once `settings.toml.pre-v4` or `settings.toml.pre-v4.1` backup, then atomically rewrites canonical TOML once; this can reorder keys and removes comments, while preserving unrecognized keys when their owner can be matched safely. Valid release migrations never use the `.corrupt` recovery slots. Older schema-less files are attempted but remain untouched with defaults active if they cannot validate, and files declaring a newer unsupported version remain untouched with configuration writes blocked. See [Automatic version upgrades](/config/configuration/#automatic-version-upgrades) for the migration rules and recovery behavior.
+An absent version identifies a legacy version 0 file, while OmniWM v0.6.4 emitted version 1. OmniWM upgrades version 0, 1, 2, 3, and 4 files sequentially in memory before strict version 5 validation, retaining the compatibility guarantee for settings emitted by v0.6.2 through v0.6.4. The version 2 to version 3 step moves the old flat routing rows into one saved arrangement; version 3 to version 4 adds the unassigned set/remove window-mark hotkey actions; version 4 to version 5 renames the resize span hotkey actions to their grow and shrink ids and keeps their bindings. A successful upgrade creates an exact write-once `settings.toml.pre-v5` or `settings.toml.pre-v5.1` backup, then atomically rewrites canonical TOML once; this can reorder keys and removes comments, while preserving unrecognized keys when their owner can be matched safely. Valid release migrations never use the `.corrupt` recovery slots. Older schema-less files are attempted but remain untouched with defaults active if they cannot validate, and files declaring a newer unsupported version remain untouched with configuration writes blocked. See [Automatic version upgrades](/config/configuration/#automatic-version-upgrades) for the migration rules and recovery behavior.
 
 ## general
 
-Global switches: hotkeys, Hyper key, default layout, sleep, updates, IPC, animations, interface language.
+Global switches: hotkeys, Hyper key, default layout, sleep, updates, IPC, animations, interface language, workspace back-and-forth.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -49,6 +49,7 @@ Global switches: hotkeys, Hyper key, default layout, sleep, updates, IPC, animat
 | `animationsEnabled` | boolean | `true` | Animates window layout changes and other OmniWM-authored motion. macOS Reduce Motion turns them off regardless of this key. |
 | `animationSpeed` *(optional)* | float | `1.0` | Tiling animation speed multiplier: `2.0` is twice as fast, `0.5` is half as fast. Applies to Dwindle layout changes and workspace swipe settling. Values are clamped to `0.25`–`4.0`; nonfinite values use `1.0`. Changes apply to newly started transitions. Direct gesture tracking, inertial scrolling, Overview, and Quake terminal animations keep their own behavior. |
 | `language` | string | unset | Interface language as a packaged localization code, such as `"ja"` or `"sr-Latn"`. Leave it unset to follow macOS. Takes effect the next time OmniWM starts. |
+| `workspaceAutoBackAndForth` *(optional)* | boolean | `false` | When a workspace shortcut or command palette entry targets the workspace you are already on, switch to the previously active workspace instead, like i3's `workspace_auto_back_and_forth`. `omniwmctl` workspace commands are unaffected. Settings > Workspaces > Workspace Switching. Unreleased: available when building from `main`. |
 
 ## focus
 
@@ -204,6 +205,26 @@ Zoom and colors for the Overview.
 | `windowBorders.hovered` | color table | `0.4, 0.6, 1.0, 1.0` | Border for the hovered window. |
 | `windowBorders.selected` | color table | `0.3, 0.8, 0.4, 1.0` | Border for the selected window. |
 
+## windowSwitcher
+
+The [window switcher](/features/window-switcher/). The table is optional; when absent, every key takes its default. Unreleased: available when building from `main`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | boolean | `false` | Takes over Command-Tab and Option-Tab, as assigned below, through OmniWM's input event tap. |
+| `commandTab` | string | `"activeWorkspace"` | Scope Command-Tab opens: `activeWorkspace`, `allWorkspaces`, `remembered` (the last scope chosen with S), or `disabled` (leaves the macOS app switcher). |
+| `optionTab` | string | `"allWorkspaces"` | Scope Option-Tab opens. Same values as `commandTab`. |
+| `scope` | string | `"allWorkspaces"` | The remembered scope, saved when you press S or click the scope button: `allWorkspaces` or `activeWorkspace`. |
+| `showFooter` | boolean | `true` | Shows the scope button and window count. |
+
+## keyboardModes
+
+[Keyboard modes](/guides/keyboard-shortcuts/#keyboard-modes). The table is optional; when absent, every key takes its default. Unreleased: available when building from `main`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `pauseTimeoutSeconds` *(optional)* | number | unset | Seconds after which a shortcut pause ends by itself. Unset or `0` keeps the pause until you toggle it again. Settings > Keyboard Shortcuts > Keyboard Modes > Pause Timeout. |
+
 ## workspaceBar
 
 The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverrides`](#per-monitor-overrides). A [shell profile or theme](/omnishell/configuration/profiles-palettes/#profile-settings) can override most of these keys in its own `[workspaceBar]`. Unreleased: available when building from `main`.
@@ -262,7 +283,7 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| `mouseMoveModifierKey` | string | `"option"` | Modifier for drag-to-swap of tiled windows in Dwindle: `off`, `option`, `control`, `command`, `controlOption`, `optionCommand`, `controlCommand`, `controlOptionCommand`. |
+| `mouseMoveModifierKey` | string | `"option"` | Modifier for left-dragging tiled windows in Dwindle. The drop position chooses the result (**unreleased**, available when building from `main`): the target tile's center swaps and its sides insert beside it, internal dividers insert between subtrees, and the workspace's outer edges insert at the root. `Shift` does not change this behavior. Workspace-edge targets take precedence in a band up to 24 points wide along the working area's boundary; dropping on another display uses the same targets there; see [drag guidance](/guides/tips/#swap-windows-by-dragging). Values: `off`, `option`, `control`, `command`, `controlOption`, `optionCommand`, `controlCommand`, `controlOptionCommand`. |
 | `mouseResizeModifierKey` | string | `"option"` | Modifier for right-drag resize: `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
 | `mouseEdgeDragResize` *(optional)* | boolean | `true` | Left-drag the gap between tiled windows (or a tiled window's edge, 4 pt inside) without a modifier to resize the split in Dwindle. The press is consumed so the app does not resize itself; presses on floating windows, menus or panels covering the gap are left alone. |
 | `mouseTitleBarDragSwap` *(optional)* | boolean | `true` | In Dwindle, dragging a tiled window by its title bar and releasing over another tile swaps the two. Drops elsewhere snap the window back. |
@@ -280,6 +301,9 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 | `workspaceSwipeSensitivity` *(optional)* | float | `1.0` | Workspace-swipe sensitivity, clamped to `0.5…4.0`; higher values need shorter swipes. Non-finite values use `1.0`. |
 | `workspaceWallpaperParallax` *(optional)* | boolean | `true` | Draw the wallpaper slightly enlarged and pan it with the active workspace's position, so workspace switches (swipe or keyboard) scroll it a little. Needs Screen Recording permission. |
 | `workspaceWallpaperParallaxAmount` *(optional)* | float | `0.1` | How far the parallax wallpaper scrolls from the first to the last workspace, as a fraction of the display size, clamped to `0.02…0.5`. Non-finite values use `0.1`. |
+| `resizePreviewStyle` *(optional)* | string | `"live"` | What modifier-based mouse resizing, and trackpad resize gestures show while the size changes: `live` writes the real window frames on every step, `glass` shows a glass panel with the app icon over each moving window, `snapshot` stretches a still capture of each moving window (needs Screen Recording, falls back to `glass` without it). `glass` and `snapshot` write the final frames once the resize ends. Native edge or corner drags bypass this setting; Dwindle neighbours always resize live. |
+| `dwindleGroupDragAcrossDisplays` *(optional)* | string | `"group"` | What a modifier drag of a Dwindle tab group moves when you drop it on another display (**unreleased**): `group` moves the whole group; `window` moves only the dragged window. The same choice decides whether a swap onto a Dwindle group exchanges the whole group or only the window under the pointer. |
+| `adoptNativeResize` *(optional)* | boolean | `false` | Keep a native edge or corner resize of a tiled window (**unreleased**). Dwindle moves the shared split and resizes neighbouring windows while you drag. Title-bar moves still snap back. |
 
 Window move and resize gestures use all directions, so their finger counts must differ from every other enabled gesture. Configuration loading rejects overlaps with each other, workspace switching or Overview. In Settings, **Set Up…** previews the conflicting assignments and lets you choose which gestures to turn off before applying the change. When editing TOML, disable or reassign conflicting gestures in the same edit. Moving stays on the starting monitor; resizing can continue beyond its bounds. Lift all fingers to finish, and turn off matching macOS gestures under System Settings → Trackpad → More Gestures. These gestures are inactive while Overview is open and do not use `invertDirection`.
 
@@ -386,6 +410,8 @@ id = "toggleScratchpad.1"
 - The array is validated strictly: each action may appear **only once**, and an action that is left out is unassigned. Workspace `10+` action IDs are optional and appear while those workspaces exist. An unknown, unassignable, or duplicate action id rejects the whole file, so rebind by editing `binding` values in place.
 - The numeric suffix is zero-based for `switchWorkspace.N` and `moveToWorkspace.N` — `switchWorkspace.0` is *Switch to Workspace 1* (`Option + 1` by default) — and one-based for `switchWorkspaceSlot.N`, `moveToWorkspaceSlot.N`, `toggleScratchpad.N`, and `assignFocusedWindowToScratchpad.N`.
 - `toggleShellWidget.<name>` toggles the shell drawer or widget popout named `<name>`. Settings lists one for every drawer and every widget with a popout, and a bound one stays while its drawer or widget is missing. Unreleased: available when building from `main`.
+- `modeKey` *(optional)* is the key that runs the action inside [Prefix or Window mode](/guides/keyboard-shortcuts/#keyboard-modes): a key name, optionally with `Shift` (for example `"H"` or `"Shift+H"`), never `Escape`. It is separate from `binding`, so an action can have both, either, or neither. Two actions with the same mode key, a mode key that is also a shortcut, or a mode key with other modifiers are reported and ignored without rejecting the file. Unreleased: available when building from `main`.
+- `openCommandPalette.<mode>` opens the command palette in `windows`, `menu`, `clipboard`, `commands`, `applications`, or `files` mode, switches to that mode if the palette is open in another one, and closes it if it is already open in that mode. These actions are unassigned by default. Unreleased: available when building from `main`.
 
 The default bindings are listed in the [keyboard shortcuts guide](/guides/keyboard-shortcuts/); assignable actions appear in **Settings > Keyboard Shortcuts**.
 
@@ -447,6 +473,8 @@ minWidth = 574.0
 ## Per-monitor overrides
 
 Five arrays hold per-monitor exceptions to the global tables. Every entry requires `monitorName`. Use the display’s `monitorDisplayUUID`; for a display without a UUID, supply both `monitorDisplayId` and `monitorName`. A name alone does not match a display. All entries except orientation also carry an `id` UUID identifying the override row, not the display. Override keys are all optional — an omitted key falls back to the corresponding global setting. All five arrays default to empty. Custom routing grids live separately in [`routing.arrangements`](#routing).
+
+Empty monitor override arrays are omitted when OmniWM saves the file. Add a `[[monitorGapOverrides]]` table to create an override; delete its whole table to remove it. An absent array means no overrides. If your file contains a line such as `monitorGapOverrides = []`, delete that line before adding tables with the same name: TOML does not allow both forms together.
 
 When `workspaceBar.enabled = false`, no monitor can show its bar. Saved `monitorBarOverrides.enabled` values take effect again when the global bar is enabled.
 

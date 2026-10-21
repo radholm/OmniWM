@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
+// Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
 import Foundation
@@ -28,7 +28,7 @@ struct DesiredBarSurface: Equatable {
 struct DesiredIslandSurface: Equatable {
     var monitor: Monitor
     var fullscreen: Bool
-    var navigation: IslandNavigationSnapshot? = nil
+    var navigation: IslandNavigationSnapshot?
 }
 
 struct ParkingEdgeMaskKey: Hashable {
